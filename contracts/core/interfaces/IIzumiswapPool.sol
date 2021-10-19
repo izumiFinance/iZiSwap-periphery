@@ -13,28 +13,33 @@ interface IIzumiswapPool {
             uint256 remainFeeX,
             uint256 remainFeeY
         );
+        
     function decLimOrderWithX(
         address recipient,
         int24 pt,
-        uint128 deltaX,
-        uint128 acquireYLim
-    ) external returns (uint128 actualDeltaX, uint256 acquireY);
+        uint128 deltaX
+    ) external returns (uint128 actualDeltaX);
+    
+    
     function decLimOrderWithY(
         address recipient,
         int24 pt,
-        uint128 deltaY,
-        uint128 acquireXLim
-    ) external returns (uint128 actualDeltaY, uint256 acquireX);
+        uint128 deltaY
+    ) external returns (uint128 actualDeltaY);
+    
+    
     function addLimOrderWithX(
         address recipient,
         int24 pt,
         uint128 amountX
     ) external returns (uint128 orderX, uint256 acquireY);
+
     function addLimOrderWithY(
         address recipient,
         int24 pt,
         uint128 amountY
     ) external returns (uint128 orderY, uint256 acquireX);
+    
     function mint(
         address minter,
         int24 leftPt,
@@ -60,24 +65,30 @@ interface IIzumiswapPool {
         int24 highPt,
         bytes calldata data
     ) external returns (uint256 amountX, uint256 amountY);
+    
     function swapY2XDesireX(
         address recipient,
         uint128 desireX,
         int24 highPt,
         bytes calldata data
     ) external returns (uint256 amountX, uint256 amountY);
+    
+    
     function swapX2Y(
         address recipient,
         uint128 amount,
         int24 lowPt,
         bytes calldata data
     ) external returns (uint256 amountX, uint256 amountY);
+    
+    
     function swapX2YDesireY(
         address recipient,
         uint128 desireY,
         int24 highPt,
         bytes calldata data
     ) external returns (uint256 amountX, uint256 amountY);
+    
     function state()
         external view
         returns(
@@ -88,7 +99,7 @@ interface IIzumiswapPool {
             uint128 liquidity,
             bool allX,
             bool locked
-        );    
+        );
     function sqrtRate_96() external view returns (uint160);
     function limitOrderData(int24 pt)
         external view

@@ -20,6 +20,7 @@ contract NonfungibleLiquidityManager is Base, ERC721, IIzumiswapMintCallback {
     struct MintCallbackData {
         address tokenX;
         address tokenY;
+        uint24 fee;
         address payer;
     }
 
@@ -48,6 +49,7 @@ contract NonfungibleLiquidityManager is Base, ERC721, IIzumiswapMintCallback {
         uint256 x, uint256 y, bytes calldata data
     ) external override {
         MintCallbackData memory dt = abi.decode(data, (MintCallbackData));
+        verify(dt.tokenX, dt.tokenY, dt.fee);
         if (x > 0) {
             pay(dt.tokenX, dt.payer, msg.sender, x);
         }
@@ -136,7 +138,7 @@ contract NonfungibleLiquidityManager is Base, ERC721, IIzumiswapMintCallback {
             sqrtRate_96
         );
         (amountX, amountY) = IIzumiswapPool(pool).mint(address(this), mp.pl, mp.pr, liquidity, 
-            abi.encode(MintCallbackData({tokenX: mp.tokenX, tokenY: mp.tokenY, payer: msg.sender})));
+            abi.encode(MintCallbackData({tokenX: mp.tokenX, tokenY: mp.tokenY, fee: mp.fee, payer: msg.sender})));
     }
     function mint(MintParam calldata mp) external payable returns(
         uint256 lid,
@@ -201,7 +203,7 @@ contract NonfungibleLiquidityManager is Base, ERC721, IIzumiswapMintCallback {
         require(ll == int256(uint256(liquidity.liquidity)), "LO");
         uint128 newLiquidity = l.addDelta(ll);
         (amountX, amountY) = IIzumiswapPool(pool).mint(address(this), liquidity.leftPt, liquidity.rightPt, l, 
-            abi.encode(MintCallbackData({tokenX: poolMeta.tokenX, tokenY: poolMeta.tokenY, payer: msg.sender})));
+            abi.encode(MintCallbackData({tokenX: poolMeta.tokenX, tokenY: poolMeta.tokenY, fee: poolMeta.fee, payer: msg.sender})));
         uint256 lastFeeScaleX_128;
         uint256 lastFeeScaleY_128;
         (lastFeeScaleX_128, lastFeeScaleY_128) = getLastFeeScale(
