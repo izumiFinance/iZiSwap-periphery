@@ -1,0 +1,5 @@
+module.exports = {
+    sk: 'b6b3b892636b11c5c6081fb60549c4d224b0473e292caeac3734c0b5fe54a76c',
+    weth: '0xd55d57a7355c623c6A2e01284B5f9a1c2B5000B7',
+    izumiswapfactory: '0x16D3cDb9C8EB9F3d854e04C2393fFa9EF05Eaf3a',
+}
