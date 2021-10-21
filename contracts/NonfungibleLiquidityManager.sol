@@ -15,6 +15,11 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 contract NonfungibleLiquidityManager is Base, ERC721, IIzumiswapMintCallback {
 
+    event IncreaseLiquidity(uint256 indexed tokenId, uint128 liquidity, uint256 amountX, uint256 amountY);
+
+    event DecreaseLiquidity(uint256 indexed tokenId, uint128 liquidity, uint256 amountX, uint256 amountY);
+
+    event Collect(uint256 indexed tokenId, address recipient, uint256 amountX, uint256 amountY);
     using LiquidityMath for uint128;
 
     struct MintCallbackData {
@@ -35,15 +40,15 @@ contract NonfungibleLiquidityManager is Base, ERC721, IIzumiswapMintCallback {
         uint256 remainTokenY;
         uint128 poolId;
     }
-    mapping(uint256 =>Liquidity) liquidities;
-    uint256 liquidityNum = 0;
+    mapping(uint256 =>Liquidity) public liquidities;
+    uint256 public liquidityNum = 0;
     struct PoolMeta {
         address tokenX;
         address tokenY;
         uint24 fee;
     }
-    mapping(uint128 =>PoolMeta) poolMetas;
-    mapping(address =>uint128) poolIds;
+    mapping(uint128 =>PoolMeta) public poolMetas;
+    mapping(address =>uint128) public poolIds;
 
     function mintDepositCallback(
         uint256 x, uint256 y, bytes calldata data
@@ -166,6 +171,7 @@ contract NonfungibleLiquidityManager is Base, ERC721, IIzumiswapMintCallback {
             poolId: cachePoolKey(pool, PoolMeta({tokenX: mp.tokenX, tokenY: mp.tokenY, fee: mp.fee}))
         });
         _mint(mp.miner, lid);
+        emit IncreaseLiquidity(lid, liquidity, amountX, amountY);
     }
     struct AddLiquidityParam {
         uint256 lid;
@@ -175,23 +181,23 @@ contract NonfungibleLiquidityManager is Base, ERC721, IIzumiswapMintCallback {
     function addLiquidity(
         AddLiquidityParam calldata mp
     ) external payable checkAuth(mp.lid) returns(
-        uint128 liquidity,
+        uint128 liquidityDelta,
         uint256 amountX,
         uint256 amountY
     ) {
         require(mp.lid < liquidityNum, "LN");
-        Liquidity storage liquidity = liquidities[mp.lid];
-        PoolMeta memory poolMeta = poolMetas[liquidity.poolId];
+        Liquidity storage liquid = liquidities[mp.lid];
+        PoolMeta memory poolMeta = poolMetas[liquid.poolId];
         int24 currPt;
         uint160 sqrtPrice_96;
         address pool = IIzumiswapFactory(factory).pool(poolMeta.tokenX, poolMeta.tokenY, poolMeta.fee);
         uint160 sqrtRate_96 = IIzumiswapPool(pool).sqrtRate_96();
         require(pool != address(0), "P0");
         (sqrtPrice_96, currPt) = getPoolPrice(pool);
-        uint128 l = MintMath.computeLiquidity(
+        uint128 liquidityDelta = MintMath.computeLiquidity(
             MintMath.MintMathParam({
-                pl: liquidity.leftPt,
-                pr: liquidity.rightPt,
+                pl: liquid.leftPt,
+                pr: liquid.rightPt,
                 xLim: mp.xLim,
                 yLim: mp.yLim
             }),
@@ -199,21 +205,21 @@ contract NonfungibleLiquidityManager is Base, ERC721, IIzumiswapMintCallback {
             sqrtPrice_96,
             sqrtRate_96
         );
-        int128 ll = int128(liquidity.liquidity);
-        require(ll == int256(uint256(liquidity.liquidity)), "LO");
-        uint128 newLiquidity = l.addDelta(ll);
-        (amountX, amountY) = IIzumiswapPool(pool).mint(address(this), liquidity.leftPt, liquidity.rightPt, l, 
+        require(int128(liquid.liquidity) == int256(uint256(liquid.liquidity)), "LO");
+        uint128 newLiquidity = liquidityDelta.addDelta(int128(liquid.liquidity));
+        (amountX, amountY) = IIzumiswapPool(pool).mint(address(this), liquid.leftPt, liquid.rightPt, liquidityDelta, 
             abi.encode(MintCallbackData({tokenX: poolMeta.tokenX, tokenY: poolMeta.tokenY, fee: poolMeta.fee, payer: msg.sender})));
         uint256 lastFeeScaleX_128;
         uint256 lastFeeScaleY_128;
         (lastFeeScaleX_128, lastFeeScaleY_128) = getLastFeeScale(
-            pool, liquidityKey(address(this), liquidity.leftPt, liquidity.rightPt)
+            pool, liquidityKey(address(this), liquid.leftPt, liquid.rightPt)
         );
-        liquidity.remainTokenX += FullMath.mulDiv(lastFeeScaleX_128 - liquidity.lastFeeScaleX_128, liquidity.liquidity, FixedPoint128.Q128);
-        liquidity.remainTokenY += FullMath.mulDiv(lastFeeScaleY_128 - liquidity.lastFeeScaleY_128, liquidity.liquidity, FixedPoint128.Q128);
-        liquidity.lastFeeScaleX_128 = lastFeeScaleX_128;
-        liquidity.lastFeeScaleY_128 = lastFeeScaleY_128;
-        liquidity.liquidity = newLiquidity;
+        liquid.remainTokenX += FullMath.mulDiv(lastFeeScaleX_128 - liquid.lastFeeScaleX_128, liquid.liquidity, FixedPoint128.Q128);
+        liquid.remainTokenY += FullMath.mulDiv(lastFeeScaleY_128 - liquid.lastFeeScaleY_128, liquid.liquidity, FixedPoint128.Q128);
+        liquid.lastFeeScaleX_128 = lastFeeScaleX_128;
+        liquid.lastFeeScaleY_128 = lastFeeScaleY_128;
+        liquid.liquidity = newLiquidity;
+        emit IncreaseLiquidity(mp.lid, liquidityDelta, amountX, amountY);
     }
 
     function decLiquidity(
@@ -244,6 +250,7 @@ contract NonfungibleLiquidityManager is Base, ERC721, IIzumiswapMintCallback {
         liquidity.lastFeeScaleX_128 = lastFeeScaleX_128;
         liquidity.lastFeeScaleY_128 = lastFeeScaleY_128;
         liquidity.liquidity = newLiquidity;
+        emit DecreaseLiquidity(lid, liquidDelta, amountX, amountY);
     }
     function collect(
         address miner,
@@ -286,5 +293,6 @@ contract NonfungibleLiquidityManager is Base, ERC721, IIzumiswapMintCallback {
         // amountX(Y)Lim may be a little greater than actual value
         liquidity.remainTokenX -= amountXLim;
         liquidity.remainTokenY -= amountYLim;
+        emit Collect(lid, miner, amountXLim, amountYLim);
     }
 }

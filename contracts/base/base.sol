@@ -124,7 +124,7 @@ abstract contract Base {
         }
     }
 
-    function pool(address tokenX, address tokenY, uint24 fee) internal view returns(address) {
+    function pool(address tokenX, address tokenY, uint24 fee) public view returns(address) {
         return IIzumiswapFactory(factory).pool(tokenX, tokenY, fee);
     }
     function verify(address tokenX, address tokenY, uint24 fee) internal view {

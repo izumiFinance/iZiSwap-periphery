@@ -45,6 +45,7 @@ contract Swap is Base, IIzumiswapSwapCallback {
         uint128 amount,
         int24 highPt
     ) external payable {
+        require(tokenX < tokenY, "x<y");
         address poolAddr = pool(tokenX, tokenY, fee);
         address payer = msg.sender;
         IIzumiswapPool(poolAddr).swapY2X(
@@ -59,6 +60,7 @@ contract Swap is Base, IIzumiswapSwapCallback {
         uint128 desireX,
         int24 highPt
     ) external payable {
+        require(tokenX < tokenY, "x<y");
         address poolAddr = pool(tokenX, tokenY, fee);
         address payer = msg.sender;
         IIzumiswapPool(poolAddr).swapY2XDesireX(
@@ -73,6 +75,7 @@ contract Swap is Base, IIzumiswapSwapCallback {
         uint128 amount,
         int24 lowPt
     ) external payable {
+        require(tokenX < tokenY, "x<y");
         address poolAddr = pool(tokenX, tokenY, fee);
         address payer = msg.sender;
         IIzumiswapPool(poolAddr).swapX2Y(
@@ -87,6 +90,7 @@ contract Swap is Base, IIzumiswapSwapCallback {
         uint128 desireY,
         int24 highPt
     ) external payable {
+        require(tokenX < tokenY, "x<y");
         address poolAddr = pool(tokenX, tokenY, fee);
         address payer = msg.sender;
         IIzumiswapPool(poolAddr).swapX2YDesireY(
