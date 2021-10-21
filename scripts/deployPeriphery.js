@@ -2,6 +2,7 @@ const { ethers } = require("hardhat");
 const settings = require("../.settings.js");
 
 async function main() {
+    // deploy nft
     const NonfungibleLiquidityManager = await ethers.getContractFactory("NonfungibleLiquidityManager");
     factory = settings.izumiswapfactory;
     weth = settings.weth;
@@ -9,6 +10,7 @@ async function main() {
     console.log("NonfungibleLiquidityManager: ", nflm.address);
     await nflm.deployed();
 
+    // deploy swap
     const Swap = await ethers.getContractFactory("Swap");
     swap = await Swap.deploy(factory, weth);
     await swap.deployed();
