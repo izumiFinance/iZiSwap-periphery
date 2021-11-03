@@ -10,12 +10,12 @@ import './libraries/FullMath.sol';
 import './libraries/FixedPoint96.sol';
 import "./base/base.sol";
 import "./libraries/TickMath.sol";
-
+import "hardhat/console.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-
+import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
 
 contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
-
+    using EnumerableSet for EnumerableSet.UintSet;
     uint128 maxPoolId = 1;
     struct LimOrder {
         int24 pt;
@@ -41,6 +41,11 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
     mapping(uint128 =>address) public poolAddrs;
     mapping(address =>uint128) public poolIds;
 
+    mapping(address => EnumerableSet.UintSet) private addr2ActiveOrderID;
+    mapping(address => EnumerableSet.UintSet) private addr2DeactiveOrderID;
+
+    uint256 public immutable ACTIVE_ORDER_LIM = 300;
+
     struct LimCallbackData {
         address tokenX;
         address tokenY;
@@ -64,6 +69,12 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
 
     modifier checkAuth(uint256 lid) {
         require(sellers[lid] == msg.sender, "Not approved");
+        _;
+    }
+
+    modifier checkActive(uint256 lid) {
+        EnumerableSet.UintSet storage activeIDs = addr2ActiveOrderID[msg.sender];
+        require(activeIDs.contains(lid), "Not Active");
         _;
     }
 
@@ -132,8 +143,9 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
     function newLimOrder(
         address recipient,
         AddLimOrderParam calldata ap
-    ) external returns (uint256 sellId, uint128 order, uint256 acquire) {
+    ) external payable returns (uint256 sellId, uint128 order, uint256 acquire) {
         require(ap.tokenX < ap.tokenY, 'x<y');
+        require(addr2ActiveOrderID[recipient].length() < ACTIVE_ORDER_LIM, "Active Limit");
         address pool = IIzumiswapFactory(factory).pool(ap.tokenX, ap.tokenY, ap.fee);
         (order, acquire) = _addLimOrder(pool, ap);
         sellId = sellNum ++;
@@ -147,6 +159,7 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
             poolId: cachePoolKey(pool, PoolMeta({tokenX: ap.tokenX, tokenY: ap.tokenY, fee: ap.fee})),
             sellXEarnY: ap.sellXEarnY
         });
+        addr2ActiveOrderID[recipient].add(sellId);
         sellers[sellId] = recipient;
     }
     function getEarnLim(uint256 lastAccEarn, uint256 accEarn, uint256 earnRemain) private pure returns(uint256 earnLim) {
@@ -193,7 +206,7 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
     function addLimOrder(
         uint256 sellId,
         uint128 amount
-    ) external checkAuth(sellId) returns (uint128 orderAdd, uint256 acquire) {
+    ) external payable checkAuth(sellId) checkActive(sellId) returns (uint128 orderAdd, uint256 acquire) {
         require(amount > 0, "A0");
         LimOrder storage order = limOrders[sellId];
         PoolMeta memory poolMeta = poolMetas[order.poolId];
@@ -216,10 +229,10 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
         order.sellingRemain = order.sellingRemain - sold + orderAdd;
         order.lastAccEarn = accEarn;
     }
-    function updateOrder(
+    function _updateOrder(
         LimOrder storage order,
         address pool
-    ) private {
+    ) private returns (uint256 earn) {
         if (order.sellXEarnY) {
             IIzumiswapPool(pool).decLimOrderWithX(order.pt, 0);
         } else {
@@ -234,15 +247,22 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
         order.sellingRemain = order.sellingRemain - sold;
         order.lastAccEarn = accEarn;
     }
+    function updateOrder(
+        uint256 sellId
+    ) external checkAuth(sellId) checkActive(sellId) returns (uint256 earn) {
+        LimOrder storage order = limOrders[sellId];
+        address pool = poolAddrs[order.poolId];
+        earn = _updateOrder(order, pool);
+    }
     function decLimOrder(
         uint256 sellId,
         uint128 amount
-    ) external checkAuth(sellId) returns (uint128 actualDelta) {
+    ) external checkAuth(sellId) checkActive(sellId) returns (uint128 actualDelta) {
         require(amount > 0, "A0");
         LimOrder storage order = limOrders[sellId];
         address pool = poolAddrs[order.poolId];
         // update order first
-        updateOrder(order, pool);
+        _updateOrder(order, pool);
         // now dec
         actualDelta = amount;
         if (actualDelta > order.sellingRemain) {
@@ -253,6 +273,7 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
         } else {
             actualDelta = IIzumiswapPool(pool).decLimOrderWithY(order.pt, actualDelta);
         }
+        console.log("actualDelta: %s", uint256(actualDelta));
         order.sellingRemain -= actualDelta;
         order.sellingDec += actualDelta;
     }
@@ -261,11 +282,11 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
         uint256 sellId,
         uint256 collectDec,
         uint256 collectEarn
-    ) external checkAuth(sellId) returns (uint256 actualCollectDec, uint256 actualCollectEarn) {
+    ) external checkAuth(sellId) checkActive(sellId) returns (uint256 actualCollectDec, uint256 actualCollectEarn) {
         LimOrder storage order = limOrders[sellId];
         address pool = poolAddrs[order.poolId];
         // update order first
-        updateOrder(order, pool);
+        _updateOrder(order, pool);
         // now collect
         actualCollectDec = collectDec;
         if (actualCollectDec > order.sellingDec) {
@@ -279,5 +300,44 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
         // collect from core may be less, but we still do not modify actualCollectEarn(Dec)
         order.sellingDec -= actualCollectDec;
         order.earn -= actualCollectEarn;
+
+        if (order.sellingDec == 0 || order.sellingRemain == 0 || order.earn == 0) {
+            addr2ActiveOrderID[msg.sender].remove(sellId);
+            addr2DeactiveOrderID[msg.sender].add(sellId);
+        }
+    }
+
+    function getActiveOrderIDs(address _user)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        EnumerableSet.UintSet storage ids = addr2ActiveOrderID[_user];
+        // push could not be used in memory array
+        // we set the tokenIdList into a fixed-length array rather than dynamic
+        uint256[] memory tokenIdList = new uint256[](ids.length());
+        for (uint256 i = 0; i < ids.length(); i++) {
+            tokenIdList[i] = ids.at(i);
+        }
+        return tokenIdList;
+    }
+
+    function getDeactiveOrderIDs(address _user)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        EnumerableSet.UintSet storage ids = addr2DeactiveOrderID[_user];
+        // push could not be used in memory array
+        // we set the tokenIdList into a fixed-length array rather than dynamic
+        uint256 len = ids.length();
+        if (len > ACTIVE_ORDER_LIM) {
+            len = ACTIVE_ORDER_LIM;
+        }
+        uint256[] memory tokenIdList = new uint256[](len);
+        for (uint256 i = 0; i < len; i++) {
+            tokenIdList[i] = ids.at(i);
+        }
+        return tokenIdList;
     }
 }
