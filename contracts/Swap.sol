@@ -22,7 +22,7 @@ contract Swap is Base, IIzumiswapSwapCallback {
         SwapCallbackData memory dt = abi.decode(data, (SwapCallbackData));
         verify(dt.tokenX, dt.tokenY, dt.fee);
         if (y > 0) {
-            safeTransferFrom(dt.tokenY, dt.payer, msg.sender, y);
+            pay(dt.tokenY, dt.payer, msg.sender, y);
         }
     }
     function swapX2YCallback(
@@ -32,7 +32,7 @@ contract Swap is Base, IIzumiswapSwapCallback {
         SwapCallbackData memory dt = abi.decode(data, (SwapCallbackData));
         verify(dt.tokenX, dt.tokenY, dt.fee);
         if (x > 0) {
-            safeTransferFrom(dt.tokenX, dt.payer, msg.sender, x);
+            pay(dt.tokenX, dt.payer, msg.sender, x);
         }
     }
     constructor(address _factory, address _weth) Base(_factory, _weth) {
