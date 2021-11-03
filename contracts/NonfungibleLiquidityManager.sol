@@ -225,7 +225,7 @@ contract NonfungibleLiquidityManager is Base, ERC721, IIzumiswapMintCallback {
     function decLiquidity(
         uint256 lid,
         uint128 liquidDelta
-    ) external payable checkAuth(lid) returns(
+    ) external checkAuth(lid) returns(
         uint256 amountX,
         uint256 amountY
     ) {
