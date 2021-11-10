@@ -8,7 +8,7 @@ async function main() {
     const NonfungibleLiquidityManager = await ethers.getContractFactory("NonfungibleLiquidityManager");
     nflm = NonfungibleLiquidityManager.attach(settings.nflmAddr);
     // add pool
-    poolAddr = await nflm.createPool(settings.usdc, settings.weth, 3000, -83000);
+    poolAddr = await nflm.createPool(settings.BIT, settings.USDC, 3000, 9164);
     console.log("create pool: ", poolAddr);
 }
 

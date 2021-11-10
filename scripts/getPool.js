@@ -8,11 +8,13 @@ async function main() {
     const NonfungibleLiquidityManager = await ethers.getContractFactory("NonfungibleLiquidityManager");
     nflm = NonfungibleLiquidityManager.attach(settings.nflmAddr);
     // get pool
-    pool_usdc_usdt = await nflm.pool(settings.usdc, settings.usdt, 3000);
-    pool_usdc_weth = await nflm.pool(settings.usdc, settings.weth, 3000);
+    // pool_usdc_usdt = await nflm.pool(settings.usdc, settings.usdt, 3000);
+    // pool_usdc_weth = await nflm.pool(settings.usdc, settings.weth, 3000);
+    pool_bit_usdc = await nflm.pool(settings.BIT, settings.USDC, 3000);
 
-    console.log("pool_usdc_usdt: ", pool_usdc_usdt);
-    console.log("pool_usdc_weth: ", pool_usdc_weth);
+    // console.log("pool_usdc_usdt: ", pool_usdc_usdt);
+    // console.log("pool_usdc_weth: ", pool_usdc_weth);
+    console.log("pool_bit_usdc: ", pool_bit_usdc);
 }
 
 main().then(() => process.exit(0))
