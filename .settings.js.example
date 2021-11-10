@@ -1,6 +1,5 @@
 module.exports = {
     sk: '${PRIMARY KEY of ACCOUNT1}',
-    sk2: '${PRIMARY KEY of ACCOUNT2}',
     weth: '${ADDRESS of WETH}'.toLowerCase(),
     izumiswapfactory: '${ADDRESS of IzumiswapFactory}',
     nflmAddr: '${ADDRESS of Nonfungible Liquidity Manager}',

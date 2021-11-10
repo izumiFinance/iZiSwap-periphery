@@ -3,6 +3,7 @@ require('hardhat-contract-sizer');
 
 const settings = require('./.settings.js');
 const sk = settings.sk;
+const sk2 = settings.sk2;
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
@@ -38,8 +39,8 @@ module.exports = {
       url: izumiRpcUrl,
       accounts: [sk],
       // gas: 90000000,
-      // gasPrice: 200000000,
-      allowUnlimitedContractSize: true,
+      gas: 5000000,
+      gasPrice: 100000000000,
     },
   }
 };
