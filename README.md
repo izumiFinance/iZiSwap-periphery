@@ -1,5 +1,6 @@
 # izumi-swap-periphery
 
+![image](image/logo.png)
 
 ## Set up Environment
 
