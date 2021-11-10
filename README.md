@@ -52,7 +52,7 @@ $ npx hardhat test
 ```
 if you want to only run a single test case, simply run
 ```
-npx hardhat test test/${FILE_OF_TEST_CASE}.json
+$ npx hardhat test test/${FILE_OF_TEST_CASE}.json
 ```
 
 ## Example of Deploy and interact
