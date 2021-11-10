@@ -8,22 +8,22 @@ async function main() {
 
     const tokenContract = await ethers.getContractFactory("Token");
 
-    const usdc = tokenContract.attach(settings.usdc);
-    await usdc.approve(settings.nflmAddr, '10000000000000000000000');
+    const BIT = tokenContract.attach(settings.BIT);
+    await BIT.approve(settings.nflmAddr, '10000000000000000000000');
 
-    const usdt = tokenContract.attach(settings.usdt);
-    await usdt.approve(settings.nflmAddr, '10000000000000000000000');
-    console.log(await usdt.allowance(signer.address, settings.nflmAddr));
+    const USDC = tokenContract.attach(settings.USDC);
+    await USDC.approve(settings.nflmAddr, '10000000000000000000000');
+    console.log(await USDC.allowance(signer.address, settings.nflmAddr));
     
     tx = await nflm.mint({
         miner: signer.address,
-        tokenX: usdc.address,
-        tokenY: usdt.address,
+        tokenX: BIT.address,
+        tokenY: USDC.address,
         fee: 3000,
-        pl: 3500,
-        pr: 6000,
-        xLim: "100000000000000",
-        yLim: "100000000000000"
+        pl: -80000,
+        pr: 60000,
+        xLim: "10000000000000000000000",
+        yLim: "10000000000000000000000"
     });
     console.log("mint tx: ", tx);
 }
