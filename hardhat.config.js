@@ -3,7 +3,6 @@ require('hardhat-contract-sizer');
 
 const settings = require('./.settings.js');
 const sk = settings.sk;
-const sk2 = settings.sk2;
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
