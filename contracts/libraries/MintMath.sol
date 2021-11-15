@@ -30,10 +30,10 @@ library MintMath {
     ) private pure returns (uint256 x, uint256 y) {
         x = 0;
         y = 0;
-        uint160 sqrtPriceR_96 = TickMath.getSqrtRatioAtTick(pr);
+        uint160 sqrtPriceR_96 = LogPowMath.getSqrtPrice(pr);
         uint160 _sqrtRate_96 = sqrtRate_96;
         if (pl < pc) {
-            uint160 sqrtPriceL_96 = TickMath.getSqrtRatioAtTick(pl);
+            uint160 sqrtPriceL_96 = LogPowMath.getSqrtPrice(pl);
             if (pr < pc) {
                 y += AmountMath.getAmountY(1, sqrtPriceL_96, sqrtPriceR_96, _sqrtRate_96, true);
             } else {

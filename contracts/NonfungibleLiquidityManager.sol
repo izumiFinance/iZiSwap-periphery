@@ -9,11 +9,11 @@ import "./libraries/LiquidityMath.sol";
 import "./libraries/FixedPoint128.sol";
 import "./base/base.sol";
 
-import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol';
 
 
-contract NonfungibleLiquidityManager is Base, ERC721, IIzumiswapMintCallback {
+contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCallback {
 
     event IncreaseLiquidity(uint256 indexed tokenId, uint128 liquidity, uint256 amountX, uint256 amountY);
 
@@ -155,9 +155,7 @@ contract NonfungibleLiquidityManager is Base, ERC721, IIzumiswapMintCallback {
         address pool;
         (liquidity, amountX, amountY, pool) = _addLiquidity(mp);
         lid = liquidityNum ++;
-        uint256 lastFeeScaleX_128;
-        uint256 lastFeeScaleY_128;
-        (lastFeeScaleX_128, lastFeeScaleY_128) = getLastFeeScale(
+        (uint256 lastFeeScaleX_128, uint256 lastFeeScaleY_128) = getLastFeeScale(
             pool, liquidityKey(address(this), mp.pl, mp.pr)
         );
         liquidities[lid] = Liquidity({
@@ -177,6 +175,27 @@ contract NonfungibleLiquidityManager is Base, ERC721, IIzumiswapMintCallback {
         uint256 lid;
         uint128 xLim;
         uint128 yLim;
+    }
+    function updateLiquidity(
+        Liquidity storage liquid,
+        address pool,
+        uint128 newLiquidity,
+        uint256 amountX,
+        uint256 amountY
+    ) private {
+        (uint256 lastFeeScaleX_128, uint256 lastFeeScaleY_128) = getLastFeeScale(
+            pool, liquidityKey(address(this), liquid.leftPt, liquid.rightPt)
+        );
+        (uint256 deltaScaleX, uint256 deltaScaleY) = (liquid.lastFeeScaleX_128, liquid.lastFeeScaleY_128);
+        assembly {
+            deltaScaleX := sub(lastFeeScaleX_128, deltaScaleX)
+            deltaScaleY := sub(lastFeeScaleY_128, deltaScaleY)
+        }
+        liquid.remainTokenX += amountX + MulDivMath.mulDivFloor(deltaScaleX, liquid.liquidity, FixedPoint128.Q128);
+        liquid.remainTokenY += amountY + MulDivMath.mulDivFloor(deltaScaleY, liquid.liquidity, FixedPoint128.Q128);
+        liquid.lastFeeScaleX_128 = lastFeeScaleX_128;
+        liquid.lastFeeScaleY_128 = lastFeeScaleY_128;
+        liquid.liquidity = newLiquidity;
     }
     function addLiquidity(
         AddLiquidityParam calldata mp
@@ -209,16 +228,7 @@ contract NonfungibleLiquidityManager is Base, ERC721, IIzumiswapMintCallback {
         uint128 newLiquidity = liquidityDelta.addDelta(int128(liquid.liquidity));
         (amountX, amountY) = IIzumiswapPool(pool).mint(address(this), liquid.leftPt, liquid.rightPt, liquidityDelta, 
             abi.encode(MintCallbackData({tokenX: poolMeta.tokenX, tokenY: poolMeta.tokenY, fee: poolMeta.fee, payer: msg.sender})));
-        uint256 lastFeeScaleX_128;
-        uint256 lastFeeScaleY_128;
-        (lastFeeScaleX_128, lastFeeScaleY_128) = getLastFeeScale(
-            pool, liquidityKey(address(this), liquid.leftPt, liquid.rightPt)
-        );
-        liquid.remainTokenX += FullMath.mulDiv(lastFeeScaleX_128 - liquid.lastFeeScaleX_128, liquid.liquidity, FixedPoint128.Q128);
-        liquid.remainTokenY += FullMath.mulDiv(lastFeeScaleY_128 - liquid.lastFeeScaleY_128, liquid.liquidity, FixedPoint128.Q128);
-        liquid.lastFeeScaleX_128 = lastFeeScaleX_128;
-        liquid.lastFeeScaleY_128 = lastFeeScaleY_128;
-        liquid.liquidity = newLiquidity;
+        updateLiquidity(liquid, pool, newLiquidity, 0, 0);
         emit IncreaseLiquidity(mp.lid, liquidityDelta, amountX, amountY);
     }
 
@@ -238,18 +248,7 @@ contract NonfungibleLiquidityManager is Base, ERC721, IIzumiswapMintCallback {
         require(ll == int256(uint256(liquidDelta)), "LO");
         uint128 newLiquidity = liquidity.liquidity.addDelta(-ll);
         (amountX, amountY) = IIzumiswapPool(pool).burn(liquidity.leftPt, liquidity.rightPt, liquidDelta);
-        uint256 lastFeeScaleX_128;
-        uint256 lastFeeScaleY_128;
-        (lastFeeScaleX_128, lastFeeScaleY_128) = getLastFeeScale(
-            pool, liquidityKey(address(this), liquidity.leftPt, liquidity.rightPt)
-        );
-        liquidity.remainTokenX += amountX +
-            FullMath.mulDiv(lastFeeScaleX_128 - liquidity.lastFeeScaleX_128, liquidity.liquidity, FixedPoint128.Q128);
-        liquidity.remainTokenY += amountY +
-            FullMath.mulDiv(lastFeeScaleY_128 - liquidity.lastFeeScaleY_128, liquidity.liquidity, FixedPoint128.Q128);
-        liquidity.lastFeeScaleX_128 = lastFeeScaleX_128;
-        liquidity.lastFeeScaleY_128 = lastFeeScaleY_128;
-        liquidity.liquidity = newLiquidity;
+        updateLiquidity(liquidity, pool, newLiquidity, amountX, amountY);
         emit DecreaseLiquidity(lid, liquidDelta, amountX, amountY);
     }
     function collect(
@@ -271,17 +270,7 @@ contract NonfungibleLiquidityManager is Base, ERC721, IIzumiswapMintCallback {
         require(pool != address(0), "P0");
         if (liquidity.liquidity > 0) {
             IIzumiswapPool(pool).burn(liquidity.leftPt, liquidity.rightPt, 0);
-            uint256 lastFeeScaleX_128;
-            uint256 lastFeeScaleY_128;
-            (lastFeeScaleX_128, lastFeeScaleY_128) = getLastFeeScale(
-                pool, liquidityKey(address(this), liquidity.leftPt, liquidity.rightPt)
-            );
-            liquidity.remainTokenX += amountX +
-                FullMath.mulDiv(lastFeeScaleX_128 - liquidity.lastFeeScaleX_128, liquidity.liquidity, FixedPoint128.Q128);
-            liquidity.remainTokenY += amountY +
-                FullMath.mulDiv(lastFeeScaleY_128 - liquidity.lastFeeScaleY_128, liquidity.liquidity, FixedPoint128.Q128);
-            liquidity.lastFeeScaleX_128 = lastFeeScaleX_128;
-            liquidity.lastFeeScaleY_128 = lastFeeScaleY_128;
+            updateLiquidity(liquidity, pool, liquidity.liquidity, 0, 0);
         }
         if (amountXLim > liquidity.remainTokenX) {
             amountXLim = uint128(liquidity.remainTokenX);

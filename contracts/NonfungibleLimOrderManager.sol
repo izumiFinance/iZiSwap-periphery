@@ -6,10 +6,10 @@ import "./core/interfaces/IIzumiswapPool.sol";
 
 import "./libraries/LiquidityMath.sol";
 import "./libraries/FixedPoint128.sol";
-import './libraries/FullMath.sol';
+import './libraries/MulDivMath.sol';
 import './libraries/FixedPoint96.sol';
 import "./base/base.sol";
-import "./libraries/TickMath.sol";
+import "./libraries/LogPowMath.sol";
 import "hardhat/console.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
@@ -177,20 +177,20 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
     ) private pure returns (uint256 earn, uint256 sold) {
         earn = earnLim;
         if (isEarnY) {
-            uint256 l = FullMath.mulDivRoundingUp(earn, FixedPoint96.Q96, sqrtPrice_96);
-            sold = FullMath.mulDivRoundingUp(l, FixedPoint96.Q96, sqrtPrice_96);
+            uint256 l = MulDivMath.mulDivCeil(earn, FixedPoint96.Q96, sqrtPrice_96);
+            sold = MulDivMath.mulDivCeil(l, FixedPoint96.Q96, sqrtPrice_96);
         } else {
-            uint256 l = FullMath.mulDivRoundingUp(earn, sqrtPrice_96, FixedPoint96.Q96);
-            sold = FullMath.mulDivRoundingUp(l, sqrtPrice_96, FixedPoint96.Q96);
+            uint256 l = MulDivMath.mulDivCeil(earn, sqrtPrice_96, FixedPoint96.Q96);
+            sold = MulDivMath.mulDivCeil(l, sqrtPrice_96, FixedPoint96.Q96);
         }
         if (sold > sellingRemain) {
             sold = sellingRemain;
             if (isEarnY) {
-                uint256 l = FullMath.mulDiv(sold, sqrtPrice_96, FixedPoint96.Q96);
-                earn = FullMath.mulDiv(l, sqrtPrice_96, FixedPoint96.Q96);
+                uint256 l = MulDivMath.mulDivFloor(sold, sqrtPrice_96, FixedPoint96.Q96);
+                earn = MulDivMath.mulDivFloor(l, sqrtPrice_96, FixedPoint96.Q96);
             } else {
-                uint256 l = FullMath.mulDiv(sold, FixedPoint96.Q96, sqrtPrice_96);
-                earn = FullMath.mulDiv(l, FixedPoint96.Q96, sqrtPrice_96);
+                uint256 l = MulDivMath.mulDivFloor(sold, FixedPoint96.Q96, sqrtPrice_96);
+                earn = MulDivMath.mulDivFloor(l, FixedPoint96.Q96, sqrtPrice_96);
             }
         }
     }
@@ -222,7 +222,7 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
         
         (uint256 accEarn, uint256 earnLim) = getEarn(pool, address(this), order.pt, order.sellXEarnY);
         earnLim = getEarnLim(order.lastAccEarn, accEarn, earnLim);
-        uint160 sqrtPrice_96 = TickMath.getSqrtRatioAtTick(order.pt);
+        uint160 sqrtPrice_96 = LogPowMath.getSqrtPrice(order.pt);
         (uint256 earn, uint256 sold) = getEarnSold(sqrtPrice_96, earnLim, order.sellingRemain, order.sellXEarnY);
         earn = assignLimOrderEarn(pool, order.pt, earn, order.sellXEarnY);
         order.earn = order.earn + earn + acquire;
@@ -240,7 +240,7 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
         }
         (uint256 accEarn, uint256 earnLim) = getEarn(pool, address(this), order.pt, order.sellXEarnY);
         earnLim = getEarnLim(order.lastAccEarn, accEarn, earnLim);
-        uint160 sqrtPrice_96 = TickMath.getSqrtRatioAtTick(order.pt);
+        uint160 sqrtPrice_96 = LogPowMath.getSqrtPrice(order.pt);
         (uint256 earn, uint256 sold) = getEarnSold(sqrtPrice_96, earnLim, order.sellingRemain, order.sellXEarnY);
         earn = assignLimOrderEarn(pool, order.pt, earn, order.sellXEarnY);
         order.earn = order.earn + earn;
