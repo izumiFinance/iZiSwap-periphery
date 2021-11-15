@@ -1,6 +1,12 @@
 # izumi-swap-periphery
 
-![image](image/logo.png)
+<div align="center">
+  <a href="https://izumi.finance"> 
+    <img width="450px" height="auto" 
+    src="image/logo.png">
+  </a>
+</div>
+
 
 ## Set up Environment
 
