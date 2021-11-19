@@ -27,11 +27,11 @@ contract Swap is Base, IIzumiswapSwapCallback {
         if (dt.token0 < dt.token1) {
             // token1 is y, amount of token1 is calculated
             // called from swapY2XDesireX(...)
-            safeTransferFrom(dt.token1, dt.payer, msg.sender, y);
+            pay(dt.token1, dt.payer, msg.sender, y);
         } else {
             // token0 is y, amount of token0 is input param
             // called from swapY2X(...)
-            safeTransferFrom(dt.token0, dt.payer, msg.sender, y);
+            pay(dt.token0, dt.payer, msg.sender, y);
         }
     }
     function swapX2YCallback(
@@ -44,11 +44,11 @@ contract Swap is Base, IIzumiswapSwapCallback {
         if (dt.token0 < dt.token1) {
             // token0 is x, amount of token0 is input param
             // called from swapX2Y(...)
-            safeTransferFrom(dt.token0, dt.payer, msg.sender, x);
+            pay(dt.token0, dt.payer, msg.sender, x);
         } else {
             // token1 is x, amount of token1 is calculated param
             // called from swapX2YDesireY(...)
-            safeTransferFrom(dt.token1, dt.payer, msg.sender, x);
+            pay(dt.token1, dt.payer, msg.sender, x);
         }
     }
     constructor(address _factory, address _weth) Base(_factory, _weth) {
