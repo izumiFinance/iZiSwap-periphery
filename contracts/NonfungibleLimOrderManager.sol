@@ -26,6 +26,7 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
         uint256 lastAccEarn;
         uint128 poolId;
         bool sellXEarnY;
+        uint256 timestamp;
     }
 
     mapping(uint256 =>LimOrder) public limOrders;
@@ -159,7 +160,8 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
             earn: acquire,
             lastAccEarn: accEarn,
             poolId: cachePoolKey(pool, PoolMeta({tokenX: ap.tokenX, tokenY: ap.tokenY, fee: ap.fee})),
-            sellXEarnY: ap.sellXEarnY
+            sellXEarnY: ap.sellXEarnY,
+            timestamp: block.timestamp
         });
         addr2ActiveOrderID[recipient].add(sellId);
         sellers[sellId] = recipient;
