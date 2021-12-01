@@ -241,6 +241,9 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCa
     ) {
         require(lid < liquidityNum, "LN");
         Liquidity storage liquidity = liquidities[lid];
+        if (liquidDelta > liquidity.liquidity) {
+            liquidDelta = liquidity.liquidity;
+        }
         PoolMeta memory poolMeta = poolMetas[liquidity.poolId];
         address pool = IIzumiswapFactory(factory).pool(poolMeta.tokenX, poolMeta.tokenY, poolMeta.fee);
         require(pool != address(0), "P0");
