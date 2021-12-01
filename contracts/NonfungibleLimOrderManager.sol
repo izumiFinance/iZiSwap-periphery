@@ -19,6 +19,7 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
     uint128 maxPoolId = 1;
     struct LimOrder {
         int24 pt;
+        uint256 amount;
         uint256 sellingRemain;
         uint256 sellingDec;
         uint256 earn;
@@ -152,6 +153,7 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
         (uint256 accEarn, uint256 earn) = getEarn(pool, address(this), ap.pt, ap.sellXEarnY);
         limOrders[sellId] = LimOrder({
             pt: ap.pt,
+            amount: ap.amount,
             sellingRemain: order,
             sellingDec: 0,
             earn: acquire,
@@ -202,32 +204,6 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
         } else {
             actualAssign = IIzumiswapPool(pool).assignLimOrderEarnX(pt, amount);
         }
-    }
-    function addLimOrder(
-        uint256 sellId,
-        uint128 amount
-    ) external payable checkAuth(sellId) checkActive(sellId) returns (uint128 orderAdd, uint256 acquire) {
-        require(amount > 0, "A0");
-        LimOrder storage order = limOrders[sellId];
-        PoolMeta memory poolMeta = poolMetas[order.poolId];
-        address pool = poolAddrs[order.poolId];
-        (orderAdd, acquire) = _addLimOrder(pool, AddLimOrderParam({
-            tokenX: poolMeta.tokenX,
-            tokenY: poolMeta.tokenY,
-            fee: poolMeta.fee,
-            pt: order.pt,
-            amount: amount,
-            sellXEarnY: order.sellXEarnY
-        }));
-        
-        (uint256 accEarn, uint256 earnLim) = getEarn(pool, address(this), order.pt, order.sellXEarnY);
-        earnLim = getEarnLim(order.lastAccEarn, accEarn, earnLim);
-        uint160 sqrtPrice_96 = LogPowMath.getSqrtPrice(order.pt);
-        (uint256 earn, uint256 sold) = getEarnSold(sqrtPrice_96, earnLim, order.sellingRemain, order.sellXEarnY);
-        earn = assignLimOrderEarn(pool, order.pt, earn, order.sellXEarnY);
-        order.earn = order.earn + earn + acquire;
-        order.sellingRemain = order.sellingRemain - sold + orderAdd;
-        order.lastAccEarn = accEarn;
     }
     function _updateOrder(
         LimOrder storage order,

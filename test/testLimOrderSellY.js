@@ -12,9 +12,6 @@ async function getToken() {
     tokenY = await tokenFactory.deploy('b', 'b');
     await tokenY.deployed();
 
-    console.log("tokenX: " + tokenX.address.toLowerCase());
-    console.log("tokenY: " + tokenY.address.toLowerCase());
-
     txAddr = tokenX.address.toLowerCase();
     tyAddr = tokenY.address.toLowerCase();
 
@@ -27,11 +24,7 @@ async function getToken() {
       tokenY = tokenX;
       tokenX = tmpToken;
     }
-    console.log("txAddr: " + txAddr);
-    console.log("tyAddr: " + tyAddr);
-
-    console.log("tx: " + tokenX.address);
-    console.log("ty: " + tokenY.address);
+    
     return [tokenX, tokenY];
 }
 
@@ -84,14 +77,7 @@ async function newLimOrderWithY(tokenX, tokenY, seller, limorderManager, amountY
         }
     );
 }
-async function addLimOrderWithY(tokenY, seller, sellId, limorderManager, amountY) {
-    await tokenY.transfer(seller.address, amountY);
-    await tokenY.connect(seller).approve(limorderManager.address, amountY);
-    await limorderManager.connect(seller).addLimOrder(
-        sellId,
-        amountY
-    );
-}
+
 async function decLimOrderWithY(seller, sellId, limorderManager, amountY) {
     await limorderManager.connect(seller).decLimOrder(
         sellId,
@@ -108,8 +94,8 @@ function blockNum2BigNumber(num) {
     return b;
 }
 async function getLimorder(sellId, limorderManager) {
-     var pt, sellingRemain, sellingDesc, earn, lastAccEarn, poolId, sellXEarnY;
-     [pt, sellingRemain, sellingDesc, earn, lastAccEarn, poolId, sellXEarnY] = await limorderManager.limOrders(sellId);
+     var pt, amount, sellingRemain, sellingDesc, earn, lastAccEarn, poolId, sellXEarnY;
+     [pt, amount, sellingRemain, sellingDesc, earn, lastAccEarn, poolId, sellXEarnY] = await limorderManager.limOrders(sellId);
      return {
          pt: pt,
          sellingRemain: blockNum2BigNumber(sellingRemain),
@@ -317,10 +303,9 @@ describe("limorder", function () {
             earnAssign: seller1EarnPhase1
         });
         sellY2_p2 = BigNumber("1500000000");
-        await addLimOrderWithY(tokenY, seller2, "1", limorderManager, sellY2_p2.toFixed(0));
         await decLimOrderWithY(seller2, "1", limorderManager, "10000");
         seller2EarnPhase1 = costX.minus(getAcquireX(5050, rate, sellY1));
-        seller2RemainPhase1 = sellY2.minus(getCostY(5050, rate, seller2EarnPhase1)).plus(sellY2_p2).minus("10000");
+        seller2RemainPhase1 = sellY2.minus(getCostY(5050, rate, seller2EarnPhase1)).minus("10000");
         await checkLimOrder("1", limorderManager, {
             pt: 5050,
             sellingRemain: seller2RemainPhase1,
