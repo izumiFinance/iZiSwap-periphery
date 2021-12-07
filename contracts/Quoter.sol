@@ -64,7 +64,7 @@ contract Quoter is Base, IIzumiswapSwapCallback {
             // called from swapX2YDesireY(...)
             assembly {  
                 let ptr := mload(0x40)
-                mstore(ptr, y)
+                mstore(ptr, x)
                 revert(ptr, 32)
             }
         }
