@@ -5,12 +5,13 @@ import "./core/interfaces/IIzumiswapFactory.sol";
 import "./core/interfaces/IIzumiswapPool.sol";
 
 import "./libraries/MintMath.sol";
-import "./libraries/LiquidityMath.sol";
 import "./libraries/FixedPoint128.sol";
 import "./base/base.sol";
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol';
+
+import "hardhat/console.sol";
 
 
 contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCallback {
@@ -20,7 +21,6 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCa
     event DecreaseLiquidity(uint256 indexed tokenId, uint128 liquidity, uint256 amountX, uint256 amountY);
 
     event Collect(uint256 indexed tokenId, address recipient, uint256 amountX, uint256 amountY);
-    using LiquidityMath for uint128;
 
     struct MintCallbackData {
         address tokenX;
@@ -55,6 +55,7 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCa
     ) external override {
         MintCallbackData memory dt = abi.decode(data, (MintCallbackData));
         verify(dt.tokenX, dt.tokenY, dt.fee);
+
         if (x > 0) {
             pay(dt.tokenX, dt.payer, msg.sender, x);
         }
@@ -142,6 +143,7 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCa
             sqrtPrice_96,
             sqrtRate_96
         );
+        
         (amountX, amountY) = IIzumiswapPool(pool).mint(address(this), mp.pl, mp.pr, liquidity, 
             abi.encode(MintCallbackData({tokenX: mp.tokenX, tokenY: mp.tokenY, fee: mp.fee, payer: msg.sender})));
     }
@@ -213,7 +215,7 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCa
         uint160 sqrtRate_96 = IIzumiswapPool(pool).sqrtRate_96();
         require(pool != address(0), "P0");
         (sqrtPrice_96, currPt) = getPoolPrice(pool);
-        uint128 liquidityDelta = MintMath.computeLiquidity(
+        liquidityDelta = MintMath.computeLiquidity(
             MintMath.MintMathParam({
                 pl: liquid.leftPt,
                 pr: liquid.rightPt,
@@ -225,7 +227,7 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCa
             sqrtRate_96
         );
         require(int128(liquid.liquidity) == int256(uint256(liquid.liquidity)), "LO");
-        uint128 newLiquidity = liquidityDelta.addDelta(int128(liquid.liquidity));
+        uint128 newLiquidity = liquidityDelta + liquid.liquidity;
         (amountX, amountY) = IIzumiswapPool(pool).mint(address(this), liquid.leftPt, liquid.rightPt, liquidityDelta, 
             abi.encode(MintCallbackData({tokenX: poolMeta.tokenX, tokenY: poolMeta.tokenY, fee: poolMeta.fee, payer: msg.sender})));
         updateLiquidity(liquid, pool, newLiquidity, 0, 0);
@@ -241,15 +243,18 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCa
     ) {
         require(lid < liquidityNum, "LN");
         Liquidity storage liquidity = liquidities[lid];
+        if (liquidity.liquidity == 0) {
+            // no need to call core to update fee
+            return (0, 0);
+        }
         if (liquidDelta > liquidity.liquidity) {
             liquidDelta = liquidity.liquidity;
         }
         PoolMeta memory poolMeta = poolMetas[liquidity.poolId];
         address pool = IIzumiswapFactory(factory).pool(poolMeta.tokenX, poolMeta.tokenY, poolMeta.fee);
         require(pool != address(0), "P0");
-        int128 ll = int128(liquidDelta);
-        require(ll == int256(uint256(liquidDelta)), "LO");
-        uint128 newLiquidity = liquidity.liquidity.addDelta(-ll);
+        
+        uint128 newLiquidity = liquidity.liquidity - liquidDelta;
         (amountX, amountY) = IIzumiswapPool(pool).burn(liquidity.leftPt, liquidity.rightPt, liquidDelta);
         updateLiquidity(liquidity, pool, newLiquidity, amountX, amountY);
         emit DecreaseLiquidity(lid, liquidDelta, amountX, amountY);

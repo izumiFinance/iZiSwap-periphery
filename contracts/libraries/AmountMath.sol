@@ -1,5 +1,5 @@
 pragma solidity ^0.8.4;
-
+  
 import './MulDivMath.sol';
 import './FixedPoint96.sol';
 import './LogPowMath.sol';
@@ -7,41 +7,29 @@ import './LogPowMath.sol';
 library AmountMath {
 
 
-    function getAmountY(
-        uint128 liquidity,
+    function getAmountYUnitLiquidity_96(
         uint160 sqrtPriceL_96,
         uint160 sqrtPriceR_96,
-        uint160 sqrtRate_96,
-        bool upper
-    ) internal pure returns (uint256 amount) {
+        uint160 sqrtRate_96
+    ) internal pure returns (uint256 amount_96) {
         uint160 numerator = sqrtPriceR_96 - sqrtPriceL_96;
         uint160 denominator = sqrtRate_96 - uint160(FixedPoint96.Q96);
-        if (!upper) {
-            amount = MulDivMath.mulDivFloor(liquidity, numerator, denominator);
-        } else {
-            amount = MulDivMath.mulDivCeil(liquidity, numerator, denominator);
-        }
+        amount_96 = MulDivMath.mulDivCeil(FixedPoint96.Q96, numerator, denominator);
     }
 
-    function getAmountX(
-        uint128 liquidity,
+    function getAmountXUnitLiquidity_96(
         int24 leftPt,
         int24 rightPt,
         uint160 sqrtPriceR_96,
-        uint160 sqrtRate_96,
-        bool upper
-    ) internal pure returns (uint256 amount) {
+        uint160 sqrtRate_96
+    ) internal pure returns (uint256 amount_96) {
         // rightPt - (leftPt - 1), pc = leftPt - 1
         uint160 sqrtPricePrPc_96 = LogPowMath.getSqrtPrice(rightPt - leftPt + 1);
         uint160 sqrtPricePrPd_96 = LogPowMath.getSqrtPrice(rightPt + 1);
 
         uint160 numerator = sqrtPricePrPc_96 - sqrtRate_96;
         uint160 denominator = sqrtPricePrPd_96 - sqrtPriceR_96;
-        if (!upper) {
-            amount = MulDivMath.mulDivFloor(liquidity, numerator, denominator);
-        } else {
-            amount = MulDivMath.mulDivCeil(liquidity, numerator, denominator);
-        }
+        amount_96 = MulDivMath.mulDivCeil(FixedPoint96.Q96, numerator, denominator);
     }
 
 }

@@ -21,6 +21,7 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
         int24 pt;
         uint256 amount;
         uint256 sellingRemain;
+        uint256 accSellingDec;
         uint256 sellingDec;
         uint256 earn;
         uint256 lastAccEarn;
@@ -152,14 +153,16 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
         (order, acquire) = _addLimOrder(pool, ap);
         sellId = sellNum ++;
         (uint256 accEarn, uint256 earn) = getEarn(pool, address(this), ap.pt, ap.sellXEarnY);
+        uint128 poolId = cachePoolKey(pool, PoolMeta({tokenX: ap.tokenX, tokenY: ap.tokenY, fee: ap.fee}));
         limOrders[sellId] = LimOrder({
             pt: ap.pt,
             amount: ap.amount,
             sellingRemain: order,
+            accSellingDec: 0,
             sellingDec: 0,
             earn: acquire,
             lastAccEarn: accEarn,
-            poolId: cachePoolKey(pool, PoolMeta({tokenX: ap.tokenX, tokenY: ap.tokenY, fee: ap.fee})),
+            poolId: poolId,
             sellXEarnY: ap.sellXEarnY,
             timestamp: block.timestamp
         });
@@ -254,6 +257,7 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
         console.log("actualDelta: %s", uint256(actualDelta));
         order.sellingRemain -= actualDelta;
         order.sellingDec += actualDelta;
+        order.accSellingDec += actualDelta;
     }
     function collectLimOrder(
         address recipient,
