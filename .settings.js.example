@@ -3,6 +3,7 @@ module.exports = {
     weth: '${ADDRESS of WETH}'.toLowerCase(),
     izumiswapfactory: '${ADDRESS of IzumiswapFactory}',
     nflmAddr: '${ADDRESS of Nonfungible Liquidity Manager}',
+    nflomAddr: '${ADDRESS of Limit Order Manager'},
     swapAddr: '${ADDRESS of SWAP}',
     quoterAddr: '${ADDRESS of QUOTER}',
     BIT: '${ADDRESS of TOKEN BIT}',
