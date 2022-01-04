@@ -12,24 +12,24 @@ async function main() {
 
     const tokenContract = await ethers.getContractFactory("Token");
 
-    const BIT = tokenContract.attach(settings.BIT);
-    await BIT.approve(settings.swapAddr, '300000000000000000000000');
+    const IZI = tokenContract.attach(settings.IZI);
+    await IZI.approve(settings.swapAddr, '300000000000000000000000');
 
     const USDC = tokenContract.attach(settings.USDC);
     await USDC.approve(settings.swapAddr, '300000000000000000000000');
 
     console.log(await USDC.allowance(signer.address, settings.nflmAddr));
-    var BitOrigin = blockNum2BigNumber(await BIT.balanceOf(signer.address));
+    var BitOrigin = blockNum2BigNumber(await IZI.balanceOf(signer.address));
     var UsdcOrigin = blockNum2BigNumber(await USDC.balanceOf(signer.address));
     tx = await swap.swapY2X(
-        BIT.address, USDC.address, 3000, "150000000000000000000000", 100000
+      USDC.address, IZI.address, 3000, "150000000000000000000000", 9164 + 276325
     );
     
-    var BitCurr = blockNum2BigNumber(await BIT.balanceOf(signer.address));
+    var iZiCurr = blockNum2BigNumber(await IZI.balanceOf(signer.address));
     var UsdcCurr = blockNum2BigNumber(await USDC.balanceOf(signer.address));
     console.log("swap tx: ", tx);
 
-    console.log("delta bit: ", BitCurr.minus(BitOrigin).toFixed(0));
+    console.log("delta bit: ", iZiCurr.minus(BitOrigin).toFixed(0));
     console.log("delta usdc: ", UsdcCurr.minus(UsdcOrigin).toFixed(0));
 }
 

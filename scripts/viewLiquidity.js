@@ -9,6 +9,13 @@ async function main() {
     console.log("l: ", l);
     console.log("r: ", r);
     console.log("liquid: ", liquid.toString());
+    console.log("sx: ", sx.toString());
+    console.log("sy: ", sy.toString());
+    console.log("rx: ", rx.toString());
+    console.log("ry: ", ry.toString());
+    console.log('p: ', p.toString());
+
+    console.log('nftnum: ', await nflm.liquidityNum());
 }
 
 main().then(() => process.exit(0))

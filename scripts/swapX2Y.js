@@ -22,7 +22,7 @@ async function main() {
     var BitOrigin = blockNum2BigNumber(await BIT.balanceOf(signer.address));
     var UsdcOrigin = blockNum2BigNumber(await USDC.balanceOf(signer.address));
     tx = await swap.swapX2Y(
-        BIT.address, USDC.address, 3000, "68000000000000000000000", -100000
+        BIT.address, USDC.address, 3000, "68000000000000000000000", 9164 - 276325
     );
     
     var BitCurr = blockNum2BigNumber(await BIT.balanceOf(signer.address));
