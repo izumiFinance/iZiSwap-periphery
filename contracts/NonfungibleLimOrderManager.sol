@@ -5,7 +5,6 @@ import "./core/interfaces/IIzumiswapCallback.sol";
 import "./core/interfaces/IIzumiswapFactory.sol";
 import "./core/interfaces/IIzumiswapPool.sol";
 
-import "./libraries/LiquidityMath.sol";
 import "./libraries/FixedPoint128.sol";
 import './libraries/MulDivMath.sol';
 import './libraries/FixedPoint96.sol';
