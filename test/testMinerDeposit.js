@@ -63,6 +63,8 @@ async function addLiquidity(nflm, miner, tokenX, tokenY, fee, pl, pr, amountX, a
             pr: pr,
             xLim: amountX.toFixed(0),
             yLim: amountY.toFixed(0),
+            amountXMin: 0,
+            amountYMin: 0,
         }
     );
   }
@@ -90,7 +92,7 @@ async function addLiquidity(nflm, miner, tokenX, tokenY, fee, pl, pr, amountX, a
   function depositYAtPrice(p, rate, liquidity) {
     price = rate.pow(p);
     amountY = liquidity.times(price.sqrt());
-    return BigNumber(amountY.toFixed(0, 2));
+    return amountY;
   }
   
   function depositXY(l, r, p, rate, liquidity) {
@@ -98,8 +100,7 @@ async function addLiquidity(nflm, miner, tokenX, tokenY, fee, pl, pr, amountX, a
     expect(r).to.greaterThan(p);
     amountY = getAmountY(l, p, rate, liquidity);
     amountX = getAmountX(p + 1, r, rate, liquidity);
-    amountY = BigNumber(amountY.toFixed(0, 2)).plus(depositYAtPrice(p, rate, liquidity));
-    amountX = BigNumber(amountX.toFixed(0, 2));
+    amountY = amountY.plus(depositYAtPrice(p, rate, liquidity));
     return [amountX, amountY];
   }
 async function addLimOrderWithY(tokenX, tokenY, seller, testAddLimOrder, amountY, point) {
@@ -246,12 +247,12 @@ async function checkLiquidity(nflm, lid, expectLiquid) {
     console.log("aaa");
 }
 async function checkOwner(nflm, lid, owner) {
-    await nflm.connect(owner).decLiquidity(lid, "1");
+    await nflm.connect(owner).decLiquidity(lid, "1", 0, 0);
 }
 async function checkNotOwner(nflm, lid, notOwner) {
 
     try {
-        await nflm.connect(notOwner).decLiquidity(lid, "1");
+        await nflm.connect(notOwner).decLiquidity(lid, "1", 0, 0);
     } catch(err) {
         // console.log(str(err));
         // console.log(err);
@@ -296,24 +297,28 @@ describe("miner deposit", function () {
 
     it("check deposit amount", async function() {
         // miner1 add liquidity
-        var miner1DepositAmountYPerLiquid = ceil(getAmountY(4850, 5000, rate, BigNumber('1')));
+        var miner1DepositAmountYPerLiquid = getAmountY(4850, 5000, rate, BigNumber('1'));
         var liquidity1 = BigNumber("10000");
-        var miner1DepositAmountYLim = miner1DepositAmountYPerLiquid.times(liquidity1);
+        var miner1DepositAmountYLim = ceil(miner1DepositAmountYPerLiquid.times(liquidity1).plus(1));
         var miner1DepositAmountY = ceil(getAmountY(4850, 5000, rate, liquidity1));
         console.log("miner1DepositAmountY: ", miner1DepositAmountY.toFixed(0));
         await addLiquidity(nflm, miner1, tokenX, tokenY, 3000, 4850, 5000, BigNumber(0), miner1DepositAmountYLim);
-        var miner1AmountY = await tokenY.balanceOf(miner1.address);
-        var miner1AmountY = BigNumber(miner1AmountY._hex);
-        var miner1OriginAmountY = miner1DepositAmountY.plus(miner1AmountY);
-        expect(miner1OriginAmountY.toFixed(0)).to.equal("20000000000");
 
         await checkLiquidity(nflm, "0", liquidity1);
         await checkOwner(nflm, "0", miner1);
         await checkNotOwner(nflm, "0", miner2);
 
-        var miner2DepositAmountXPerLiquid = ceil(getAmountX(5050, 5150, rate, BigNumber('1')));
+        var miner1AmountY = await tokenY.balanceOf(miner1.address);
+        var miner1AmountY = BigNumber(miner1AmountY._hex);
+        var miner1OriginAmountY = miner1DepositAmountY.plus(miner1AmountY);
+        expect(miner1OriginAmountY.toFixed(0)).to.equal("20000000000");
+
+        console.log('aaaaaaaaa');
+
+
+        var miner2DepositAmountXPerLiquid = getAmountX(5050, 5150, rate, BigNumber('1'));
         var liquidity2 = BigNumber("20000");
-        var miner2DepositAmountXLim = miner2DepositAmountXPerLiquid.times(liquidity2);
+        var miner2DepositAmountXLim = ceil(miner2DepositAmountXPerLiquid.times(liquidity2));
         var miner2DepositAmountX = ceil(getAmountX(5050, 5150, rate, liquidity2));
         await addLiquidity(nflm, miner2, tokenX, tokenY, 3000, 5050, 5150, miner2DepositAmountXLim, BigNumber(0));
         var miner2AmountX = await tokenX.balanceOf(miner2.address);
@@ -324,8 +329,8 @@ describe("miner deposit", function () {
 
         [miner3DepositAmountXPerLiquid, miner3DepositAmountYPerLiquid] = depositXY(4900, 5100, 5010, rate, BigNumber('1'));
         var liquidity3 = BigNumber("30000");
-        miner3DepositAmountXLim = miner3DepositAmountXPerLiquid.times(liquidity3);
-        miner3DepositAmountYLim = miner3DepositAmountYPerLiquid.times(liquidity3);
+        miner3DepositAmountXLim = ceil(miner3DepositAmountXPerLiquid.times(liquidity3));
+        miner3DepositAmountYLim = ceil(miner3DepositAmountYPerLiquid.times(liquidity3).plus(1));
         [miner3DepositAmountX, miner3DepositAmountY] = depositXY(4900, 5100, 5010, rate, BigNumber('30000'));
         await addLiquidity(nflm, miner3, tokenX, tokenY, 3000, 4900, 5100, miner3DepositAmountXLim, miner3DepositAmountYLim);
         miner3AmountX = await tokenX.balanceOf(miner3.address);

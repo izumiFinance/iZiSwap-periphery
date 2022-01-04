@@ -63,6 +63,8 @@ async function addLiquidity(nflm, miner, tokenX, tokenY, fee, pl, pr, amountX, a
             pr: pr,
             xLim: amountX.toFixed(0),
             yLim: amountY.toFixed(0),
+            amountXMin: 0,
+            amountYMin: 0
         }
     );
   }
@@ -93,25 +95,44 @@ async function addLiquidity(nflm, miner, tokenX, tokenY, fee, pl, pr, amountX, a
     return floor(amountY);
   }
   
+  function getAmountXNoRound(l, r, rate, liquidity, up) {
+    amountX = BigNumber('0');
+    price = rate.pow(l);
+    for (var idx = l; idx < r; idx ++) {
+      amountX = amountX.plus(liquidity.div(price.sqrt()));
+      price = price.times(rate);
+    }
+    return amountX;
+  }
+  
+  function getAmountYNoRound(l, r, rate, liquidity, up) {
+    amountY = BigNumber('0');
+    price = rate.pow(l);
+    for (var idx = l; idx < r; idx ++) {
+      amountY = amountY.plus(liquidity.times(price.sqrt()));
+      price = price.times(rate);
+    }
+    return amountY;
+  }
   function depositYAtPrice(p, rate, liquidity) {
     price = rate.pow(p);
     amountY = liquidity.times(price.sqrt());
-    return ceil(amountY);
+    return amountY;
   }
   
   function depositXY(l, r, p, rate, liquidity) {
     expect(l).to.lessThanOrEqual(p);
     expect(r).to.greaterThan(p);
-    amountY = getAmountY(l, p, rate, liquidity, true);
-    amountX = getAmountX(p + 1, r, rate, liquidity, true);
+    amountY = getAmountYNoRound(l, p, rate, liquidity);
+    amountX = getAmountXNoRound(p + 1, r, rate, liquidity);
     amountY = amountY.plus(depositYAtPrice(p, rate, liquidity));
     return [amountX, amountY];
   }
 
   async function addLiquidityByLiquid(nflm, tokenX, tokenY, miner, l, r, p, rate, liquidity) {
       [amountX1, amountY1] = depositXY(l, r, p, rate, BigNumber("1"));
-      amountXLim = amountX1.times(liquidity);
-      amountYLim = amountY1.times(liquidity);
+      amountXLim = ceil(amountX1.times(liquidity));
+      amountYLim = ceil(amountY1.times(liquidity));
       await addLiquidity(nflm, miner, tokenX, tokenY, 3000, l, r, amountXLim, amountYLim);
   }
 async function addLimOrderWithY(tokenX, tokenY, seller, testAddLimOrder, amountY, point) {
@@ -286,6 +307,10 @@ async function checkBalance(token, miner, expectAmount) {
 function getFee(amount) {
     return ceil(amount.times(3).div(1000));
 }
+async function getLiquidity(nflm, tokenId) {
+    [l,r,liquid, sx,sy,rx,ry,p] = await nflm.liquidities(tokenId);
+    return liquid.toString();
+}
 describe("swap", function () {
     var signer, miner1, miner2, miner3, trader1, trader2, trader3, trader4;
     var poolPart, poolPartDesire;
@@ -295,6 +320,7 @@ describe("swap", function () {
     var swap;
     var tokenX, tokenY;
     var rate;
+    var totalLiquidity;
     beforeEach(async function() {
         [signer, miner1, miner2, miner3, trader1, trader2, trader3, trader4] = await ethers.getSigners();
         [poolPart, poolPartDesire] = await getPoolParts();
@@ -321,55 +347,61 @@ describe("swap", function () {
         rate = BigNumber("1.0001");
 
         await addLiquidityByLiquid(nflm, tokenX, tokenY, miner1, 4900, 5100, 5010, rate, BigNumber("10000"));
+        var liquid0 = await getLiquidity(nflm, "0");
+        console.log('liquid0: ',liquid0);
         await addLiquidityByLiquid(nflm, tokenX, tokenY, miner2, 4900, 5100, 5010, rate, BigNumber("20000"));
+        var liquid1 = await getLiquidity(nflm, "1");
+        console.log('liquid1: ',liquid1);
+
+        totalLiquidity = BigNumber(liquid0).plus(liquid1).toFixed(0);
     });
 
     it("check swap y2x", async function() {
         // 5010 is all y
-        var amountY = getAmountY(5011, 5100, rate, BigNumber("30000"), true);
+        var amountY = getAmountY(5011, 5100, rate, BigNumber(totalLiquidity), true);
         amountY = amountY.plus(getFee(amountY));
-        var amountX = getAmountX(5011, 5100, rate, BigNumber("30000"), false);
+        var amountX = getAmountX(5011, 5100, rate, BigNumber(totalLiquidity), false);
         var amountYOrigin = BigNumber("1000000000000");
         await tokenY.transfer(trader1.address, amountYOrigin.toFixed(0));
         await tokenY.connect(trader1).approve(swap.address, amountY.toFixed(0));
-        await swap.connect(trader1).swapY2X(tokenX.address, tokenY.address, 3000, amountY.toFixed(0), 5100);
+        await swap.connect(trader1).swapY2X(tokenX.address, tokenY.address, 3000, amountY.toFixed(0), 5100, 0);
         await checkBalance(tokenY, trader1, amountYOrigin.minus(amountY));
         await checkBalance(tokenX, trader1, amountX);
 
     });
     it("check swap x2y", async function() {
         // 5010 is all y, [4900, 5011)
-        var amountY = getAmountY(4900, 5011, rate, BigNumber("30000"), false);
-        var amountX = getAmountX(4900, 5011, rate, BigNumber("30000"), true);
+        var amountY = getAmountY(4900, 5011, rate, BigNumber(totalLiquidity), false);
+        var amountX = getAmountX(4900, 5011, rate, BigNumber(totalLiquidity), true);
         amountX = amountX.plus(getFee(amountX));
         var amountXOrigin = BigNumber("1000000000000");
         await tokenX.transfer(trader1.address, amountXOrigin.toFixed(0));
         await tokenX.connect(trader1).approve(swap.address, amountX.toFixed(0));
-        await swap.connect(trader1).swapX2Y(tokenX.address, tokenY.address, 3000, amountX.toFixed(0), 4900);
+        await swap.connect(trader1).swapX2Y(tokenX.address, tokenY.address, 3000, amountX.toFixed(0), 4900, 0);
         await checkBalance(tokenX, trader1, amountXOrigin.minus(amountX));
         await checkBalance(tokenY, trader1, amountY);
     });
     it("check swap y2x desireX", async function() {
         // 5010 is all y
-        var amountY = getAmountY(5011, 5100, rate, BigNumber("30000"), true);
+        var amountY = getAmountY(5011, 5100, rate, BigNumber(totalLiquidity), true);
         amountY = amountY.plus(getFee(amountY));
-        var amountX = getAmountX(5011, 5100, rate, BigNumber("30000"), false);
+        var amountX = getAmountX(5011, 5100, rate, BigNumber(totalLiquidity), false);
         var amountYOrigin = BigNumber("1000000000000");
         await tokenY.transfer(trader1.address, amountYOrigin.toFixed(0));
         await tokenY.connect(trader1).approve(swap.address, amountY.toFixed(0));
-        await swap.connect(trader1).swapY2XDesireX(tokenX.address, tokenY.address, 3000, amountX.toFixed(0), 5100);
+        await swap.connect(trader1).swapY2XDesireX(tokenX.address, tokenY.address, 3000, amountX.toFixed(0), 5100, '1000000000000');
         await checkBalance(tokenY, trader1, amountYOrigin.minus(amountY));
         await checkBalance(tokenX, trader1, amountX);
     });
     it("check swap x2y desireY", async function() {
         // 5010 is all y, [4900, 5011)
-        var amountY = getAmountY(4900, 5011, rate, BigNumber("30000"), false);
-        var amountX = getAmountX(4900, 5011, rate, BigNumber("30000"), true);
+        var amountY = getAmountY(4900, 5011, rate, BigNumber(totalLiquidity), false);
+        var amountX = getAmountX(4900, 5011, rate, BigNumber(totalLiquidity), true);
         amountX = amountX.plus(getFee(amountX));
         var amountXOrigin = BigNumber("1000000000000");
         await tokenX.transfer(trader1.address, amountXOrigin.toFixed(0));
         await tokenX.connect(trader1).approve(swap.address, amountX.toFixed(0));
-        await swap.connect(trader1).swapX2YDesireY(tokenX.address, tokenY.address, 3000, amountY.toFixed(0), 4900);
+        await swap.connect(trader1).swapX2YDesireY(tokenX.address, tokenY.address, 3000, amountY.toFixed(0), 4900, '1000000000000');
         await checkBalance(tokenX, trader1, amountXOrigin.minus(amountX));
         await checkBalance(tokenY, trader1, amountY);
     });

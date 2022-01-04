@@ -52,6 +52,7 @@ async function mint(nflm, miner, tokenX, tokenY, fee, pl, pr, amountX, amountY) 
         await tokenY.connect(miner).approve(nflm.address, amountY.toFixed(0));
         console.log("approve y: " + await tokenY.allowance(miner.address, nflm.address));
     }
+
     await nflm.connect(miner).mint(
         {
             miner: miner.address,
@@ -62,6 +63,8 @@ async function mint(nflm, miner, tokenX, tokenY, fee, pl, pr, amountX, amountY) 
             pr: pr,
             xLim: amountX.toFixed(0),
             yLim: amountY.toFixed(0),
+            amountXMin: 0,
+            amountYMin: 0,
         }
     );
 }
@@ -81,25 +84,39 @@ async function addLiquidity(nflm, miner, tokenX, tokenY, lid, amountX, amountY) 
         {
             lid: lid,
             xLim: amountX.toFixed(0),
-            yLim: amountY.toFixed(0)
+            yLim: amountY.toFixed(0),
+            amountXMin: 0,
+            amountYMin: 0,
         }
     );
 }
 
 async function decLiquidity(nflm, miner, lid, liquidDelta) {
-    await nflm.connect(miner).decLiquidity(lid, liquidDelta);
+    await nflm.connect(miner).decLiquidity(
+        lid, 
+        liquidDelta,
+        0,
+        0,
+    );
 }
-  function getAmountX(l, r, rate, liquidity, up) {
+  
+  function getAmountYNoRound(l, r, rate, liquidity) {
+    var amountY = BigNumber('0');
+    var price = rate.pow(l);
+    for (var idx = l; idx < r; idx ++) {
+      amountY = amountY.plus(liquidity.times(price.sqrt()));
+      price = price.times(rate);
+    }
+    return amountY;
+  }
+  function getAmountXNoRound(l, r, rate, liquidity) {
     amountX = BigNumber('0');
     price = rate.pow(l);
     for (var idx = l; idx < r; idx ++) {
       amountX = amountX.plus(liquidity.div(price.sqrt()));
       price = price.times(rate);
     }
-    if (up) {
-        return ceil(amountX);
-    }
-    return floor(amountX);
+    return amountX;
   }
   
   function getAmountY(l, r, rate, liquidity, up) {
@@ -114,18 +131,29 @@ async function decLiquidity(nflm, miner, lid, liquidDelta) {
     }
     return floor(amountY);
   }
-  
+  function getAmountX(l, r, rate, liquidity, up) {
+    amountX = BigNumber('0');
+    price = rate.pow(l);
+    for (var idx = l; idx < r; idx ++) {
+      amountX = amountX.plus(liquidity.div(price.sqrt()));
+      price = price.times(rate);
+    }
+    if (up) {
+        return ceil(amountX);
+    }
+    return floor(amountX);
+  }
   function depositYAtPrice(p, rate, liquidity) {
     var price = rate.pow(p);
     var amountY = liquidity.times(price.sqrt());
-    return ceil(amountY);
+    return amountY;
   }
   
   function depositXY(l, r, p, rate, liquidity) {
     expect(l).to.lessThanOrEqual(p);
     expect(r).to.greaterThan(p);
-    var amountY = getAmountY(l, p, rate, liquidity, true);
-    var amountX = getAmountX(p + 1, r, rate, liquidity, true);
+    var amountY = getAmountYNoRound(l, p, rate, liquidity);
+    var amountX = getAmountXNoRound(p + 1, r, rate, liquidity);
     amountY = amountY.plus(depositYAtPrice(p, rate, liquidity));
     return [amountX, amountY];
   }
@@ -137,14 +165,14 @@ async function decLiquidity(nflm, miner, lid, liquidDelta) {
         [amountX1, amountY1] = depositXY(l, r, p, rate, BigNumber("1"));
     } else {
         if (l <= p) {
-            amountY1 = getAmountY(l, r, rate, BigNumber("1"), true);
+            amountY1 = getAmountYNoRound(l, r, rate, BigNumber("1"));
         }
         if (r > p) {
-            amountX1 = getAmountX(l, r, rate, BigNumber("1"), true);
+            amountX1 = getAmountXNoRound(l, r, rate, BigNumber("1"));
         }
     }
-      var amountXLim = amountX1.times(liquidity);
-      var amountYLim = amountY1.times(liquidity);
+      var amountXLim = ceil(amountX1.times(liquidity));
+      var amountYLim = ceil(amountY1.times(liquidity));
       await mint(nflm, miner, tokenX, tokenY, 3000, l, r, amountXLim, amountYLim);
   }
   async function addByLiquid(nflm, tokenX, tokenY, miner, l, r, p, rate, lid, liquidity) {
@@ -154,14 +182,14 @@ async function decLiquidity(nflm, miner, lid, liquidDelta) {
           [amountX1, amountY1] = depositXY(l, r, p, rate, BigNumber("1"));
       } else {
           if (l <= p) {
-              amountY1 = getAmountY(l, r, rate, BigNumber("1"), true);
+              amountY1 = getAmountYNoRound(l, r, rate, BigNumber("1"));
           }
           if (r > p) {
-              amountX1 = getAmountX(l, r, rate, BigNumber("1"), true);
+              amountX1 = getAmountXNoRound(l, r, rate, BigNumber("1"));
           }
       }
-      var amountXLim = amountX1.times(liquidity);
-      var amountYLim = amountY1.times(liquidity);
+      var amountXLim = ceil(amountX1.times(liquidity));
+      var amountYLim = ceil(amountY1.times(liquidity));
       await addLiquidity(nflm, miner, tokenX, tokenY, lid, amountXLim, amountYLim);
   }
 async function addLimOrderWithY(tokenX, tokenY, seller, testAddLimOrder, amountY, point) {
@@ -347,6 +375,11 @@ function muldiv(a, b, c) {
     return floor(w.minus(w.mod(c)).div(c));
 }
 
+async function getLiquidity(nflm, tokenId) {
+    [l,r,liquid, sx,sy,rx,ry,p] = await nflm.liquidities(tokenId);
+    return liquid.toString();
+}
+
 describe("swap", function () {
     var signer, miner1, miner2, miner3, trader1, trader2, trader3, trader4;
     var poolPart, poolPartDesire;
@@ -356,6 +389,12 @@ describe("swap", function () {
     var swap;
     var tokenX, tokenY;
     var rate;
+
+    var liquid1;
+    var liquid2;
+    var liquid2;
+
+    var startTotalLiquidity;
     beforeEach(async function() {
         [signer, miner1, miner2, miner3, miner4, trader1, trader2] = await ethers.getSigners();
         [poolPart, poolPartDesire] = await getPoolParts();
@@ -384,55 +423,67 @@ describe("swap", function () {
         rate = BigNumber("1.0001");
 
         await mintByLiquid(nflm, tokenX, tokenY, miner1, 4900, 5100, 5010, rate, BigNumber("10000"));
+        liquid1 = await getLiquidity(nflm, "0");
+        console.log("liquid1: ", liquid1);
         await mintByLiquid(nflm, tokenX, tokenY, miner2, 4900, 5100, 5010, rate, BigNumber("20000"));
+        liquid2 = await getLiquidity(nflm, "1");
+        console.log("liquid2: ", liquid2);
         await mintByLiquid(nflm, tokenX, tokenY, miner3, 4900, 5100, 5010, rate, BigNumber("30000"));
+        liquid3 = await getLiquidity(nflm, "2");
+        console.log("liquid3: ", liquid3);
+
+        startTotalLiquidity = BigNumber(liquid1).plus(liquid2).plus(liquid3).toFixed(0);
     });
 
     it("check fee after swap/add/dec", async function() {
         // 5010 is all y
-        var amountY1 = getAmountY(5011, 5100, rate, BigNumber("60000"), true);
+        var amountY1 = getAmountY(5011, 5100, rate, BigNumber(startTotalLiquidity), true);
         var amountY1Fee = getFee(amountY1);
         amountY1 = amountY1.plus(amountY1Fee);
-        var amountX1 = getAmountX(5011, 5100, rate, BigNumber("60000"), false);
+        var amountX1 = getAmountX(5011, 5100, rate, BigNumber(startTotalLiquidity), false);
         var amountY1Origin = BigNumber("1000000000000");
 
         await tokenY.transfer(trader1.address, amountY1Origin.toFixed(0));
         await tokenY.connect(trader1).approve(swap.address, amountY1.toFixed(0));
-        await swap.connect(trader1).swapY2X(tokenX.address, tokenY.address, 3000, amountY1.toFixed(0), 5100);
+        await swap.connect(trader1).swapY2X(tokenX.address, tokenY.address, 3000, amountY1.toFixed(0), 5100, 0);
         await checkBalance(tokenY, trader1, amountY1Origin.minus(amountY1));
 
-        var lastFeeScaleY_128 = floor(amountY1Fee.times(BigNumber("2").pow(128)).div("60000"));
-        var miner3FeeY = floor(lastFeeScaleY_128.times(BigNumber("30000")).div(BigNumber("2").pow(128)));
-        var miner2FeeY = floor(lastFeeScaleY_128.times(BigNumber("20000")).div(BigNumber("2").pow(128)));
-        var miner1FeeY = floor(lastFeeScaleY_128.times(BigNumber("10000")).div(BigNumber("2").pow(128)));
+        var lastFeeScaleY_128 = floor(amountY1Fee.times(BigNumber("2").pow(128)).div(startTotalLiquidity));
+        var miner3FeeY = floor(lastFeeScaleY_128.times(BigNumber(liquid3)).div(BigNumber("2").pow(128)));
+        var miner2FeeY = floor(lastFeeScaleY_128.times(BigNumber(liquid2)).div(BigNumber("2").pow(128)));
+        var miner1FeeY = floor(lastFeeScaleY_128.times(BigNumber(liquid1)).div(BigNumber("2").pow(128)));
         await decLiquidity(nflm, miner3, "2", "10000");
         await checkLiquidity(
-            nflm, "2", BigNumber("20000"),
+            nflm, "2", BigNumber(liquid3).minus("10000"),
             BigNumber("0"),
             lastFeeScaleY_128,
             BigNumber("0"),
             getAmountY(4900, 5100, rate, BigNumber("10000"), false).plus(miner3FeeY)
         );
+        liquid3 = BigNumber(liquid3).minus("10000").toFixed(0);
         await addByLiquid(nflm, tokenX, tokenY, miner2, 4900, 5100, 5100, rate, "1", BigNumber("10000"));
         await checkLiquidity(
-            nflm, "1", BigNumber("30000"),
+            nflm, "1", BigNumber(liquid2).plus("9999"),
             BigNumber("0"),
             lastFeeScaleY_128,
             BigNumber("0"),
             miner2FeeY
         );
+        liquid2 = BigNumber(liquid2).plus("9999").toFixed(0);
         await mintByLiquid(nflm, tokenX, tokenY, miner4, 4900, 5100, 5100, rate, BigNumber("20000"));
         await checkLiquidity(
-            nflm, "3", BigNumber("20000"),
+            nflm, "3", BigNumber("19999"),
             BigNumber("0"),
             lastFeeScaleY_128,
             BigNumber("0"),
             BigNumber("0")
         );
 
+        var totalLiquidity = BigNumber(liquid1).plus(liquid2).plus(liquid3).plus('19999');
+
         // trader 2
-        var amountY2 = getAmountY(4900, 5100, rate, BigNumber("80000"), false);
-        var amountX2 = getAmountX(4900, 5100, rate, BigNumber("80000"), true);
+        var amountY2 = getAmountY(4900, 5100, rate, BigNumber(totalLiquidity), false);
+        var amountX2 = getAmountX(4900, 5100, rate, BigNumber(totalLiquidity), true);
         var amountX2Fee = getFee(amountX2);
         amountX2 = amountX2.plus(amountX2Fee);
         var amountX2Origin = BigNumber("1000000000000");
@@ -440,60 +491,60 @@ describe("swap", function () {
         await tokenX.transfer(trader2.address, amountX2Origin.toFixed(0));
         console.log("amountX2: ", amountX2.toFixed(0));
         await tokenX.connect(trader2).approve(swap.address, amountX2.toFixed(0));
-        await swap.connect(trader2).swapX2Y(tokenX.address, tokenY.address, 3000, amountX2.toFixed(0), 4900);
+        await swap.connect(trader2).swapX2Y(tokenX.address, tokenY.address, 3000, amountX2.toFixed(0), 4900, 0);
         await checkBalance(tokenX, trader2, amountX2Origin.minus(amountX2));
 
 
-        var lastFeeScaleX_128 = floor(amountX2Fee.times(BigNumber("2").pow(128)).div("80000"));
+        var lastFeeScaleX_128 = floor(amountX2Fee.times(BigNumber("2").pow(128)).div(totalLiquidity));
         console.log("last fee scalex: ", lastFeeScaleX_128.toFixed(0));
-        var miner1FeeX = muldiv(lastFeeScaleX_128, BigNumber("10000"), BigNumber("2").pow(128));
-        var miner3FeeX = muldiv(lastFeeScaleX_128, BigNumber("20000"), BigNumber("2").pow(128));
-        var miner2FeeX = muldiv(lastFeeScaleX_128, BigNumber("30000"), BigNumber("2").pow(128));
-        var miner4FeeX = muldiv(lastFeeScaleX_128, BigNumber("20000"), BigNumber("2").pow(128));
+        var miner1FeeX = muldiv(lastFeeScaleX_128, BigNumber(liquid1), BigNumber("2").pow(128));
+        var miner3FeeX = muldiv(lastFeeScaleX_128, BigNumber(liquid3), BigNumber("2").pow(128));
+        var miner2FeeX = muldiv(lastFeeScaleX_128, BigNumber(liquid2), BigNumber("2").pow(128));
+        var miner4FeeX = muldiv(lastFeeScaleX_128, BigNumber("19999"), BigNumber("2").pow(128));
 
         console.log("miner2FeeX: ", miner2FeeX.toFixed(0));
 
-        await decLiquidity(nflm, miner1, "0", "10000");
+        await decLiquidity(nflm, miner1, "0", liquid1);
         await checkLiquidity(
             nflm, "0", BigNumber("0"),
             lastFeeScaleX_128,
             lastFeeScaleY_128,
             getAmountX(
-                4900, 4901, rate, BigNumber("10000"), false
-            ).plus(getAmountX(4901, 5100, rate, BigNumber("10000"), false)).plus(miner1FeeX),
+                4900, 4901, rate, BigNumber(liquid1), false
+            ).plus(getAmountX(4901, 5100, rate, BigNumber(liquid1), false)).plus(miner1FeeX),
             miner1FeeY
         );
 
-        await decLiquidity(nflm, miner2, "1", "30000");
+        await decLiquidity(nflm, miner2, "1", liquid2);
         await checkLiquidity(
             nflm, "1", BigNumber("0"),
             lastFeeScaleX_128,
             lastFeeScaleY_128,
             getAmountX(
-                4900, 4901, rate, BigNumber("30000"), false
-            ).plus(getAmountX(4901, 5100, rate, BigNumber("30000"), false)).plus(miner2FeeX),
+                4900, 4901, rate, BigNumber(liquid2), false
+            ).plus(getAmountX(4901, 5100, rate, BigNumber(liquid2), false)).plus(miner2FeeX),
             miner2FeeY
         );
 
-        await decLiquidity(nflm, miner3, "2", "20000");
+        await decLiquidity(nflm, miner3, "2", liquid3);
         await checkLiquidity(
             nflm, "2", BigNumber("0"),
             lastFeeScaleX_128,
             lastFeeScaleY_128,
             getAmountX(
-                4900, 4901, rate, BigNumber("20000"), false
-            ).plus(getAmountX(4901, 5100, rate, BigNumber("20000"), false)).plus(miner3FeeX),
+                4900, 4901, rate, BigNumber(liquid3), false
+            ).plus(getAmountX(4901, 5100, rate, BigNumber(liquid3), false)).plus(miner3FeeX),
             getAmountY(4900, 5100, rate, BigNumber("10000"), false).plus(miner3FeeY)
         );
 
-        await decLiquidity(nflm, miner4, "3", "20000");
+        await decLiquidity(nflm, miner4, "3", "19999");
         await checkLiquidity(
             nflm, "3", BigNumber("0"),
             lastFeeScaleX_128,
             lastFeeScaleY_128,
             getAmountX(
-                4900, 4901, rate, BigNumber("20000"), false
-            ).plus(getAmountX(4901, 5100, rate, BigNumber("20000"), false)).plus(miner4FeeX),
+                4900, 4901, rate, BigNumber("19999"), false
+            ).plus(getAmountX(4901, 5100, rate, BigNumber("19999"), false)).plus(miner4FeeX),
             BigNumber(0)
         );
     });
