@@ -21,7 +21,7 @@ contract Quoter is Base, IIzumiswapSwapCallback {
         uint256 x,
         uint256 y,
         bytes calldata data
-    ) external override {
+    ) external view override {
         SwapCallbackData memory dt = abi.decode(data, (SwapCallbackData));
         verify(dt.token0, dt.token1, dt.fee);
         
@@ -47,7 +47,7 @@ contract Quoter is Base, IIzumiswapSwapCallback {
         uint256 x,
         uint256 y,
         bytes calldata data
-    ) external override {
+    ) external view override {
         SwapCallbackData memory dt = abi.decode(data, (SwapCallbackData));
         verify(dt.token0, dt.token1, dt.fee);
 

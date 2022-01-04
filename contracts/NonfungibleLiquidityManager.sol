@@ -92,6 +92,8 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCa
         int24 pr;
         uint128 xLim;
         uint128 yLim;
+        uint128 amountXMin;
+        uint128 amountYMin;
     }
     function liquidityKey(address miner, int24 pl, int24 pr) internal pure returns(bytes32) {
         return keccak256(abi.encodePacked(miner, pl, pr));
@@ -106,20 +108,19 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCa
     }
     function getLastFeeScale(address pool, bytes32 key) private view returns(uint256, uint256) {
 
-        (uint128 liquidity, uint256 lastFeeScaleX_128, uint256 lastFeeScaleY_128, uint256 rx, uint256 ry) = IIzumiswapPool(pool).liquidities(
+        (, uint256 lastFeeScaleX_128, uint256 lastFeeScaleY_128, , ) = IIzumiswapPool(pool).liquidities(
             key
         );
         return (lastFeeScaleX_128, lastFeeScaleY_128);
     }
-    function getPoolPrice(address pool) private returns (uint160, int24) {
+    function getPoolPrice(address pool) private view returns (uint160, int24) {
         (
             uint160 sqrtPrice_96,
             int24 currPt,
-            uint256 currX,
-            uint256 currY,
-            uint128 liquidity,
-            bool allX,
-            bool locked
+            ,
+            ,
+            ,
+            ,
         ) = IIzumiswapPool(pool).state();
         return (sqrtPrice_96, currPt);
     }
@@ -156,6 +157,8 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCa
         require(mp.tokenX < mp.tokenY, "x<y");
         address pool;
         (liquidity, amountX, amountY, pool) = _addLiquidity(mp);
+        require(amountX >= mp.amountXMin, "XMIN");
+        require(amountY >= mp.amountYMin, "YMIN");
         lid = liquidityNum ++;
         (uint256 lastFeeScaleX_128, uint256 lastFeeScaleY_128) = getLastFeeScale(
             pool, liquidityKey(address(this), mp.pl, mp.pr)
@@ -177,6 +180,8 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCa
         uint256 lid;
         uint128 xLim;
         uint128 yLim;
+        uint128 amountXMin;
+        uint128 amountYMin;
     }
     function updateLiquidity(
         Liquidity storage liquid,
@@ -230,13 +235,17 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCa
         uint128 newLiquidity = liquidityDelta + liquid.liquidity;
         (amountX, amountY) = IIzumiswapPool(pool).mint(address(this), liquid.leftPt, liquid.rightPt, liquidityDelta, 
             abi.encode(MintCallbackData({tokenX: poolMeta.tokenX, tokenY: poolMeta.tokenY, fee: poolMeta.fee, payer: msg.sender})));
+        require(amountX >= mp.amountXMin, "XMIN");
+        require(amountY >= mp.amountYMin, "YMIN");
         updateLiquidity(liquid, pool, newLiquidity, 0, 0);
         emit IncreaseLiquidity(mp.lid, liquidityDelta, amountX, amountY);
     }
 
     function decLiquidity(
         uint256 lid,
-        uint128 liquidDelta
+        uint128 liquidDelta,
+        uint256 amountXMin,
+        uint256 amountYMin
     ) external checkAuth(lid) returns(
         uint256 amountX,
         uint256 amountY
@@ -256,6 +265,8 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCa
         
         uint128 newLiquidity = liquidity.liquidity - liquidDelta;
         (amountX, amountY) = IIzumiswapPool(pool).burn(liquidity.leftPt, liquidity.rightPt, liquidDelta);
+        require(amountX >= amountXMin, "XMIN");
+        require(amountY >= amountYMin, "YMIN");
         updateLiquidity(liquidity, pool, newLiquidity, amountX, amountY);
         emit DecreaseLiquidity(lid, liquidDelta, amountX, amountY);
     }
@@ -286,7 +297,7 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCa
         if (amountYLim > liquidity.remainTokenY) {
             amountYLim = uint128(liquidity.remainTokenY);
         }
-        IIzumiswapPool(pool).collect(miner, liquidity.leftPt, liquidity.rightPt, amountXLim, amountYLim);
+        (amountX, amountY) = IIzumiswapPool(pool).collect(miner, liquidity.leftPt, liquidity.rightPt, amountXLim, amountYLim);
         // amountX(Y)Lim may be a little greater than actual value
         liquidity.remainTokenX -= amountXLim;
         liquidity.remainTokenY -= amountYLim;

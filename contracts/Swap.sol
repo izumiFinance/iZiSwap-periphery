@@ -59,59 +59,67 @@ contract Swap is Base, IIzumiswapSwapCallback {
         address tokenY,
         uint24 fee,
         uint128 amount,
-        int24 highPt
+        int24 highPt,
+        uint256 amountXMin
     ) external payable {
         require(tokenX < tokenY, "x<y");
         address poolAddr = pool(tokenX, tokenY, fee);
         address payer = msg.sender;
-        IIzumiswapPool(poolAddr).swapY2X(
+        (uint256 amountX, ) = IIzumiswapPool(poolAddr).swapY2X(
             payer, amount, highPt,
             abi.encode(SwapCallbackData({token0: tokenY, token1:tokenX, fee: fee, payer: payer}))
         );
+        require(amountX >= amountXMin, "XMIN");
     }
     function swapY2XDesireX(
         address tokenX,
         address tokenY,
         uint24 fee,
         uint128 desireX,
-        int24 highPt
+        int24 highPt,
+        uint256 amountYMax
     ) external payable {
         require(tokenX < tokenY, "x<y");
         address poolAddr = pool(tokenX, tokenY, fee);
         address payer = msg.sender;
-        IIzumiswapPool(poolAddr).swapY2XDesireX(
+        (, uint256 amountY) = IIzumiswapPool(poolAddr).swapY2XDesireX(
             payer, desireX, highPt,
             abi.encode(SwapCallbackData({token0: tokenX, token1:tokenY, fee: fee, payer: payer}))
         );
+        require(amountY <= amountYMax, "YMAX");
     }
     function swapX2Y(
         address tokenX,
         address tokenY,
         uint24 fee,
         uint128 amount,
-        int24 lowPt
+        int24 lowPt,
+        uint256 amountYMin
     ) external payable {
         require(tokenX < tokenY, "x<y");
         address poolAddr = pool(tokenX, tokenY, fee);
         address payer = msg.sender;
-        IIzumiswapPool(poolAddr).swapX2Y(
+        (, uint256 amountY) = IIzumiswapPool(poolAddr).swapX2Y(
             payer, amount, lowPt,
             abi.encode(SwapCallbackData({token0: tokenX, token1:tokenY, fee: fee, payer: payer}))
         );
+        require(amountY >= amountYMin, "YMIN");
     }
     function swapX2YDesireY(
         address tokenX,
         address tokenY,
         uint24 fee,
         uint128 desireY,
-        int24 highPt
+        int24 highPt,
+        uint256 amountXMax
     ) external payable {
         require(tokenX < tokenY, "x<y");
         address poolAddr = pool(tokenX, tokenY, fee);
         address payer = msg.sender;
-        IIzumiswapPool(poolAddr).swapX2YDesireY(
+        (uint256 amountX,) = IIzumiswapPool(poolAddr).swapX2YDesireY(
             payer, desireY, highPt,
             abi.encode(SwapCallbackData({token0: tokenY, token1:tokenX, fee: fee, payer: payer}))
         );
+        require(amountX <= amountXMax, "XMAX");
     }
 }
