@@ -364,7 +364,7 @@ describe("swap", function () {
         var amountYOrigin = BigNumber("1000000000000");
         await tokenY.transfer(trader1.address, amountYOrigin.toFixed(0));
         await tokenY.connect(trader1).approve(swap.address, amountY.toFixed(0));
-        await swap.connect(trader1).swapY2X(tokenX.address, tokenY.address, 3000, amountY.toFixed(0), 5100, 0);
+        await swap.connect(trader1).swapY2X({tokenX: tokenX.address, tokenY: tokenY.address, fee: 3000}, amountY.toFixed(0), 5100, 0);
         await checkBalance(tokenY, trader1, amountYOrigin.minus(amountY));
         await checkBalance(tokenX, trader1, amountX);
 
@@ -377,7 +377,7 @@ describe("swap", function () {
         var amountXOrigin = BigNumber("1000000000000");
         await tokenX.transfer(trader1.address, amountXOrigin.toFixed(0));
         await tokenX.connect(trader1).approve(swap.address, amountX.toFixed(0));
-        await swap.connect(trader1).swapX2Y(tokenX.address, tokenY.address, 3000, amountX.toFixed(0), 4900, 0);
+        await swap.connect(trader1).swapX2Y({tokenX: tokenX.address, tokenY: tokenY.address, fee: 3000}, amountX.toFixed(0), 4900, 0);
         await checkBalance(tokenX, trader1, amountXOrigin.minus(amountX));
         await checkBalance(tokenY, trader1, amountY);
     });
@@ -389,7 +389,7 @@ describe("swap", function () {
         var amountYOrigin = BigNumber("1000000000000");
         await tokenY.transfer(trader1.address, amountYOrigin.toFixed(0));
         await tokenY.connect(trader1).approve(swap.address, amountY.toFixed(0));
-        await swap.connect(trader1).swapY2XDesireX(tokenX.address, tokenY.address, 3000, amountX.toFixed(0), 5100, '1000000000000');
+        await swap.connect(trader1).swapY2XDesireX({tokenX: tokenX.address, tokenY: tokenY.address, fee: 3000}, amountX.toFixed(0), 5100, '1000000000000');
         await checkBalance(tokenY, trader1, amountYOrigin.minus(amountY));
         await checkBalance(tokenX, trader1, amountX);
     });
@@ -401,7 +401,7 @@ describe("swap", function () {
         var amountXOrigin = BigNumber("1000000000000");
         await tokenX.transfer(trader1.address, amountXOrigin.toFixed(0));
         await tokenX.connect(trader1).approve(swap.address, amountX.toFixed(0));
-        await swap.connect(trader1).swapX2YDesireY(tokenX.address, tokenY.address, 3000, amountY.toFixed(0), 4900, '1000000000000');
+        await swap.connect(trader1).swapX2YDesireY({tokenX: tokenX.address, tokenY: tokenY.address, fee: 3000}, amountY.toFixed(0), 4900, '1000000000000');
         await checkBalance(tokenX, trader1, amountXOrigin.minus(amountX));
         await checkBalance(tokenY, trader1, amountY);
     });

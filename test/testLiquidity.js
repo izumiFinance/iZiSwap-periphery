@@ -445,7 +445,7 @@ describe("swap", function () {
 
         await tokenY.transfer(trader1.address, amountY1Origin.toFixed(0));
         await tokenY.connect(trader1).approve(swap.address, amountY1.toFixed(0));
-        await swap.connect(trader1).swapY2X(tokenX.address, tokenY.address, 3000, amountY1.toFixed(0), 5100, 0);
+        await swap.connect(trader1).swapY2X({tokenX: tokenX.address, tokenY: tokenY.address, fee: 3000}, amountY1.toFixed(0), 5100, 0);
         await checkBalance(tokenY, trader1, amountY1Origin.minus(amountY1));
 
         var lastFeeScaleY_128 = floor(amountY1Fee.times(BigNumber("2").pow(128)).div(startTotalLiquidity));
@@ -491,7 +491,7 @@ describe("swap", function () {
         await tokenX.transfer(trader2.address, amountX2Origin.toFixed(0));
         console.log("amountX2: ", amountX2.toFixed(0));
         await tokenX.connect(trader2).approve(swap.address, amountX2.toFixed(0));
-        await swap.connect(trader2).swapX2Y(tokenX.address, tokenY.address, 3000, amountX2.toFixed(0), 4900, 0);
+        await swap.connect(trader2).swapX2Y({tokenX: tokenX.address, tokenY: tokenY.address, fee: 3000}, amountX2.toFixed(0), 4900, 0);
         await checkBalance(tokenX, trader2, amountX2Origin.minus(amountX2));
 
 

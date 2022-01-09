@@ -282,7 +282,7 @@ describe("limorder", function () {
         acquireYExpect = sellY1.plus(sellY2.div(3));
         costX = getCostX(5050, rate, acquireYExpect);
         acquireYExpect = getAcquireY(5050, rate, costX);
-        await swap.connect(trader).swapX2Y(tokenX.address, tokenY.address, 3000, costX.toFixed(0), 5050, 0);
+        await swap.connect(trader).swapX2Y({tokenX: tokenX.address, tokenY: tokenY.address, fee: 3000}, costX.toFixed(0), 5050, 0);
 
         await decLimOrderWithY(seller1, "0", limorderManager, "500000000");
         seller1EarnPhase1 = getAcquireX(5050, rate, sellY1);
