@@ -278,6 +278,9 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
         if (actualCollectEarn > order.earn) {
             actualCollectEarn = order.earn;
         }
+        if (recipient == address(0)) {
+            recipient = address(this);
+        }
         IIzumiswapPool(pool).collectLimOrder(recipient, order.pt, actualCollectDec, actualCollectEarn, order.sellXEarnY);
         // collect from core may be less, but we still do not modify actualCollectEarn(Dec)
         order.sellingDec -= actualCollectDec;
