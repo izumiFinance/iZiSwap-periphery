@@ -286,7 +286,7 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
         order.sellingDec -= actualCollectDec;
         order.earn -= actualCollectEarn;
 
-        if (order.sellingDec == 0 || order.sellingRemain == 0 || order.earn == 0) {
+        if (order.sellingDec == 0 && order.sellingRemain == 0 && order.earn == 0) {
             addr2ActiveOrderID[msg.sender].remove(sellId);
             addr2DeactiveOrderID[msg.sender].add(sellId);
         }
