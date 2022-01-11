@@ -17,7 +17,7 @@ contract Swap is Base, IIzumiswapSwapCallback {
         address payer;
         uint24 fee;
     }
-
+    receive() external payable {}
     function swapY2XCallback(
         uint256 x,
         uint256 y,
@@ -55,86 +55,78 @@ contract Swap is Base, IIzumiswapSwapCallback {
     constructor(address _factory, address _weth) Base(_factory, _weth) {
     }
 
-    function getCurrTick(address poolAddr) public view returns(int24 currPt) {
-        (
-            ,
-            currPt,
-            ,
-            ,
-            ,
-            ,
-            
-        ) = IIzumiswapPool(poolAddr).state();
-    }
-
-    struct PoolParams {
+    struct SwapParams {
         address tokenX;
         address tokenY;
         uint24 fee;
+        /// @notice highPt for y2x, lowPt for x2y
+        int24 boundaryPt; 
+        address recipient;
+        /// @notice desired amount for desired mode, payed amount for non-desired mode
+        uint128 amount;
+        uint256 maxPayed;
+        uint256 minAcquired;
+    }
+
+    struct SwapAmount {
+        uint256 amountX;
+        uint256 amountY;
     }
 
     function swapY2X(
-        PoolParams calldata poolParams,
-        uint128 amount,
-        int24 highPt,
-        uint256 amountXMin
-    ) external payable returns(int24 currPt) {
-        require(poolParams.tokenX < poolParams.tokenY, "x<y");
-        address poolAddr = pool(poolParams.tokenX, poolParams.tokenY, poolParams.fee);
+        SwapParams calldata swapParams
+    ) external payable {
+        require(swapParams.tokenX < swapParams.tokenY, "x<y");
+        address poolAddr = pool(swapParams.tokenX, swapParams.tokenY, swapParams.fee);
         address payer = msg.sender;
+        address recipient = (swapParams.recipient == address(0)) ? address(this): swapParams.recipient;
         (uint256 amountX, ) = IIzumiswapPool(poolAddr).swapY2X(
-            payer, amount, highPt,
-            abi.encode(SwapCallbackData({token0: poolParams.tokenY, token1:poolParams.tokenX, fee: poolParams.fee, payer: payer}))
+            recipient, swapParams.amount, swapParams.boundaryPt,
+            abi.encode(SwapCallbackData({token0: swapParams.tokenY, token1:swapParams.tokenX, fee: swapParams.fee, payer: payer}))
         );
-        require(amountX >= amountXMin, "XMIN");
-        return getCurrTick(poolAddr);
+        require(amountX >= swapParams.minAcquired, "XMIN");
     }
     function swapY2XDesireX(
-        PoolParams calldata poolParams,
-        uint128 desireX,
-        int24 highPt,
-        uint256 amountYMax
-    ) external payable returns(int24 currPt) {
-        require(poolParams.tokenX < poolParams.tokenY, "x<y");
-        address poolAddr = pool(poolParams.tokenX, poolParams.tokenY, poolParams.fee);
+        SwapParams calldata swapParams
+    ) external payable {
+        require(swapParams.tokenX < swapParams.tokenY, "x<y");
+        address poolAddr = pool(swapParams.tokenX, swapParams.tokenY, swapParams.fee);
         address payer = msg.sender;
-        (, uint256 amountY) = IIzumiswapPool(poolAddr).swapY2XDesireX(
-            payer, desireX, highPt,
-            abi.encode(SwapCallbackData({token0: poolParams.tokenX, token1:poolParams.tokenY, fee: poolParams.fee, payer: payer}))
+        address recipient = (swapParams.recipient == address(0)) ? address(this): swapParams.recipient;
+        SwapAmount memory amount;
+        (amount.amountX, amount.amountY) = IIzumiswapPool(poolAddr).swapY2XDesireX(
+            recipient, swapParams.amount, swapParams.boundaryPt,
+            abi.encode(SwapCallbackData({token0: swapParams.tokenX, token1:swapParams.tokenY, fee: swapParams.fee, payer: payer}))
         );
-        require(amountY <= amountYMax, "YMAX");
-        return getCurrTick(poolAddr);
+        require(amount.amountX >= swapParams.minAcquired, "XMIN");
+        require(amount.amountY <= swapParams.maxPayed, "YMAX");
     }
     function swapX2Y(
-        PoolParams calldata poolParams,
-        uint128 amount,
-        int24 lowPt,
-        uint256 amountYMin
-    ) external payable returns(int24 currPt) {
-        require(poolParams.tokenX < poolParams.tokenY, "x<y");
-        address poolAddr = pool(poolParams.tokenX, poolParams.tokenY, poolParams.fee);
+        SwapParams calldata swapParams
+    ) external payable {
+        require(swapParams.tokenX < swapParams.tokenY, "x<y");
+        address poolAddr = pool(swapParams.tokenX, swapParams.tokenY, swapParams.fee);
         address payer = msg.sender;
+        address recipient = (swapParams.recipient == address(0)) ? address(this): swapParams.recipient;
         (, uint256 amountY) = IIzumiswapPool(poolAddr).swapX2Y(
-            payer, amount, lowPt,
-            abi.encode(SwapCallbackData({token0: poolParams.tokenX, token1:poolParams.tokenY, fee: poolParams.fee, payer: payer}))
+            recipient, swapParams.amount, swapParams.boundaryPt,
+            abi.encode(SwapCallbackData({token0: swapParams.tokenX, token1:swapParams.tokenY, fee: swapParams.fee, payer: payer}))
         );
-        require(amountY >= amountYMin, "YMIN");
-        return getCurrTick(poolAddr);
+        require(amountY >= swapParams.minAcquired, "YMIN");
     }
     function swapX2YDesireY(
-        PoolParams calldata poolParams,
-        uint128 desireY,
-        int24 highPt,
-        uint256 amountXMax
-    ) external payable returns(int24 currPt) {
-        require(poolParams.tokenX < poolParams.tokenY, "x<y");
-        address poolAddr = pool(poolParams.tokenX, poolParams.tokenY, poolParams.fee);
+        SwapParams calldata swapParams
+    ) external payable {
+        require(swapParams.tokenX < swapParams.tokenY, "x<y");
+        address poolAddr = pool(swapParams.tokenX, swapParams.tokenY, swapParams.fee);
         address payer = msg.sender;
-        (uint256 amountX,) = IIzumiswapPool(poolAddr).swapX2YDesireY(
-            payer, desireY, highPt,
-            abi.encode(SwapCallbackData({token0: poolParams.tokenY, token1:poolParams.tokenX, fee: poolParams.fee, payer: payer}))
+        address recipient = (swapParams.recipient == address(0)) ? address(this): swapParams.recipient;
+        SwapAmount memory amount;
+        (amount.amountX, amount.amountY) = IIzumiswapPool(poolAddr).swapX2YDesireY(
+            recipient, swapParams.amount, swapParams.boundaryPt,
+            abi.encode(SwapCallbackData({token0: swapParams.tokenY, token1:swapParams.tokenX, fee: swapParams.fee, payer: payer}))
         );
-        require(amountX <= amountXMax, "XMAX");
-        return getCurrTick(poolAddr);
+        require(amount.amountX <= swapParams.maxPayed, "XMAX");
+        require(amount.amountY >= swapParams.minAcquired, "YMIN");
     }
 }
