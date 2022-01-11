@@ -17,7 +17,6 @@ contract Swap is Base, IIzumiswapSwapCallback {
         address payer;
         uint24 fee;
     }
-    receive() external payable {}
     function swapY2XCallback(
         uint256 x,
         uint256 y,

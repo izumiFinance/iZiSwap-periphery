@@ -36,6 +36,7 @@ abstract contract Base {
             results[i] = result;
         }
     }
+    receive() external payable {}
     /// @notice Transfers tokens from the targeted address to the given destination
     /// @notice Errors with 'STF' if transfer fails
     /// @param token The contract address of the token to be transferred
