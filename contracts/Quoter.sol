@@ -26,13 +26,24 @@ contract Quoter is Base, IIzumiswapSwapCallback {
         SwapCallbackData memory dt = abi.decode(data, (SwapCallbackData));
         verify(dt.token0, dt.token1, dt.fee);
         
+        address poolAddr = pool(dt.token0, dt.token1, dt.fee);
+        (
+            ,
+            int24 currPt,
+            ,
+            ,
+            ,
+            ,
+        ) = IIzumiswapPool(poolAddr).state();
+
         if (dt.token0 < dt.token1) {
             // token1 is y, amount of token1 is calculated
             // called from swapY2XDesireX(...)
             assembly {  
                 let ptr := mload(0x40)
                 mstore(ptr, y)
-                revert(ptr, 32)
+                mstore(add(ptr, 0x20), currPt)
+                revert(ptr, 64)
             }
         } else {
             // token0 is y, amount of token0 is input param
@@ -40,7 +51,8 @@ contract Quoter is Base, IIzumiswapSwapCallback {
             assembly {  
                 let ptr := mload(0x40)
                 mstore(ptr, x)
-                revert(ptr, 32)
+                mstore(add(ptr, 0x20), currPt)
+                revert(ptr, 64)
             }
         }
     }
@@ -52,13 +64,24 @@ contract Quoter is Base, IIzumiswapSwapCallback {
         SwapCallbackData memory dt = abi.decode(data, (SwapCallbackData));
         verify(dt.token0, dt.token1, dt.fee);
 
+        address poolAddr = pool(dt.token0, dt.token1, dt.fee);
+        (
+            ,
+            int24 currPt,
+            ,
+            ,
+            ,
+            ,
+        ) = IIzumiswapPool(poolAddr).state();
+
         if (dt.token0 < dt.token1) {
             // token0 is x, amount of token0 is input param
             // called from swapX2Y(...)
             assembly {  
                 let ptr := mload(0x40)
                 mstore(ptr, y)
-                revert(ptr, 32)
+                mstore(add(ptr, 0x20), currPt)
+                revert(ptr, 64)
             }
         } else {
             // token1 is x, amount of token1 is calculated param
@@ -66,23 +89,32 @@ contract Quoter is Base, IIzumiswapSwapCallback {
             assembly {  
                 let ptr := mload(0x40)
                 mstore(ptr, x)
-                revert(ptr, 32)
+                mstore(add(ptr, 0x20), currPt)
+                revert(ptr, 64)
             }
         }
     }
     constructor(address _factory, address _weth) Base(_factory, _weth) {
     }
 
-    function parseRevertReason(bytes memory reason) private pure returns (uint256) {
-        if (reason.length != 32) {
+    function parseRevertReason(bytes memory reason)
+        private
+        pure
+        returns (
+            uint256 amount,
+            int24 currPt
+        )
+    {
+        if (reason.length != 64) {
             if (reason.length < 68) revert('Unexpected error');
             assembly {
                 reason := add(reason, 0x04)
             }
             revert(abi.decode(reason, (string)));
         }
-        return abi.decode(reason, (uint256)); 
+        return abi.decode(reason, (uint256, int24));
     }
+
 
     function swapY2X(
         address tokenX,
@@ -90,7 +122,7 @@ contract Quoter is Base, IIzumiswapSwapCallback {
         uint24 fee,
         uint128 amount,
         int24 highPt
-    ) public returns (uint256) {
+    ) public returns (uint256, int24) {
         require(tokenX < tokenY, "x<y");
         address poolAddr = pool(tokenX, tokenY, fee);
         address payer = msg.sender;
@@ -109,7 +141,7 @@ contract Quoter is Base, IIzumiswapSwapCallback {
         uint24 fee,
         uint128 desireX,
         int24 highPt
-    ) public returns (uint256) {
+    ) public returns (uint256, int24) {
         require(tokenX < tokenY, "x<y");
         address poolAddr = pool(tokenX, tokenY, fee);
         address payer = msg.sender;
@@ -128,7 +160,7 @@ contract Quoter is Base, IIzumiswapSwapCallback {
         uint24 fee,
         uint128 amount,
         int24 lowPt
-    ) public returns (uint256) {
+    ) public returns (uint256, int24) {
         require(tokenX < tokenY, "x<y");
         address poolAddr = pool(tokenX, tokenY, fee);
         address payer = msg.sender;
@@ -147,7 +179,7 @@ contract Quoter is Base, IIzumiswapSwapCallback {
         uint24 fee,
         uint128 desireY,
         int24 highPt
-    ) public returns (uint256) {
+    ) public returns (uint256, int24) {
         require(tokenX < tokenY, "x<y");
         address poolAddr = pool(tokenX, tokenY, fee);
         address payer = msg.sender;
