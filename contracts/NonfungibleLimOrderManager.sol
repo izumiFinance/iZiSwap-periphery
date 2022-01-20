@@ -249,15 +249,22 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
         if (actualDelta > order.sellingRemain) {
             actualDelta = uint128(order.sellingRemain);
         }
+        uint128 actualDeltaRefund;
         if (order.sellXEarnY) {
-            actualDelta = IIzumiswapPool(pool).decLimOrderWithX(order.pt, actualDelta);
+            actualDeltaRefund = IIzumiswapPool(pool).decLimOrderWithX(order.pt, actualDelta);
         } else {
-            actualDelta = IIzumiswapPool(pool).decLimOrderWithY(order.pt, actualDelta);
+            actualDeltaRefund = IIzumiswapPool(pool).decLimOrderWithY(order.pt, actualDelta);
         }
-        console.log("actualDelta: %s", uint256(actualDelta));
+        // actualDeltaRefund may be less than actualDelta
+        // but we still minus actualDelta in sellingRemain, and only add actualDeltaRefund to sellingDec
+        // because if actualDeltaRefund < actualDelta
+        // then other users cannot buy from this limit order any more
+        // and also, the seller cannot fetch back more than actualDeltaRefund from swap pool >_<
+        // but fortunately, actualDeltaRefund < actualDelta only happens after swap on this limit order
+        // and also, actualDelta - actualDeltaRefund is a very small deviation
         order.sellingRemain -= actualDelta;
-        order.sellingDec += actualDelta;
-        order.accSellingDec += actualDelta;
+        order.sellingDec += actualDeltaRefund;
+        order.accSellingDec += actualDeltaRefund;
     }
     function collectLimOrder(
         address recipient,
@@ -286,7 +293,12 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
         order.sellingDec -= actualCollectDec;
         order.earn -= actualCollectEarn;
 
-        if (order.sellingDec == 0 && order.sellingRemain == 0 && order.earn == 0) {
+        bool noRemain = (order.sellingRemain == 0);
+        if (order.sellingRemain > 0) {
+            noRemain = (order.amount / order.sellingRemain > 100000);
+        }
+
+        if (order.sellingDec == 0 && noRemain && order.earn == 0) {
             addr2ActiveOrderID[msg.sender].remove(sellId);
             addr2DeactiveOrderID[msg.sender].add(sellId);
         }

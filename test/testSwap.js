@@ -196,15 +196,7 @@ async function checkUserEarn(
     expect(eEarn.toFixed(0)).to.equal(earn.toFixed(0));
     expect(eEarnAssign.toFixed(0)).to.equal(earnAssign.toFixed(0));
 }
-async function getPoolParts() {
-  const IzumiswapPoolPartFactory = await ethers.getContractFactory("IzumiswapPoolPart");
-  const izumiswapPoolPart = await IzumiswapPoolPartFactory.deploy();
-  await izumiswapPoolPart.deployed();
-  const IzumiswapPoolPartDesireFactory = await ethers.getContractFactory("IzumiswapPoolPartDesire");
-  const izumiswapPoolPartDesire = await IzumiswapPoolPartDesireFactory.deploy();
-  await izumiswapPoolPartDesire.deployed();
-  return [izumiswapPoolPart.address, izumiswapPoolPartDesire.address];
-}
+
 async function getLimOrder(poolAddr, pt) {
     const IzumiswapPool = await ethers.getContractFactory("IzumiswapPool");
     pool = await IzumiswapPool.attach(poolAddr);
@@ -234,13 +226,13 @@ function getContractJson(path) {
     return data;
 }
 async function getPoolParts(signer) {
-    var izumiswapPoolPartJson = getContractJson(__dirname + '/core/IzumiswapPoolPart.sol/IzumiswapPoolPart.json');
+    var izumiswapPoolPartJson = getContractJson(__dirname + '/core/swapX2Y.sol/SwapX2YModule.json');
     var IzumiswapPoolPartFactory = await ethers.getContractFactory(izumiswapPoolPartJson.abi, izumiswapPoolPartJson.bytecode, signer);
 
     const izumiswapPoolPart = await IzumiswapPoolPartFactory.deploy();
     await izumiswapPoolPart.deployed();
 
-    var izumiswapPoolPartDesireJson = getContractJson(__dirname + '/core/IzumiswapPoolPartDesire.sol/IzumiswapPoolPartDesire.json');
+    var izumiswapPoolPartDesireJson = getContractJson(__dirname + '/core/swapY2X.sol/SwapY2XModule.json');
     var IzsumiswapPoolPartDesireFactory = await ethers.getContractFactory(izumiswapPoolPartDesireJson.abi, izumiswapPoolPartDesireJson.bytecode, signer);
     const izumiswapPoolPartDesire = await IzsumiswapPoolPartDesireFactory.deploy();
     await izumiswapPoolPartDesire.deployed();
@@ -255,7 +247,7 @@ async function getIzumiswapFactory(poolPart, poolPartDesire, signer) {
     return factory;
 }
 async function getWETH9(signer) {
-    var WETH9Json = getContractJson(__dirname + '/core/WETH9.json').WETH9;
+    var WETH9Json = getContractJson(__dirname + '/core/WETH9.json');
     var WETH9Factory = await ethers.getContractFactory(WETH9Json.abi, WETH9Json.bytecode, signer);
     var WETH9 = await WETH9Factory.deploy();
     await WETH9.deployed();
@@ -364,7 +356,19 @@ describe("swap", function () {
         var amountYOrigin = BigNumber("1000000000000");
         await tokenY.transfer(trader1.address, amountYOrigin.toFixed(0));
         await tokenY.connect(trader1).approve(swap.address, amountY.toFixed(0));
-        await swap.connect(trader1).swapY2X({tokenX: tokenX.address, tokenY: tokenY.address, fee: 3000}, amountY.toFixed(0), 5100, 0);
+        await swap.connect(trader1).swapY2X(
+            {
+                tokenX: tokenX.address, 
+                tokenY: tokenY.address, 
+                fee: 3000,
+                recipient: trader1.address,
+                amount: amountY.toFixed(0),
+                boundaryPt: 5100,
+                minAcquired: 0,
+                maxPayed: amountY.toFixed(0),
+            }
+        );
+        console.log('after swapy2x!!!!!!!!!!!!!!!!!!!!!');
         await checkBalance(tokenY, trader1, amountYOrigin.minus(amountY));
         await checkBalance(tokenX, trader1, amountX);
 
@@ -377,7 +381,18 @@ describe("swap", function () {
         var amountXOrigin = BigNumber("1000000000000");
         await tokenX.transfer(trader1.address, amountXOrigin.toFixed(0));
         await tokenX.connect(trader1).approve(swap.address, amountX.toFixed(0));
-        await swap.connect(trader1).swapX2Y({tokenX: tokenX.address, tokenY: tokenY.address, fee: 3000}, amountX.toFixed(0), 4900, 0);
+        await swap.connect(trader1).swapX2Y(
+            {
+                tokenX: tokenX.address, 
+                tokenY: tokenY.address, 
+                fee: 3000,
+                recipient: trader1.address,
+                amount: amountX.toFixed(0),
+                boundaryPt: 4900,
+                minAcquired: 0,
+                maxPayed: amountX.toFixed(0)
+            }
+        );
         await checkBalance(tokenX, trader1, amountXOrigin.minus(amountX));
         await checkBalance(tokenY, trader1, amountY);
     });
@@ -389,7 +404,18 @@ describe("swap", function () {
         var amountYOrigin = BigNumber("1000000000000");
         await tokenY.transfer(trader1.address, amountYOrigin.toFixed(0));
         await tokenY.connect(trader1).approve(swap.address, amountY.toFixed(0));
-        await swap.connect(trader1).swapY2XDesireX({tokenX: tokenX.address, tokenY: tokenY.address, fee: 3000}, amountX.toFixed(0), 5100, '1000000000000');
+        await swap.connect(trader1).swapY2XDesireX(
+            {
+                tokenX: tokenX.address, 
+                tokenY: tokenY.address, 
+                fee: 3000,
+                recipient: trader1.address,
+                amount: amountX.toFixed(0),
+                boundaryPt: 5100,
+                minAcquired: 0,
+                maxPayed: '1000000000000'
+            }
+        );
         await checkBalance(tokenY, trader1, amountYOrigin.minus(amountY));
         await checkBalance(tokenX, trader1, amountX);
     });
@@ -401,7 +427,18 @@ describe("swap", function () {
         var amountXOrigin = BigNumber("1000000000000");
         await tokenX.transfer(trader1.address, amountXOrigin.toFixed(0));
         await tokenX.connect(trader1).approve(swap.address, amountX.toFixed(0));
-        await swap.connect(trader1).swapX2YDesireY({tokenX: tokenX.address, tokenY: tokenY.address, fee: 3000}, amountY.toFixed(0), 4900, '1000000000000');
+        await swap.connect(trader1).swapX2YDesireY(
+            {
+                tokenX: tokenX.address, 
+                tokenY: tokenY.address, 
+                fee: 3000,
+                recipient: trader1.address,
+                amount: amountY.toFixed(0),
+                boundaryPt: 4900,
+                minAcquired: 0,
+                maxPayed: '1000000000000'
+            }
+        );
         await checkBalance(tokenX, trader1, amountXOrigin.minus(amountX));
         await checkBalance(tokenY, trader1, amountY);
     });

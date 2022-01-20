@@ -142,16 +142,6 @@ function blockNum2BigNumber(blc) {
     return BigNumber(blc._hex);
 }
 
-async function getPoolParts() {
-  const IzumiswapPoolPartFactory = await ethers.getContractFactory("IzumiswapPoolPart");
-  const izumiswapPoolPart = await IzumiswapPoolPartFactory.deploy();
-  await izumiswapPoolPart.deployed();
-  const IzumiswapPoolPartDesireFactory = await ethers.getContractFactory("IzumiswapPoolPartDesire");
-  const izumiswapPoolPartDesire = await IzumiswapPoolPartDesireFactory.deploy();
-  await izumiswapPoolPartDesire.deployed();
-  return [izumiswapPoolPart.address, izumiswapPoolPartDesire.address];
-}
-
 function getContractJson(path) {
     const fs = require('fs');
     let rawdata = fs.readFileSync(path);
@@ -159,13 +149,13 @@ function getContractJson(path) {
     return data;
 }
 async function getPoolParts(signer) {
-    var izumiswapPoolPartJson = getContractJson(__dirname + '/core/IzumiswapPoolPart.sol/IzumiswapPoolPart.json');
+    var izumiswapPoolPartJson = getContractJson(__dirname + '/core/swapX2Y.sol/SwapX2YModule.json');
     var IzumiswapPoolPartFactory = await ethers.getContractFactory(izumiswapPoolPartJson.abi, izumiswapPoolPartJson.bytecode, signer);
 
     const izumiswapPoolPart = await IzumiswapPoolPartFactory.deploy();
     await izumiswapPoolPart.deployed();
 
-    var izumiswapPoolPartDesireJson = getContractJson(__dirname + '/core/IzumiswapPoolPartDesire.sol/IzumiswapPoolPartDesire.json');
+    var izumiswapPoolPartDesireJson = getContractJson(__dirname + '/core/swapY2X.sol/SwapY2XModule.json');
     var IzsumiswapPoolPartDesireFactory = await ethers.getContractFactory(izumiswapPoolPartDesireJson.abi, izumiswapPoolPartDesireJson.bytecode, signer);
     const izumiswapPoolPartDesire = await IzsumiswapPoolPartDesireFactory.deploy();
     await izumiswapPoolPartDesire.deployed();
@@ -180,7 +170,7 @@ async function getIzumiswapFactory(poolPart, poolPartDesire, signer) {
     return factory;
 }
 async function getWETH9(signer) {
-    var WETH9Json = getContractJson(__dirname + '/core/WETH9.json').WETH9;
+    var WETH9Json = getContractJson(__dirname + '/core/WETH9.json');
     var WETH9Factory = await ethers.getContractFactory(WETH9Json.abi, WETH9Json.bytecode, signer);
     var WETH9 = await WETH9Factory.deploy();
     await WETH9.deployed();
