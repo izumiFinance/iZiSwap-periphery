@@ -3,11 +3,11 @@ pragma solidity ^0.8.4;
 
 import "./base/base.sol";
 
-import "./core/interfaces/IIzumiswapCallback.sol";
-import "./core/interfaces/IIzumiswapFactory.sol";
-import "./core/interfaces/IIzumiswapPool.sol";
+import "./core/interfaces/IiZiSwapCallback.sol";
+import "./core/interfaces/IiZiSwapFactory.sol";
+import "./core/interfaces/IiZiSwapPool.sol";
 
-contract Swap is Base, IIzumiswapSwapCallback {
+contract Swap is Base, IiZiSwapCallback {
 
     struct SwapCallbackData {
         // amount of token0 is input param
@@ -79,7 +79,7 @@ contract Swap is Base, IIzumiswapSwapCallback {
         address poolAddr = pool(swapParams.tokenX, swapParams.tokenY, swapParams.fee);
         address payer = msg.sender;
         address recipient = (swapParams.recipient == address(0)) ? address(this): swapParams.recipient;
-        (uint256 amountX, ) = IIzumiswapPool(poolAddr).swapY2X(
+        (uint256 amountX, ) = IiZiSwapPool(poolAddr).swapY2X(
             recipient, swapParams.amount, swapParams.boundaryPt,
             abi.encode(SwapCallbackData({token0: swapParams.tokenY, token1:swapParams.tokenX, fee: swapParams.fee, payer: payer}))
         );
@@ -93,7 +93,7 @@ contract Swap is Base, IIzumiswapSwapCallback {
         address payer = msg.sender;
         address recipient = (swapParams.recipient == address(0)) ? address(this): swapParams.recipient;
         SwapAmount memory amount;
-        (amount.amountX, amount.amountY) = IIzumiswapPool(poolAddr).swapY2XDesireX(
+        (amount.amountX, amount.amountY) = IiZiSwapPool(poolAddr).swapY2XDesireX(
             recipient, swapParams.amount, swapParams.boundaryPt,
             abi.encode(SwapCallbackData({token0: swapParams.tokenX, token1:swapParams.tokenY, fee: swapParams.fee, payer: payer}))
         );
@@ -107,7 +107,7 @@ contract Swap is Base, IIzumiswapSwapCallback {
         address poolAddr = pool(swapParams.tokenX, swapParams.tokenY, swapParams.fee);
         address payer = msg.sender;
         address recipient = (swapParams.recipient == address(0)) ? address(this): swapParams.recipient;
-        (, uint256 amountY) = IIzumiswapPool(poolAddr).swapX2Y(
+        (, uint256 amountY) = IiZiSwapPool(poolAddr).swapX2Y(
             recipient, swapParams.amount, swapParams.boundaryPt,
             abi.encode(SwapCallbackData({token0: swapParams.tokenX, token1:swapParams.tokenY, fee: swapParams.fee, payer: payer}))
         );
@@ -121,7 +121,7 @@ contract Swap is Base, IIzumiswapSwapCallback {
         address payer = msg.sender;
         address recipient = (swapParams.recipient == address(0)) ? address(this): swapParams.recipient;
         SwapAmount memory amount;
-        (amount.amountX, amount.amountY) = IIzumiswapPool(poolAddr).swapX2YDesireY(
+        (amount.amountX, amount.amountY) = IiZiSwapPool(poolAddr).swapX2YDesireY(
             recipient, swapParams.amount, swapParams.boundaryPt,
             abi.encode(SwapCallbackData({token0: swapParams.tokenY, token1:swapParams.tokenX, fee: swapParams.fee, payer: payer}))
         );

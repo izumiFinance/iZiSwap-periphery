@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.4;
 
-import "./core/interfaces/IIzumiswapCallback.sol";
-import "./core/interfaces/IIzumiswapFactory.sol";
-import "./core/interfaces/IIzumiswapPool.sol";
+import "./core/interfaces/IiZiSwapCallback.sol";
+import "./core/interfaces/IiZiSwapFactory.sol";
+import "./core/interfaces/IiZiSwapPool.sol";
 
 import "./libraries/MintMath.sol";
 import "./libraries/FixedPoint128.sol";
@@ -15,7 +15,7 @@ import '@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol';
 import "hardhat/console.sol";
 
 
-contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCallback {
+contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
 
     event IncreaseLiquidity(uint256 indexed tokenId, uint128 liquidity, uint256 amountX, uint256 amountY);
 
@@ -76,9 +76,9 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCa
 
     function createPool(address tokenX, address tokenY, uint24 fee, int24 cp) external returns (address) {
         require(tokenX < tokenY, "x<y");
-        address pool = IIzumiswapFactory(factory).pool(tokenX, tokenY, fee);
+        address pool = IiZiSwapFactory(factory).pool(tokenX, tokenY, fee);
         if (pool == address(0)) {
-            pool = IIzumiswapFactory(factory).newPool(tokenX, tokenY, fee, cp);
+            pool = IiZiSwapFactory(factory).newPool(tokenX, tokenY, fee, cp);
             return pool;
         }
         return pool;
@@ -109,7 +109,7 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCa
     }
     function getLastFeeScale(address pool, bytes32 key) private view returns(uint256, uint256) {
 
-        (, uint256 lastFeeScaleX_128, uint256 lastFeeScaleY_128, , ) = IIzumiswapPool(pool).liquidities(
+        (, uint256 lastFeeScaleX_128, uint256 lastFeeScaleY_128, , ) = IiZiSwapPool(pool).liquidities(
             key
         );
         return (lastFeeScaleX_128, lastFeeScaleY_128);
@@ -122,7 +122,7 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCa
             ,
             ,
             ,
-        ) = IIzumiswapPool(pool).state();
+        ) = IiZiSwapPool(pool).state();
         return (sqrtPrice_96, currPt);
     }
     function _addLiquidity(MintParam memory mp) private returns(
@@ -130,8 +130,8 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCa
     ) {
         int24 currPt;
         uint160 sqrtPrice_96;
-        pool = IIzumiswapFactory(factory).pool(mp.tokenX, mp.tokenY, mp.fee);
-        uint160 sqrtRate_96 = IIzumiswapPool(pool).sqrtRate_96();
+        pool = IiZiSwapFactory(factory).pool(mp.tokenX, mp.tokenY, mp.fee);
+        uint160 sqrtRate_96 = IiZiSwapPool(pool).sqrtRate_96();
         require(pool != address(0), "P0");
         (sqrtPrice_96, currPt) = getPoolPrice(pool);
         liquidity = MintMath.computeLiquidity(
@@ -146,7 +146,7 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCa
             sqrtRate_96
         );
         
-        (amountX, amountY) = IIzumiswapPool(pool).mint(address(this), mp.pl, mp.pr, liquidity, 
+        (amountX, amountY) = IiZiSwapPool(pool).mint(address(this), mp.pl, mp.pr, liquidity, 
             abi.encode(MintCallbackData({tokenX: mp.tokenX, tokenY: mp.tokenY, fee: mp.fee, payer: msg.sender})));
     }
     function mint(MintParam calldata mp) external payable returns(
@@ -217,8 +217,8 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCa
         PoolMeta memory poolMeta = poolMetas[liquid.poolId];
         int24 currPt;
         uint160 sqrtPrice_96;
-        address pool = IIzumiswapFactory(factory).pool(poolMeta.tokenX, poolMeta.tokenY, poolMeta.fee);
-        uint160 sqrtRate_96 = IIzumiswapPool(pool).sqrtRate_96();
+        address pool = IiZiSwapFactory(factory).pool(poolMeta.tokenX, poolMeta.tokenY, poolMeta.fee);
+        uint160 sqrtRate_96 = IiZiSwapPool(pool).sqrtRate_96();
         require(pool != address(0), "P0");
         (sqrtPrice_96, currPt) = getPoolPrice(pool);
         liquidityDelta = MintMath.computeLiquidity(
@@ -234,7 +234,7 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCa
         );
         require(int128(liquid.liquidity) == int256(uint256(liquid.liquidity)), "LO");
         uint128 newLiquidity = liquidityDelta + liquid.liquidity;
-        (amountX, amountY) = IIzumiswapPool(pool).mint(address(this), liquid.leftPt, liquid.rightPt, liquidityDelta, 
+        (amountX, amountY) = IiZiSwapPool(pool).mint(address(this), liquid.leftPt, liquid.rightPt, liquidityDelta, 
             abi.encode(MintCallbackData({tokenX: poolMeta.tokenX, tokenY: poolMeta.tokenY, fee: poolMeta.fee, payer: msg.sender})));
         require(amountX >= mp.amountXMin, "XMIN");
         require(amountY >= mp.amountYMin, "YMIN");
@@ -261,11 +261,11 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCa
             liquidDelta = liquidity.liquidity;
         }
         PoolMeta memory poolMeta = poolMetas[liquidity.poolId];
-        address pool = IIzumiswapFactory(factory).pool(poolMeta.tokenX, poolMeta.tokenY, poolMeta.fee);
+        address pool = IiZiSwapFactory(factory).pool(poolMeta.tokenX, poolMeta.tokenY, poolMeta.fee);
         require(pool != address(0), "P0");
         
         uint128 newLiquidity = liquidity.liquidity - liquidDelta;
-        (amountX, amountY) = IIzumiswapPool(pool).burn(liquidity.leftPt, liquidity.rightPt, liquidDelta);
+        (amountX, amountY) = IiZiSwapPool(pool).burn(liquidity.leftPt, liquidity.rightPt, liquidDelta);
         require(amountX >= amountXMin, "XMIN");
         require(amountY >= amountYMin, "YMIN");
         updateLiquidity(liquidity, pool, newLiquidity, amountX, amountY);
@@ -286,10 +286,10 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCa
         require(lid < liquidityNum, "LN");
         Liquidity storage liquidity = liquidities[lid];
         PoolMeta memory poolMeta = poolMetas[liquidity.poolId];
-        address pool = IIzumiswapFactory(factory).pool(poolMeta.tokenX, poolMeta.tokenY, poolMeta.fee);
+        address pool = IiZiSwapFactory(factory).pool(poolMeta.tokenX, poolMeta.tokenY, poolMeta.fee);
         require(pool != address(0), "P0");
         if (liquidity.liquidity > 0) {
-            IIzumiswapPool(pool).burn(liquidity.leftPt, liquidity.rightPt, 0);
+            IiZiSwapPool(pool).burn(liquidity.leftPt, liquidity.rightPt, 0);
             updateLiquidity(liquidity, pool, liquidity.liquidity, 0, 0);
         }
         if (amountXLim > liquidity.remainTokenX) {
@@ -298,7 +298,7 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IIzumiswapMintCa
         if (amountYLim > liquidity.remainTokenY) {
             amountYLim = uint128(liquidity.remainTokenY);
         }
-        (amountX, amountY) = IIzumiswapPool(pool).collect(miner, liquidity.leftPt, liquidity.rightPt, amountXLim, amountYLim);
+        (amountX, amountY) = IiZiSwapPool(pool).collect(miner, liquidity.leftPt, liquidity.rightPt, amountXLim, amountYLim);
         // amountX(Y)Lim may be a little greater than actual value
         liquidity.remainTokenX -= amountXLim;
         liquidity.remainTokenY -= amountYLim;

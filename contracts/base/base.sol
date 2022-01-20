@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '../core/interfaces/IIzumiswapFactory.sol';
+import '../core/interfaces/IiZiSwapFactory.sol';
 
 /// @title Interface for WETH9
 interface IWETH9 is IERC20 {
@@ -142,7 +142,7 @@ abstract contract Base {
     }
 
     function pool(address tokenX, address tokenY, uint24 fee) public view returns(address) {
-        return IIzumiswapFactory(factory).pool(tokenX, tokenY, fee);
+        return IiZiSwapFactory(factory).pool(tokenX, tokenY, fee);
     }
     function verify(address tokenX, address tokenY, uint24 fee) internal view {
         require (msg.sender == pool(tokenX, tokenY, fee), "sp");

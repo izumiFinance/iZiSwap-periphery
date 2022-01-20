@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.4;
 
-import "./core/interfaces/IIzumiswapCallback.sol";
-import "./core/interfaces/IIzumiswapFactory.sol";
-import "./core/interfaces/IIzumiswapPool.sol";
+import "./core/interfaces/IiZiSwapCallback.sol";
+import "./core/interfaces/IiZiSwapFactory.sol";
+import "./core/interfaces/IiZiSwapPool.sol";
 
 import "./libraries/FixedPoint128.sol";
 import './libraries/MulDivMath.sol';
@@ -14,7 +14,7 @@ import "hardhat/console.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
 
-contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
+contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
     using EnumerableSet for EnumerableSet.UintSet;
     uint128 maxPoolId = 1;
     struct LimOrder {
@@ -100,14 +100,14 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
         }
     }
     function getEarnX(address pool, bytes32 key) private view returns(uint256, uint256) {
-        (uint256 lastAccEarn, uint256 sellingRemain, uint256 sellingDesc, uint256 earn, uint256 earnAssign) = IIzumiswapPool(pool).userEarnX(key);
+        (uint256 lastAccEarn, uint256 sellingRemain, uint256 sellingDesc, uint256 earn, uint256 earnAssign) = IiZiSwapPool(pool).userEarnX(key);
         return (lastAccEarn, earn);
     }
     function getEarnX(address pool, address miner, int24 pt) private view returns(uint256 accEarn, uint256 earn) {
         (accEarn, earn) = getEarnX(pool, limOrderKey(miner, pt));
     }
     function getEarnY(address pool, bytes32 key) private view returns(uint256, uint256) {
-        (uint256 lastAccEarn, uint256 sellingRemain, uint256 sellingDesc, uint256 earn, uint256 earnAssign) = IIzumiswapPool(pool).userEarnY(key);
+        (uint256 lastAccEarn, uint256 sellingRemain, uint256 sellingDesc, uint256 earn, uint256 earnAssign) = IiZiSwapPool(pool).userEarnY(key);
         return (lastAccEarn, earn);
     }
     function getEarnY(address pool, address miner, int24 pt) private view returns(uint256 accEarn, uint256 earn) {
@@ -132,12 +132,12 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
         address pool, AddLimOrderParam memory ap
     ) private returns (uint128 order, uint256 acquire) {
         if (ap.sellXEarnY) {
-            (order, acquire) = IIzumiswapPool(pool).addLimOrderWithX(
+            (order, acquire) = IiZiSwapPool(pool).addLimOrderWithX(
                 address(this), ap.pt, ap.amount,
                 abi.encode(LimCallbackData({tokenX: ap.tokenX, tokenY: ap.tokenY, fee: ap.fee, payer: msg.sender}))
             );
         } else {
-            (order, acquire) = IIzumiswapPool(pool).addLimOrderWithY(
+            (order, acquire) = IiZiSwapPool(pool).addLimOrderWithY(
                 address(this), ap.pt, ap.amount,
                 abi.encode(LimCallbackData({tokenX: ap.tokenX, tokenY: ap.tokenY, fee: ap.fee, payer: msg.sender}))
             );
@@ -149,7 +149,7 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
     ) external payable returns (uint256 sellId, uint128 order, uint256 acquire) {
         require(ap.tokenX < ap.tokenY, 'x<y');
         require(addr2ActiveOrderID[recipient].length() < ACTIVE_ORDER_LIM, "Active Limit");
-        address pool = IIzumiswapFactory(factory).pool(ap.tokenX, ap.tokenY, ap.fee);
+        address pool = IiZiSwapFactory(factory).pool(ap.tokenX, ap.tokenY, ap.fee);
         (order, acquire) = _addLimOrder(pool, ap);
         sellId = sellNum ++;
         (uint256 accEarn, uint256 earn) = getEarn(pool, address(this), ap.pt, ap.sellXEarnY);
@@ -205,9 +205,9 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
         address pool, int24 pt, uint256 amount, bool isEarnY
     ) private returns(uint256 actualAssign) {
         if (isEarnY) {
-            actualAssign = IIzumiswapPool(pool).assignLimOrderEarnY(pt, amount);
+            actualAssign = IiZiSwapPool(pool).assignLimOrderEarnY(pt, amount);
         } else {
-            actualAssign = IIzumiswapPool(pool).assignLimOrderEarnX(pt, amount);
+            actualAssign = IiZiSwapPool(pool).assignLimOrderEarnX(pt, amount);
         }
     }
     function _updateOrder(
@@ -215,9 +215,9 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
         address pool
     ) private returns (uint256 earn) {
         if (order.sellXEarnY) {
-            IIzumiswapPool(pool).decLimOrderWithX(order.pt, 0);
+            IiZiSwapPool(pool).decLimOrderWithX(order.pt, 0);
         } else {
-            IIzumiswapPool(pool).decLimOrderWithY(order.pt, 0);
+            IiZiSwapPool(pool).decLimOrderWithY(order.pt, 0);
         }
         (uint256 accEarn, uint256 earnLim) = getEarn(pool, address(this), order.pt, order.sellXEarnY);
         earnLim = getEarnLim(order.lastAccEarn, accEarn, earnLim);
@@ -251,9 +251,9 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
         }
         uint128 actualDeltaRefund;
         if (order.sellXEarnY) {
-            actualDeltaRefund = IIzumiswapPool(pool).decLimOrderWithX(order.pt, actualDelta);
+            actualDeltaRefund = IiZiSwapPool(pool).decLimOrderWithX(order.pt, actualDelta);
         } else {
-            actualDeltaRefund = IIzumiswapPool(pool).decLimOrderWithY(order.pt, actualDelta);
+            actualDeltaRefund = IiZiSwapPool(pool).decLimOrderWithY(order.pt, actualDelta);
         }
         // actualDeltaRefund may be less than actualDelta
         // but we still minus actualDelta in sellingRemain, and only add actualDeltaRefund to sellingDec
@@ -288,7 +288,7 @@ contract NonfungibleLOrderManager is Base, IIzumiswapAddLimOrderCallback {
         if (recipient == address(0)) {
             recipient = address(this);
         }
-        IIzumiswapPool(pool).collectLimOrder(recipient, order.pt, actualCollectDec, actualCollectEarn, order.sellXEarnY);
+        IiZiSwapPool(pool).collectLimOrder(recipient, order.pt, actualCollectDec, actualCollectEarn, order.sellXEarnY);
         // collect from core may be less, but we still do not modify actualCollectEarn(Dec)
         order.sellingDec -= actualCollectDec;
         order.earn -= actualCollectEarn;
