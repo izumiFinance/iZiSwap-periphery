@@ -1,5 +1,5 @@
 // TODO may need modify
-pragma solidity ^0.8.4;
+pragma solidity >=0.7.3;
 
 interface IiZiSwapMintCallback {
 

@@ -208,7 +208,7 @@ async function getPoolParts(signer) {
 }
 
 async function getIzumiswapFactory(poolPart, poolPartDesire, signer) {
-    var izumiswapJson = getContractJson(__dirname + '/core/IzumiswapFactory.sol/IzumiswapFactory.json');
+    var izumiswapJson = getContractJson(__dirname + '/core/iZiSwapFactory.sol/iZiSwapFactory.json');
     var IzumiswapFactory = await ethers.getContractFactory(izumiswapJson.abi, izumiswapJson.bytecode, signer);
     var factory = await IzumiswapFactory.deploy(poolPart, poolPartDesire);
     await factory.deployed();
