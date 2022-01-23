@@ -30,6 +30,9 @@ contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
         uint256 timestamp;
     }
 
+    event NewLimitOrder(uint256 indexed limitOrderId, uint256 amount, bool sellXEarnY, uint128 indexed poolId);
+    event CancelLimitOrder(uint256 indexed limitOrderId);
+
     mapping(uint256 =>LimOrder) public limOrders;
     uint256 public sellNum = 0;
     
@@ -168,6 +171,7 @@ contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
         });
         addr2ActiveOrderID[recipient].add(sellId);
         sellers[sellId] = recipient;
+        emit NewLimitOrder(sellId, ap.amount, ap.sellXEarnY, poolId);
     }
     function getEarnLim(uint256 lastAccEarn, uint256 accEarn, uint256 earnRemain) private pure returns(uint256 earnLim) {
         require(accEarn >= lastAccEarn, "AEO");
@@ -301,6 +305,8 @@ contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
         if (order.sellingDec == 0 && noRemain && order.earn == 0) {
             addr2ActiveOrderID[msg.sender].remove(sellId);
             addr2DeactiveOrderID[msg.sender].add(sellId);
+
+            emit CancelLimitOrder(sellId);
         }
     }
 

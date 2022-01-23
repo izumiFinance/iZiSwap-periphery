@@ -72,6 +72,9 @@ contract Swap is Base, IiZiSwapCallback {
         uint256 amountY;
     }
 
+    event SwapEvent(address indexed tokenA, address indexed tokenB, uint24 fee, uint256 amountA, uint256 amountB);
+
+
     function swapY2X(
         SwapParams calldata swapParams
     ) external payable {
@@ -79,11 +82,12 @@ contract Swap is Base, IiZiSwapCallback {
         address poolAddr = pool(swapParams.tokenX, swapParams.tokenY, swapParams.fee);
         address payer = msg.sender;
         address recipient = (swapParams.recipient == address(0)) ? address(this): swapParams.recipient;
-        (uint256 amountX, ) = IiZiSwapPool(poolAddr).swapY2X(
+        (uint256 amountX, uint256 amountY) = IiZiSwapPool(poolAddr).swapY2X(
             recipient, swapParams.amount, swapParams.boundaryPt,
             abi.encode(SwapCallbackData({token0: swapParams.tokenY, token1:swapParams.tokenX, fee: swapParams.fee, payer: payer}))
         );
         require(amountX >= swapParams.minAcquired, "XMIN");
+        emit SwapEvent(swapParams.tokenY, swapParams.tokenX, swapParams.fee, amountY, amountX);
     }
     function swapY2XDesireX(
         SwapParams calldata swapParams
@@ -99,6 +103,7 @@ contract Swap is Base, IiZiSwapCallback {
         );
         require(amount.amountX >= swapParams.minAcquired, "XMIN");
         require(amount.amountY <= swapParams.maxPayed, "YMAX");
+        emit SwapEvent(swapParams.tokenY, swapParams.tokenX, swapParams.fee, amount.amountY, amount.amountX);
     }
     function swapX2Y(
         SwapParams calldata swapParams
@@ -107,11 +112,12 @@ contract Swap is Base, IiZiSwapCallback {
         address poolAddr = pool(swapParams.tokenX, swapParams.tokenY, swapParams.fee);
         address payer = msg.sender;
         address recipient = (swapParams.recipient == address(0)) ? address(this): swapParams.recipient;
-        (, uint256 amountY) = IiZiSwapPool(poolAddr).swapX2Y(
+        (uint256 amountX, uint256 amountY) = IiZiSwapPool(poolAddr).swapX2Y(
             recipient, swapParams.amount, swapParams.boundaryPt,
             abi.encode(SwapCallbackData({token0: swapParams.tokenX, token1:swapParams.tokenY, fee: swapParams.fee, payer: payer}))
         );
         require(amountY >= swapParams.minAcquired, "YMIN");
+        emit SwapEvent(swapParams.tokenX, swapParams.tokenY, swapParams.fee, amountX, amountY);
     }
     function swapX2YDesireY(
         SwapParams calldata swapParams
@@ -127,5 +133,6 @@ contract Swap is Base, IiZiSwapCallback {
         );
         require(amount.amountX <= swapParams.maxPayed, "XMAX");
         require(amount.amountY >= swapParams.minAcquired, "YMIN");
+        emit SwapEvent(swapParams.tokenX, swapParams.tokenY, swapParams.fee, amount.amountX, amount.amountY);
     }
 }
