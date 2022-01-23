@@ -122,6 +122,9 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCall
             ,
             ,
             ,
+            ,
+            ,
+            ,
         ) = IiZiSwapPool(pool).state();
         return (sqrtPrice_96, currPt);
     }
@@ -145,7 +148,6 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCall
             sqrtPrice_96,
             sqrtRate_96
         );
-        
         (amountX, amountY) = IiZiSwapPool(pool).mint(address(this), mp.pl, mp.pr, liquidity, 
             abi.encode(MintCallbackData({tokenX: mp.tokenX, tokenY: mp.tokenY, fee: mp.fee, payer: msg.sender})));
     }

@@ -53,6 +53,8 @@ async function mint(nflm, miner, tokenX, tokenY, fee, pl, pr, amountX, amountY) 
         console.log("approve y: " + await tokenY.allowance(miner.address, nflm.address));
     }
 
+    console.log('before mint');
+
     await nflm.connect(miner).mint(
         {
             miner: miner.address,
@@ -67,6 +69,7 @@ async function mint(nflm, miner, tokenX, tokenY, fee, pl, pr, amountX, amountY) 
             amountYMin: 0,
         }
     );
+    console.log('after mint');
 }
 
 async function addLiquidity(nflm, miner, tokenX, tokenY, lid, amountX, amountY) {
@@ -282,6 +285,7 @@ function getContractJson(path) {
     let data = JSON.parse(rawdata);
     return data;
 }
+
 async function getPoolParts(signer) {
     var izumiswapPoolPartJson = getContractJson(__dirname + '/core/swapX2Y.sol/SwapX2YModule.json');
     var IzumiswapPoolPartFactory = await ethers.getContractFactory(izumiswapPoolPartJson.abi, izumiswapPoolPartJson.bytecode, signer);
@@ -293,13 +297,18 @@ async function getPoolParts(signer) {
     var IzsumiswapPoolPartDesireFactory = await ethers.getContractFactory(izumiswapPoolPartDesireJson.abi, izumiswapPoolPartDesireJson.bytecode, signer);
     const izumiswapPoolPartDesire = await IzsumiswapPoolPartDesireFactory.deploy();
     await izumiswapPoolPartDesire.deployed();
-    return [izumiswapPoolPart.address, izumiswapPoolPartDesire.address];
+
+    var mintModuleJson = getContractJson(__dirname + '/core/mint.sol/MintModule.json');
+    var MintModuleFactory = await ethers.getContractFactory(mintModuleJson.abi, mintModuleJson.bytecode, signer);
+    const mintModule = await MintModuleFactory.deploy();
+    await mintModule.deployed();
+    return [izumiswapPoolPart.address, izumiswapPoolPartDesire.address, mintModule.address];
 }
 
-async function getIzumiswapFactory(poolPart, poolPartDesire, signer) {
+async function getIzumiswapFactory(poolPart, poolPartDesire, mintModule, signer) {
     var izumiswapJson = getContractJson(__dirname + '/core/iZiSwapFactory.sol/iZiSwapFactory.json');
     var IzumiswapFactory = await ethers.getContractFactory(izumiswapJson.abi, izumiswapJson.bytecode, signer);
-    var factory = await IzumiswapFactory.deploy(poolPart, poolPartDesire);
+    var factory = await IzumiswapFactory.deploy(poolPart, poolPartDesire, mintModule);
     await factory.deployed();
     return factory;
 }
@@ -389,8 +398,8 @@ describe("swap", function () {
     var startTotalLiquidity;
     beforeEach(async function() {
         [signer, miner1, miner2, miner3, miner4, trader1, trader2] = await ethers.getSigners();
-        [poolPart, poolPartDesire] = await getPoolParts();
-        izumiswapFactory = await getIzumiswapFactory(poolPart, poolPartDesire, signer);
+        [poolPart, poolPartDesire, mintModule] = await getPoolParts();
+        izumiswapFactory = await getIzumiswapFactory(poolPart, poolPartDesire, mintModule, signer);
         console.log("get izumiswapFactory");
         weth9 = await getWETH9(signer);
         console.log("get weth9");
@@ -413,8 +422,9 @@ describe("swap", function () {
 
         poolAddr = await nflm.createPool(tokenX.address, tokenY.address, 3000, 5010);
         rate = BigNumber("1.0001");
-
+        console.log('beforer mint ')
         await mintByLiquid(nflm, tokenX, tokenY, miner1, 4900, 5100, 5010, rate, BigNumber("10000"));
+        console.log('after mint');
         liquid1 = await getLiquidity(nflm, "0");
         console.log("liquid1: ", liquid1);
         await mintByLiquid(nflm, tokenX, tokenY, miner2, 4900, 5100, 5010, rate, BigNumber("20000"));

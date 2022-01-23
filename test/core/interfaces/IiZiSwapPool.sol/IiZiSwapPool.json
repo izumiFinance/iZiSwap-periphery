@@ -1,0 +1,887 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IiZiSwapPool",
+  "sourceName": "contracts/interfaces/IiZiSwapPool.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        },
+        {
+          "internalType": "int24",
+          "name": "point",
+          "type": "int24"
+        },
+        {
+          "internalType": "uint128",
+          "name": "amountX",
+          "type": "uint128"
+        },
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "addLimOrderWithX",
+      "outputs": [
+        {
+          "internalType": "uint128",
+          "name": "orderX",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint256",
+          "name": "acquireY",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        },
+        {
+          "internalType": "int24",
+          "name": "point",
+          "type": "int24"
+        },
+        {
+          "internalType": "uint128",
+          "name": "amountY",
+          "type": "uint128"
+        },
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "addLimOrderWithY",
+      "outputs": [
+        {
+          "internalType": "uint128",
+          "name": "orderY",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint256",
+          "name": "acquireX",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int24",
+          "name": "point",
+          "type": "int24"
+        },
+        {
+          "internalType": "uint256",
+          "name": "assignX",
+          "type": "uint256"
+        }
+      ],
+      "name": "assignLimOrderEarnX",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "actualAssignX",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int24",
+          "name": "point",
+          "type": "int24"
+        },
+        {
+          "internalType": "uint256",
+          "name": "assignY",
+          "type": "uint256"
+        }
+      ],
+      "name": "assignLimOrderEarnY",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "actualAssignY",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int24",
+          "name": "leftPt",
+          "type": "int24"
+        },
+        {
+          "internalType": "int24",
+          "name": "rightPt",
+          "type": "int24"
+        },
+        {
+          "internalType": "uint128",
+          "name": "liquidDelta",
+          "type": "uint128"
+        }
+      ],
+      "name": "burn",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountX",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountY",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        },
+        {
+          "internalType": "int24",
+          "name": "leftPt",
+          "type": "int24"
+        },
+        {
+          "internalType": "int24",
+          "name": "rightPt",
+          "type": "int24"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountXLim",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountYLim",
+          "type": "uint256"
+        }
+      ],
+      "name": "collect",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "actualAmountX",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "actualAmountY",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        },
+        {
+          "internalType": "int24",
+          "name": "point",
+          "type": "int24"
+        },
+        {
+          "internalType": "uint256",
+          "name": "collectDec",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "collectEarn",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "isEarnY",
+          "type": "bool"
+        }
+      ],
+      "name": "collectLimOrder",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "actualCollectDec",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "actualCollectEarn",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int24",
+          "name": "point",
+          "type": "int24"
+        },
+        {
+          "internalType": "uint128",
+          "name": "deltaX",
+          "type": "uint128"
+        }
+      ],
+      "name": "decLimOrderWithX",
+      "outputs": [
+        {
+          "internalType": "uint128",
+          "name": "actualDeltaX",
+          "type": "uint128"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int24",
+          "name": "point",
+          "type": "int24"
+        },
+        {
+          "internalType": "uint128",
+          "name": "deltaY",
+          "type": "uint128"
+        }
+      ],
+      "name": "decLimOrderWithY",
+      "outputs": [
+        {
+          "internalType": "uint128",
+          "name": "actualDeltaY",
+          "type": "uint128"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint16",
+          "name": "newNextQueueLen",
+          "type": "uint16"
+        }
+      ],
+      "name": "expandObservationQueue",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int24",
+          "name": "point",
+          "type": "int24"
+        }
+      ],
+      "name": "limitOrderData",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "sellingX",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "accEarnX",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "sellingY",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "accEarnY",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "earnX",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "earnY",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "key",
+          "type": "bytes32"
+        }
+      ],
+      "name": "liquidities",
+      "outputs": [
+        {
+          "internalType": "uint128",
+          "name": "liquidity",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint256",
+          "name": "lastFeeScaleX_128",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "lastFeeScaleY_128",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "remainFeeX",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "remainFeeY",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        },
+        {
+          "internalType": "int24",
+          "name": "leftPt",
+          "type": "int24"
+        },
+        {
+          "internalType": "int24",
+          "name": "rightPt",
+          "type": "int24"
+        },
+        {
+          "internalType": "uint128",
+          "name": "liquidDelta",
+          "type": "uint128"
+        },
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "mint",
+      "outputs": [
+        {
+          "internalType": "uint128",
+          "name": "amountX",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint128",
+          "name": "amountY",
+          "type": "uint128"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "index",
+          "type": "uint256"
+        }
+      ],
+      "name": "observations",
+      "outputs": [
+        {
+          "internalType": "uint32",
+          "name": "timestamp",
+          "type": "uint32"
+        },
+        {
+          "internalType": "int56",
+          "name": "pointCumulative",
+          "type": "int56"
+        },
+        {
+          "internalType": "uint160",
+          "name": "secondsPerLiquidityCumulative_128",
+          "type": "uint160"
+        },
+        {
+          "internalType": "bool",
+          "name": "init",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32[]",
+          "name": "secondsAgos",
+          "type": "uint32[]"
+        }
+      ],
+      "name": "observe",
+      "outputs": [
+        {
+          "internalType": "int56[]",
+          "name": "pointCumulatives",
+          "type": "int56[]"
+        },
+        {
+          "internalType": "uint160[]",
+          "name": "secondsPerLiquidityCumulative_128s",
+          "type": "uint160[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int24",
+          "name": "point",
+          "type": "int24"
+        }
+      ],
+      "name": "orderOrEndpoint",
+      "outputs": [
+        {
+          "internalType": "int24",
+          "name": "val",
+          "type": "int24"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int16",
+          "name": "wordPosition",
+          "type": "int16"
+        }
+      ],
+      "name": "pointBitmap",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int24",
+          "name": "point",
+          "type": "int24"
+        }
+      ],
+      "name": "points",
+      "outputs": [
+        {
+          "internalType": "uint128",
+          "name": "liquidAcc",
+          "type": "uint128"
+        },
+        {
+          "internalType": "int128",
+          "name": "liquidDelta",
+          "type": "int128"
+        },
+        {
+          "internalType": "uint256",
+          "name": "feeScaleXBeyond_128",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "feeScaleYBeyond_128",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "isEndpt",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "sqrtRate_96",
+      "outputs": [
+        {
+          "internalType": "uint160",
+          "name": "",
+          "type": "uint160"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "state",
+      "outputs": [
+        {
+          "internalType": "uint160",
+          "name": "sqrtPrice_96",
+          "type": "uint160"
+        },
+        {
+          "internalType": "int24",
+          "name": "currentPoint",
+          "type": "int24"
+        },
+        {
+          "internalType": "uint256",
+          "name": "currX",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "currY",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint128",
+          "name": "liquidity",
+          "type": "uint128"
+        },
+        {
+          "internalType": "bool",
+          "name": "allX",
+          "type": "bool"
+        },
+        {
+          "internalType": "uint16",
+          "name": "observationCurrentIndex",
+          "type": "uint16"
+        },
+        {
+          "internalType": "uint16",
+          "name": "observationQueueLen",
+          "type": "uint16"
+        },
+        {
+          "internalType": "uint16",
+          "name": "observationNextQueueLen",
+          "type": "uint16"
+        },
+        {
+          "internalType": "bool",
+          "name": "locked",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        },
+        {
+          "internalType": "uint128",
+          "name": "amount",
+          "type": "uint128"
+        },
+        {
+          "internalType": "int24",
+          "name": "lowPt",
+          "type": "int24"
+        },
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "swapX2Y",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountX",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountY",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        },
+        {
+          "internalType": "uint128",
+          "name": "desireY",
+          "type": "uint128"
+        },
+        {
+          "internalType": "int24",
+          "name": "lowPt",
+          "type": "int24"
+        },
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "swapX2YDesireY",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountX",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountY",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        },
+        {
+          "internalType": "uint128",
+          "name": "amount",
+          "type": "uint128"
+        },
+        {
+          "internalType": "int24",
+          "name": "highPt",
+          "type": "int24"
+        },
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "swapY2X",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountX",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountY",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        },
+        {
+          "internalType": "uint128",
+          "name": "desireX",
+          "type": "uint128"
+        },
+        {
+          "internalType": "int24",
+          "name": "highPt",
+          "type": "int24"
+        },
+        {
+          "internalType": "bytes",
+          "name": "data",
+          "type": "bytes"
+        }
+      ],
+      "name": "swapY2XDesireX",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "amountX",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountY",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "key",
+          "type": "bytes32"
+        }
+      ],
+      "name": "userEarnX",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "lastAccEarn",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "sellingRemain",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "sellingDec",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "earn",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "earnAssign",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "key",
+          "type": "bytes32"
+        }
+      ],
+      "name": "userEarnY",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "lastAccEarn",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "sellingRemain",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "sellingDec",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "earn",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "earnAssign",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

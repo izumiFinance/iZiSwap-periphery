@@ -159,13 +159,18 @@ async function getPoolParts(signer) {
     var IzsumiswapPoolPartDesireFactory = await ethers.getContractFactory(izumiswapPoolPartDesireJson.abi, izumiswapPoolPartDesireJson.bytecode, signer);
     const izumiswapPoolPartDesire = await IzsumiswapPoolPartDesireFactory.deploy();
     await izumiswapPoolPartDesire.deployed();
-    return [izumiswapPoolPart.address, izumiswapPoolPartDesire.address];
+
+    var mintModuleJson = getContractJson(__dirname + '/core/mint.sol/MintModule.json');
+    var MintModuleFactory = await ethers.getContractFactory(mintModuleJson.abi, mintModuleJson.bytecode, signer);
+    const mintModule = await MintModuleFactory.deploy();
+    await mintModule.deployed();
+    return [izumiswapPoolPart.address, izumiswapPoolPartDesire.address, mintModule.address];
 }
 
-async function getIzumiswapFactory(poolPart, poolPartDesire, signer) {
+async function getIzumiswapFactory(poolPart, poolPartDesire, mintModule, signer) {
     var izumiswapJson = getContractJson(__dirname + '/core/iZiSwapFactory.sol/iZiSwapFactory.json');
     var IzumiswapFactory = await ethers.getContractFactory(izumiswapJson.abi, izumiswapJson.bytecode, signer);
-    var factory = await IzumiswapFactory.deploy(poolPart, poolPartDesire);
+    var factory = await IzumiswapFactory.deploy(poolPart, poolPartDesire, mintModule);
     await factory.deployed();
     return factory;
 }
@@ -261,8 +266,8 @@ describe("limorder", function () {
     var rate;
     beforeEach(async function() {
         [signer, seller1, seller2, seller3, trader, trader2, recipient1, recipient2] = await ethers.getSigners();
-        [poolPart, poolPartDesire] = await getPoolParts();
-        izumiswapFactory = await getIzumiswapFactory(poolPart, poolPartDesire, signer);
+        [poolPart, poolPartDesire, mintModule] = await getPoolParts();
+        izumiswapFactory = await getIzumiswapFactory(poolPart, poolPartDesire, mintModule, signer);
         weth9 = await getWETH9(signer);
         nflm = await getNFTLiquidityManager(izumiswapFactory, weth9);
         swap = await getSwap(izumiswapFactory, weth9);
