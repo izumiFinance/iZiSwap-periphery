@@ -17,24 +17,42 @@ import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
 contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
 
     using EnumerableSet for EnumerableSet.UintSet;
+
+    // max-poolId in poolIds, poolId starts from 1
     uint128 maxPoolId = 1;
 
+    // infomation of a limit order
     struct LimOrder {
+        // point (price) of limit order
         int24 pt;
+        // initial amount of token on sale
         uint256 amount;
+        // remaing amount of token on sale
         uint256 sellingRemain;
+        // accumulated decreased token
         uint256 accSellingDec;
+        // uncollected decreased token
         uint256 sellingDec;
+        // uncollected earned token
         uint256 earn;
+        // total amount of earned token by all users at this point 
+        // with same direction (sell x or sell y) as of the last update(add/dec)
         uint256 lastAccEarn;
+        // id of pool in which this liquidity is added
         uint128 poolId;
+        // direction of limit order (sellx or sell y)
         bool sellXEarnY;
+        // block.timestamp when add a limit order
         uint256 timestamp;
     }
 
+    // mapping from limit order id to limit order info
     mapping(uint256 =>LimOrder) public limOrders;
+
+    // number of limit order add via this contract
     uint256 public sellNum = 0;
     
+    // owners of limit order
     mapping(uint256 =>address) public sellers;
     
     struct PoolMeta {
@@ -42,21 +60,40 @@ contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
         address tokenY;
         uint24 fee;
     }
+
+    // mapping from pool id to pool's meta info
     mapping(uint128 =>PoolMeta) public poolMetas;
+
+    // mapping from pool id to pool address
     mapping(uint128 =>address) public poolAddrs;
+
+    // mapping from pool address to poolid
     mapping(address =>uint128) public poolIds;
 
+    // seller's active order id
     mapping(address => EnumerableSet.UintSet) private addr2ActiveOrderID;
+    // seller's canceled or finished order id
     mapping(address => EnumerableSet.UintSet) private addr2DeactiveOrderID;
 
+    // maximum number of active order per user
     uint256 public immutable ACTIVE_ORDER_LIM = 300;
 
+    // callback data passed through iZiSwapPool#addLimOrderWithX(Y) to the callback
     struct LimCallbackData {
+        // tokenX of swap pool
         address tokenX;
+        // tokenY of swap pool
         address tokenY;
+        // fee amount of swap pool
         uint24 fee;
+        // the address who provides token to sell
         address payer;
     }
+
+    /// @notice callback for add limit order, in order to deposit corresponding tokens
+    /// @param x amount of tokenX need to pay from miner
+    /// @param y amount of tokenY need to pay from miner
+    /// @param data encoded LimCallbackData
     function payCallback(
         uint256 x,
         uint256 y,
@@ -83,10 +120,13 @@ contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
         _;
     }
 
+    /// @notice constructor to create this contract
+    /// @param factory address of iZiSwapFactory
+    /// @param weth address of WETH token
     constructor(
-        address fac,
+        address factory,
         address weth
-    ) Base(fac, weth) {
+    ) Base(factory, weth) {
     }
 
     function limOrderKey(address miner, int24 pt) internal pure returns(bytes32) {
@@ -122,55 +162,77 @@ contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
             (accEarn, earn) = getEarnX(pool, limOrderKey(miner, pt));
         }
     }
+
+    /// parameters when calling newLimOrder, grouped together to avoid stake too deep
     struct AddLimOrderParam {
+        // tokenX of swap pool
         address tokenX;
+        // tokenY of swap pool
         address tokenY;
+        // fee amount of swap pool
         uint24 fee;
+        // on which point to add limit order
         int24 pt;
+        // amount of token to sell
         uint128 amount;
+        // sell tokenX or sell tokenY
         bool sellXEarnY;
     }
+
     function _addLimOrder(
-        address pool, AddLimOrderParam memory ap
+        address pool, AddLimOrderParam memory addLimitOrderParam
     ) private returns (uint128 order, uint256 acquire) {
-        if (ap.sellXEarnY) {
+        if (addLimitOrderParam.sellXEarnY) {
             (order, acquire) = IiZiSwapPool(pool).addLimOrderWithX(
-                address(this), ap.pt, ap.amount,
-                abi.encode(LimCallbackData({tokenX: ap.tokenX, tokenY: ap.tokenY, fee: ap.fee, payer: msg.sender}))
+                address(this), addLimitOrderParam.pt, addLimitOrderParam.amount,
+                abi.encode(LimCallbackData({tokenX: addLimitOrderParam.tokenX, tokenY: addLimitOrderParam.tokenY, fee: addLimitOrderParam.fee, payer: msg.sender}))
             );
         } else {
             (order, acquire) = IiZiSwapPool(pool).addLimOrderWithY(
-                address(this), ap.pt, ap.amount,
-                abi.encode(LimCallbackData({tokenX: ap.tokenX, tokenY: ap.tokenY, fee: ap.fee, payer: msg.sender}))
+                address(this), addLimitOrderParam.pt, addLimitOrderParam.amount,
+                abi.encode(LimCallbackData({tokenX: addLimitOrderParam.tokenX, tokenY: addLimitOrderParam.tokenY, fee: addLimitOrderParam.fee, payer: msg.sender}))
             );
         }
     }
+
+    /// @notice add a limit order for recipient
+    /// @param recipient owner of the limit order and will benefit from it
+    /// @param addLimitOrderParam describe params of added limit order, see AddLimOrderParam for more
+    /// @return orderId id of added limit order
+    /// @return orderAmount actual amount of token added in limit order
+    /// @return acquire amount of tokenY acquired if there is a limit order to sell the other token before adding
     function newLimOrder(
         address recipient,
-        AddLimOrderParam calldata ap
-    ) external payable returns (uint256 sellId, uint128 order, uint256 acquire) {
-        require(ap.tokenX < ap.tokenY, 'x<y');
+        AddLimOrderParam calldata addLimitOrderParam
+    ) external payable returns (uint256 orderId, uint128 orderAmount, uint256 acquire) {
+        require(addLimitOrderParam.tokenX < addLimitOrderParam.tokenY, 'x<y');
         require(addr2ActiveOrderID[recipient].length() < ACTIVE_ORDER_LIM, "Active Limit");
-        address pool = IiZiSwapFactory(factory).pool(ap.tokenX, ap.tokenY, ap.fee);
-        (order, acquire) = _addLimOrder(pool, ap);
-        sellId = sellNum ++;
-        (uint256 accEarn, ) = getEarn(pool, address(this), ap.pt, ap.sellXEarnY);
-        uint128 poolId = cachePoolKey(pool, PoolMeta({tokenX: ap.tokenX, tokenY: ap.tokenY, fee: ap.fee}));
-        limOrders[sellId] = LimOrder({
-            pt: ap.pt,
-            amount: ap.amount,
-            sellingRemain: order,
+        address pool = IiZiSwapFactory(factory).pool(addLimitOrderParam.tokenX, addLimitOrderParam.tokenY, addLimitOrderParam.fee);
+        (orderAmount, acquire) = _addLimOrder(pool, addLimitOrderParam);
+        orderId = sellNum ++;
+        (uint256 accEarn, ) = getEarn(pool, address(this), addLimitOrderParam.pt, addLimitOrderParam.sellXEarnY);
+        uint128 poolId = cachePoolKey(pool, PoolMeta({tokenX: addLimitOrderParam.tokenX, tokenY: addLimitOrderParam.tokenY, fee: addLimitOrderParam.fee}));
+        limOrders[orderId] = LimOrder({
+            pt: addLimitOrderParam.pt,
+            amount: addLimitOrderParam.amount,
+            sellingRemain: orderAmount,
             accSellingDec: 0,
             sellingDec: 0,
             earn: acquire,
             lastAccEarn: accEarn,
             poolId: poolId,
-            sellXEarnY: ap.sellXEarnY,
+            sellXEarnY: addLimitOrderParam.sellXEarnY,
             timestamp: block.timestamp
         });
-        addr2ActiveOrderID[recipient].add(sellId);
-        sellers[sellId] = recipient;
+        addr2ActiveOrderID[recipient].add(orderId);
+        sellers[orderId] = recipient;
     }
+
+    /// @notice compute max amount of earned token the seller can claim
+    /// @param lastAccEarn total amount of earned token of all users on this point before last update of this limit order
+    /// @param accEarn total amount of earned token of all users on this point now
+    /// @param earnRemain total amount of unclaimed earned token of all users on this point
+    /// @return earnLim max amount of earned token the seller can claim
     function getEarnLim(uint256 lastAccEarn, uint256 accEarn, uint256 earnRemain) private pure returns(uint256 earnLim) {
         require(accEarn >= lastAccEarn, "AEO");
         earnLim = accEarn - lastAccEarn;
@@ -178,6 +240,15 @@ contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
             earnLim = earnRemain;
         }
     }
+
+    /// @notice compute amount of earned token and amount of sold token for a limit order
+    ///    we will make amount of earned token as max as possible
+    /// @param sqrtPrice_96 a 96 bit fixpoint number to describe sqrt(price) of pool
+    /// @param earnLim max amount of earned token computed by getEarnLim(...)
+    /// @param sellingRemain amount of token before exchange in the limit order
+    /// @param isEarnY direction of the limit order (sell Y or sell tokenY)
+    /// @return earn amount of earned token this limit order can claim
+    /// @return sold amount of sold token which will be minused from sellingRemain
     function getEarnSold(
         uint160 sqrtPrice_96,
         uint256 earnLim,
@@ -203,6 +274,7 @@ contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
             }
         }
     }
+
     function assignLimOrderEarn(
         address pool, int24 pt, uint256 amount, bool isEarnY
     ) private returns(uint256 actualAssign) {
@@ -212,6 +284,12 @@ contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
             actualAssign = IiZiSwapPool(pool).assignLimOrderEarnX(pt, amount);
         }
     }
+
+    /// @notice update an limit order
+    ///    the principle to update is to make this order claim earned tokens as much as posible
+    /// @param order the order to update, see LimOrder for more
+    /// @param pool address of swap pool
+    /// @return earn amount of earned token this limit order can claim
     function _updateOrder(
         LimOrder storage order,
         address pool
@@ -224,25 +302,36 @@ contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
         (uint256 accEarn, uint256 earnLim) = getEarn(pool, address(this), order.pt, order.sellXEarnY);
         earnLim = getEarnLim(order.lastAccEarn, accEarn, earnLim);
         uint160 sqrtPrice_96 = LogPowMath.getSqrtPrice(order.pt);
-        (uint256 earn, uint256 sold) = getEarnSold(sqrtPrice_96, earnLim, order.sellingRemain, order.sellXEarnY);
+        uint256 sold;
+        (earn, sold) = getEarnSold(sqrtPrice_96, earnLim, order.sellingRemain, order.sellXEarnY);
         earn = assignLimOrderEarn(pool, order.pt, earn, order.sellXEarnY);
         order.earn = order.earn + earn;
         order.sellingRemain = order.sellingRemain - sold;
         order.lastAccEarn = accEarn;
     }
+
+    /// @notice update an limit order
+    ///    the principle to update is to make this order claim earned tokens as much as posible
+    /// @param orderId id of order to update
+    /// @return earn amount of earned token this limit order can claim
     function updateOrder(
-        uint256 sellId
-    ) external checkAuth(sellId) checkActive(sellId) returns (uint256 earn) {
-        LimOrder storage order = limOrders[sellId];
+        uint256 orderId
+    ) external checkAuth(orderId) checkActive(orderId) returns (uint256 earn) {
+        LimOrder storage order = limOrders[orderId];
         address pool = poolAddrs[order.poolId];
         earn = _updateOrder(order, pool);
     }
+
+    /// @notice decrease amount of selling-token of a limit order
+    /// @param orderId point of seller's limit order
+    /// @param amount max amount of selling-token to decrease
+    /// @return actualDelta actual amount of selling-token decreased
     function decLimOrder(
-        uint256 sellId,
+        uint256 orderId,
         uint128 amount
-    ) external checkAuth(sellId) checkActive(sellId) returns (uint128 actualDelta) {
+    ) external checkAuth(orderId) checkActive(orderId) returns (uint128 actualDelta) {
         require(amount > 0, "A0");
-        LimOrder storage order = limOrders[sellId];
+        LimOrder storage order = limOrders[orderId];
         address pool = poolAddrs[order.poolId];
         // update order first
         _updateOrder(order, pool);
@@ -268,13 +357,21 @@ contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
         order.sellingDec += actualDeltaRefund;
         order.accSellingDec += actualDeltaRefund;
     }
+
+    /// @notice collect earned or decreased token from limit order
+    /// @param recipient address to benefit
+    /// @param orderId id of limit order
+    /// @param collectDec max amount of decreased selling token to collect
+    /// @param collectEarn max amount of earned token to collect
+    /// @return actualCollectDec actual amount of decresed selling token collected
+    /// @return actualCollectEarn actual amount of earned token collected
     function collectLimOrder(
         address recipient,
-        uint256 sellId,
+        uint256 orderId,
         uint256 collectDec,
         uint256 collectEarn
-    ) external checkAuth(sellId) checkActive(sellId) returns (uint256 actualCollectDec, uint256 actualCollectEarn) {
-        LimOrder storage order = limOrders[sellId];
+    ) external checkAuth(orderId) checkActive(orderId) returns (uint256 actualCollectDec, uint256 actualCollectEarn) {
+        LimOrder storage order = limOrders[orderId];
         address pool = poolAddrs[order.poolId];
         // update order first
         _updateOrder(order, pool);
@@ -301,11 +398,14 @@ contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
         }
 
         if (order.sellingDec == 0 && noRemain && order.earn == 0) {
-            addr2ActiveOrderID[msg.sender].remove(sellId);
-            addr2DeactiveOrderID[msg.sender].add(sellId);
+            addr2ActiveOrderID[msg.sender].remove(orderId);
+            addr2DeactiveOrderID[msg.sender].add(orderId);
         }
     }
 
+    /// @notice return active order ids for seller
+    /// @param _user address of seller
+    /// @return list of active order ids
     function getActiveOrderIDs(address _user)
         external
         view
@@ -321,6 +421,9 @@ contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
         return tokenIdList;
     }
 
+    /// @notice return deactive order ids for seller
+    /// @param _user address of seller
+    /// @return list of deactive order ids
     function getDeactiveOrderIDs(address _user)
         external
         view
