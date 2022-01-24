@@ -16,16 +16,22 @@ interface IWETH9 is IERC20 {
 
 abstract contract Base {
 
+    /// @notice address of iZiSwapFactory
     address public immutable factory;
+
+    /// @notice address of weth9 token
     address public immutable WETH9;
 
+    /// @notice Make multiple function calls in this contract in a single transaction
+    ///     and return the data for each function call, revert if any function call fails
+    /// @param data The encoded function data for each function call
+    /// @return results result of each function call
     function multicall(bytes[] calldata data) external payable returns (bytes[] memory results) {
         results = new bytes[](data.length);
         for (uint256 i = 0; i < data.length; i++) {
             (bool success, bytes memory result) = address(this).delegatecall(data[i]);
 
             if (!success) {
-                // Next 5 lines from https://ethereum.stackexchange.com/a/83577
                 if (result.length < 68) revert();
                 assembly {
                     result := add(result, 0x04)
@@ -36,7 +42,9 @@ abstract contract Base {
             results[i] = result;
         }
     }
+
     receive() external payable {}
+
     /// @notice Transfers tokens from the targeted address to the given destination
     /// @notice Errors with 'STF' if transfer fails
     /// @param token The contract address of the token to be transferred
@@ -91,29 +99,46 @@ abstract contract Base {
         require(success, 'STE');
     }
 
-    function unwrapWETH9(uint256 amountMinimum, address recipient) external payable {
-        uint256 balanceWETH9 = IWETH9(WETH9).balanceOf(address(this));
-        require(balanceWETH9 >= amountMinimum, 'Insufficient WETH9');
+    /// @notice Withdraw all weth9 token of this contract and send the withdrawed eth to recipient
+    ///    usually used in multicall when mint/swap/update limitorder with eth
+    ///    normally this contract has no any erc20 token or eth after or before a transaction
+    ///    we donot need to worry that some one can steal eth from this contract
+    /// @param minAmount The minimum amount of WETH9 to withdraw
+    /// @param recipient The address to receive all withdrawed eth from this contract
+    function unwrapWETH9(uint256 minAmount, address recipient) external payable {
+        uint256 all = IWETH9(WETH9).balanceOf(address(this));
+        require(all >= minAmount, 'WETH9 Not Enough');
 
-        if (balanceWETH9 > 0) {
-            IWETH9(WETH9).withdraw(balanceWETH9);
-            safeTransferETH(recipient, balanceWETH9);
+        if (all > 0) {
+            IWETH9(WETH9).withdraw(all);
+            safeTransferETH(recipient, all);
         }
     }
 
+    /// @notice send all balance of specified token in this contract to recipient
+    ///    usually used in multicall when mint/swap/update limitorder with eth
+    ///    normally this contract has no any erc20 token or eth after or before a transaction
+    ///    we donot need to worry that some one can steal some token from this contract
+    /// @param token address of the token
+    /// @param minAmount balance should >= minAmount
+    /// @param recipient the address to receive specified token from this contract
     function sweepToken(
         address token,
-        uint256 amountMinimum,
+        uint256 minAmount,
         address recipient
     ) external payable {
-        uint256 balanceToken = IERC20(token).balanceOf(address(this));
-        require(balanceToken >= amountMinimum, 'Insufficient token');
+        uint256 all = IERC20(token).balanceOf(address(this));
+        require(all >= minAmount, 'WETH9 Not Enough');
 
-        if (balanceToken > 0) {
-            safeTransfer(token, recipient, balanceToken);
+        if (all > 0) {
+            safeTransfer(token, recipient, all);
         }
     }
 
+    /// @notice send all balance of eth in this contract to msg.sender
+    ///    usually used in multicall when mint/swap/update limitorder with eth
+    ///    normally this contract has no any erc20 token or eth after or before a transaction
+    ///    we donot need to worry that some one can steal some token from this contract
     function refundETH() external payable {
         if (address(this).balance > 0) safeTransferETH(msg.sender, address(this).balance);
     }
@@ -141,12 +166,20 @@ abstract contract Base {
         }
     }
 
+    /// @notice query pool address from factory by (tokenX, tokenY, fee)
+    /// @param tokenX tokenX of swap pool
+    /// @param tokenY tokenY of swap pool
+    /// @param fee fee amount of swap pool
     function pool(address tokenX, address tokenY, uint24 fee) public view returns(address) {
         return IiZiSwapFactory(factory).pool(tokenX, tokenY, fee);
     }
     function verify(address tokenX, address tokenY, uint24 fee) internal view {
         require (msg.sender == pool(tokenX, tokenY, fee), "sp");
     }
+
+    /// @notice constructor of base
+    /// @param _factory address of iZiSwapFactory
+    /// @param _WETH9 address of weth9 token
     constructor(address _factory, address _WETH9) {
         factory = _factory;
         WETH9 = _WETH9;
