@@ -15,8 +15,10 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
 
 contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
+
     using EnumerableSet for EnumerableSet.UintSet;
     uint128 maxPoolId = 1;
+
     struct LimOrder {
         int24 pt;
         uint256 amount;
@@ -29,9 +31,6 @@ contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
         bool sellXEarnY;
         uint256 timestamp;
     }
-
-    event NewLimitOrder(uint256 indexed limitOrderId, uint256 amount, bool sellXEarnY, uint128 indexed poolId);
-    event CancelLimitOrder(uint256 indexed limitOrderId);
 
     mapping(uint256 =>LimOrder) public limOrders;
     uint256 public sellNum = 0;
@@ -103,14 +102,14 @@ contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
         }
     }
     function getEarnX(address pool, bytes32 key) private view returns(uint256, uint256) {
-        (uint256 lastAccEarn, uint256 sellingRemain, uint256 sellingDesc, uint256 earn, uint256 earnAssign) = IiZiSwapPool(pool).userEarnX(key);
+        (uint256 lastAccEarn, , , uint256 earn, ) = IiZiSwapPool(pool).userEarnX(key);
         return (lastAccEarn, earn);
     }
     function getEarnX(address pool, address miner, int24 pt) private view returns(uint256 accEarn, uint256 earn) {
         (accEarn, earn) = getEarnX(pool, limOrderKey(miner, pt));
     }
     function getEarnY(address pool, bytes32 key) private view returns(uint256, uint256) {
-        (uint256 lastAccEarn, uint256 sellingRemain, uint256 sellingDesc, uint256 earn, uint256 earnAssign) = IiZiSwapPool(pool).userEarnY(key);
+        (uint256 lastAccEarn, , , uint256 earn, ) = IiZiSwapPool(pool).userEarnY(key);
         return (lastAccEarn, earn);
     }
     function getEarnY(address pool, address miner, int24 pt) private view returns(uint256 accEarn, uint256 earn) {
@@ -155,7 +154,7 @@ contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
         address pool = IiZiSwapFactory(factory).pool(ap.tokenX, ap.tokenY, ap.fee);
         (order, acquire) = _addLimOrder(pool, ap);
         sellId = sellNum ++;
-        (uint256 accEarn, uint256 earn) = getEarn(pool, address(this), ap.pt, ap.sellXEarnY);
+        (uint256 accEarn, ) = getEarn(pool, address(this), ap.pt, ap.sellXEarnY);
         uint128 poolId = cachePoolKey(pool, PoolMeta({tokenX: ap.tokenX, tokenY: ap.tokenY, fee: ap.fee}));
         limOrders[sellId] = LimOrder({
             pt: ap.pt,
@@ -171,7 +170,6 @@ contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
         });
         addr2ActiveOrderID[recipient].add(sellId);
         sellers[sellId] = recipient;
-        emit NewLimitOrder(sellId, ap.amount, ap.sellXEarnY, poolId);
     }
     function getEarnLim(uint256 lastAccEarn, uint256 accEarn, uint256 earnRemain) private pure returns(uint256 earnLim) {
         require(accEarn >= lastAccEarn, "AEO");
@@ -305,8 +303,6 @@ contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
         if (order.sellingDec == 0 && noRemain && order.earn == 0) {
             addr2ActiveOrderID[msg.sender].remove(sellId);
             addr2DeactiveOrderID[msg.sender].add(sellId);
-
-            emit CancelLimitOrder(sellId);
         }
     }
 

@@ -17,14 +17,6 @@ import "hardhat/console.sol";
 
 contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
 
-    event NewPool(address tokenX, address tokenY, uint24 fee, address pool);
-
-    event IncreaseLiquidity(uint256 indexed tokenId, uint128 liquidity, uint256 amountX, uint256 amountY, uint128 indexed poolId);
-
-    event DecreaseLiquidity(uint256 indexed tokenId, uint128 liquidity, uint256 amountX, uint256 amountY, uint128 indexed poolId);
-
-    event Collect(uint256 indexed tokenId, address recipient, uint256 amountX, uint256 amountY);
-
     struct MintCallbackData {
         address tokenX;
         address tokenY;
@@ -81,7 +73,6 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCall
         address pool = IiZiSwapFactory(factory).pool(tokenX, tokenY, fee);
         if (pool == address(0)) {
             pool = IiZiSwapFactory(factory).newPool(tokenX, tokenY, fee, cp);
-            emit NewPool(tokenX, tokenY, fee, pool);
             return pool;
         }
         return pool;
@@ -181,7 +172,6 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCall
             poolId: poolId
         });
         _mint(mp.miner, lid);
-        emit IncreaseLiquidity(lid, liquidity, amountX, amountY, poolId);
     }
     struct AddLiquidityParam {
         uint256 lid;
@@ -245,7 +235,6 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCall
         require(amountX >= mp.amountXMin, "XMIN");
         require(amountY >= mp.amountYMin, "YMIN");
         updateLiquidity(liquid, pool, newLiquidity, 0, 0);
-        emit IncreaseLiquidity(mp.lid, liquidityDelta, amountX, amountY, liquid.poolId);
     }
 
     function decLiquidity(
@@ -275,7 +264,6 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCall
         require(amountX >= amountXMin, "XMIN");
         require(amountY >= amountYMin, "YMIN");
         updateLiquidity(liquidity, pool, newLiquidity, amountX, amountY);
-        emit DecreaseLiquidity(lid, liquidDelta, amountX, amountY, liquidity.poolId);
     }
     function collect(
         address miner,
@@ -308,6 +296,5 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCall
         // amountX(Y)Lim may be a little greater than actual value
         liquidity.remainTokenX -= amountXLim;
         liquidity.remainTokenY -= amountYLim;
-        emit Collect(lid, miner, amountXLim, amountYLim);
     }
 }
