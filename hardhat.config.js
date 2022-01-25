@@ -1,8 +1,8 @@
 require("@nomiclabs/hardhat-waffle");
 require('hardhat-contract-sizer');
 
-const settings = require('./.settings.js');
-const sk = settings.sk;
+const secret = require('./.secret.js');
+const sk = secret.sk;
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
