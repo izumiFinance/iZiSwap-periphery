@@ -135,7 +135,7 @@ contract NonfungibleLiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCall
     }
     function getLastFeeScale(address pool, bytes32 key) private view returns(uint256, uint256) {
 
-        (, uint256 lastFeeScaleX_128, uint256 lastFeeScaleY_128, , ) = IiZiSwapPool(pool).liquidities(
+        (, uint256 lastFeeScaleX_128, uint256 lastFeeScaleY_128, , ) = IiZiSwapPool(pool).liquidity(
             key
         );
         return (lastFeeScaleX_128, lastFeeScaleY_128);
