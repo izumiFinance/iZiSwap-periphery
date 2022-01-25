@@ -169,10 +169,10 @@ async function getPoolParts(signer) {
     return [izumiswapPoolPart.address, izumiswapPoolPartDesire.address, mintModule.address];
 }
 
-async function getIzumiswapFactory(poolPart, poolPartDesire, mintModule, signer) {
+async function getIzumiswapFactory(receiverAddr, poolPart, poolPartDesire, mintModule, signer) {
     var izumiswapJson = getContractJson(__dirname + '/core/iZiSwapFactory.sol/iZiSwapFactory.json');
     var IzumiswapFactory = await ethers.getContractFactory(izumiswapJson.abi, izumiswapJson.bytecode, signer);
-    var factory = await IzumiswapFactory.deploy(poolPart, poolPartDesire, mintModule);
+    var factory = await IzumiswapFactory.deploy(receiverAddr, poolPart, poolPartDesire, mintModule);
     await factory.deployed();
     return factory;
 }
@@ -245,9 +245,9 @@ describe("limorder", function () {
     var tokenX, tokenY;
     var rate;
     beforeEach(async function() {
-        [signer, seller1, seller2, seller3, trader, trader2, recipient2] = await ethers.getSigners();
+        [signer, seller1, seller2, seller3, trader, trader2, recipient2, receiver] = await ethers.getSigners();
         [poolPart, poolPartDesire, mintModule] = await getPoolParts();
-        izumiswapFactory = await getIzumiswapFactory(poolPart, poolPartDesire, mintModule, signer);
+        izumiswapFactory = await getIzumiswapFactory(receiver.address, poolPart, poolPartDesire, mintModule, signer);
         weth9 = await getWETH9(signer);
         nflm = await getNFTLiquidityManager(izumiswapFactory, weth9);
         swap = await getSwap(izumiswapFactory, weth9);

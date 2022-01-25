@@ -305,10 +305,10 @@ async function getPoolParts(signer) {
     return [izumiswapPoolPart.address, izumiswapPoolPartDesire.address, mintModule.address];
 }
 
-async function getIzumiswapFactory(poolPart, poolPartDesire, mintModule, signer) {
+async function getIzumiswapFactory(receiverAddr, poolPart, poolPartDesire, mintModule, signer) {
     var izumiswapJson = getContractJson(__dirname + '/core/iZiSwapFactory.sol/iZiSwapFactory.json');
     var IzumiswapFactory = await ethers.getContractFactory(izumiswapJson.abi, izumiswapJson.bytecode, signer);
-    var factory = await IzumiswapFactory.deploy(poolPart, poolPartDesire, mintModule);
+    var factory = await IzumiswapFactory.deploy(receiverAddr, poolPart, poolPartDesire, mintModule);
     await factory.deployed();
     return factory;
 }
@@ -368,6 +368,11 @@ function getFee(amount) {
     return ceil(amount.times(3).div(1000));
 }
 
+function getFeeAfterCharge(fee) {
+    const charged = floor(fee.times(20).div(100));
+    return fee.minus(charged);
+}
+
 function muldiv(a, b, c) {
     w = a.times(b);
     if (w.mod(c).eq("0")) {
@@ -397,9 +402,9 @@ describe("swap", function () {
 
     var startTotalLiquidity;
     beforeEach(async function() {
-        [signer, miner1, miner2, miner3, miner4, trader1, trader2] = await ethers.getSigners();
+        [signer, miner1, miner2, miner3, miner4, trader1, trader2, receiver] = await ethers.getSigners();
         [poolPart, poolPartDesire, mintModule] = await getPoolParts();
-        izumiswapFactory = await getIzumiswapFactory(poolPart, poolPartDesire, mintModule, signer);
+        izumiswapFactory = await getIzumiswapFactory(receiver.address, poolPart, poolPartDesire, mintModule, signer);
         console.log("get izumiswapFactory");
         weth9 = await getWETH9(signer);
         console.log("get weth9");
@@ -442,6 +447,7 @@ describe("swap", function () {
         var amountY1 = getAmountY(5011, 5100, rate, BigNumber(startTotalLiquidity), true);
         var amountY1Fee = getFee(amountY1);
         amountY1 = amountY1.plus(amountY1Fee);
+        amountY1Fee = getFeeAfterCharge(amountY1Fee);
         var amountX1 = getAmountX(5011, 5100, rate, BigNumber(startTotalLiquidity), false);
         var amountY1Origin = BigNumber("1000000000000");
 
@@ -499,6 +505,7 @@ describe("swap", function () {
         var amountX2 = getAmountX(4900, 5100, rate, BigNumber(totalLiquidity), true);
         var amountX2Fee = getFee(amountX2);
         amountX2 = amountX2.plus(amountX2Fee);
+        amountX2Fee = getFeeAfterCharge(amountX2Fee);
         var amountX2Origin = BigNumber("1000000000000");
 
         await tokenX.transfer(trader2.address, amountX2Origin.toFixed(0));
