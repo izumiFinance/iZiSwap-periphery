@@ -1,6 +1,6 @@
 const contracts = {
     izumiTest: {
-        iZiSwapFactory: '0x8e85aE75C8803B48D09d10DcF8308393316EBAfA',
+        iZiSwapFactory: '0x80E1Fcd031355F55d8Df9625927B107817B268bB',
 
         BIT: '0x41BC21bdcF0FA87ae6eeFcBE0e4dB29dB2b650C1',
         iZi: '0xEe5e3852434eB67F8e9E97015e32845861ea15E8',
@@ -9,10 +9,10 @@ const contracts = {
 
         WETH9: "0x3AD23A16A81Cd40010F39309876978F20DD2f682",
 
-        nftLiquidityManager: '0x9fe87A14127743786549F5CD05A04E59fF9bb463',
-        nfLimOrderManager: '0xb99FfD94C04BD5D059F048b921CAC5d111fb1FA2',
-        swap: '0x0c068edf0dbb798fefFef637732439fc24683096',
-        quoter: '0x8339cAD97CCF827fdA7b6edbf6655dC23f14f2BF',
+        nftLiquidityManager: '0x1b48cfb8254115DCC5960EC0C68Dc4836aDfCE68',
+        nfLimOrderManager: '0x851c30845D87d62d09A4F7E255a6dd3a3b75cdaf',
+        swap: '0x923589Add088fe71037488cB4e4e74246ed98Ea5',
+        quoter: '0x9b80d6B6b06566295246fcE6e42161D81dec2b1e',
     },
 }
 
