@@ -14,7 +14,7 @@ import "hardhat/console.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
 
-contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
+contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
 
     using EnumerableSet for EnumerableSet.UintSet;
 
