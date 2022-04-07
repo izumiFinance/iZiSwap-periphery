@@ -227,8 +227,8 @@ async function getWETH9(signer) {
     return WETH9;
 }
 async function getNFTLiquidityManager(factory, weth) {
-    const NonfungibleLiquidityManager = await ethers.getContractFactory("NonfungibleLiquidityManager");
-    var nflm = await NonfungibleLiquidityManager.deploy(factory.address, weth.address);
+    const LiquidityManager = await ethers.getContractFactory("LiquidityManager");
+    var nflm = await LiquidityManager.deploy(factory.address, weth.address);
     await nflm.deployed();
     return nflm;
 }

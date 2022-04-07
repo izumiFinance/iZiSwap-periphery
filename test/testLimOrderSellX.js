@@ -182,8 +182,8 @@ async function getWETH9(signer) {
     return WETH9;
 }
 async function getNFTLiquidityManager(factory, weth) {
-    const NonfungibleLiquidityManager = await ethers.getContractFactory("NonfungibleLiquidityManager");
-    var nflm = await NonfungibleLiquidityManager.deploy(factory.address, weth.address);
+    const LiquidityManager = await ethers.getContractFactory("LiquidityManager");
+    var nflm = await LiquidityManager.deploy(factory.address, weth.address);
     await nflm.deployed();
     return nflm;
 }
@@ -194,7 +194,7 @@ async function getSwap(factory, weth) {
     return swap;
 }
 async function getLimorderManager(factory, weth) {
-    const LimorderManager = await ethers.getContractFactory("NonfungibleLOrderManager");
+    const LimorderManager = await ethers.getContractFactory("LimitOrderManager");
     var limorderManager = await LimorderManager.deploy(factory.address, weth.address);
     await limorderManager.deployed();
     return limorderManager;
@@ -235,8 +235,8 @@ async function checkCoreEarnY(tokenX, tokenY, viewLimorder, limorderManager, pt,
 }
 async function checkpoolid(orderId, nflomAddr) {
 
-    const NonfungibleLOrderManager = await ethers.getContractFactory("NonfungibleLOrderManager");
-    var nflom = NonfungibleLOrderManager.attach(nflomAddr);
+    const LimitOrderManager = await ethers.getContractFactory("LimitOrderManager");
+    var nflom = LimitOrderManager.attach(nflomAddr);
 
     var pt;
     var amount;
