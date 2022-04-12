@@ -43,8 +43,6 @@ contract Quoter is Base, IiZiSwapCallback {
             ,
             ,
             ,
-            ,
-            ,
         ) = IiZiSwapPool(poolAddr).state();
 
         if (dt.token0 < dt.token1) {
@@ -85,8 +83,6 @@ contract Quoter is Base, IiZiSwapCallback {
         (
             ,
             int24 currPt,
-            ,
-            ,
             ,
             ,
             ,

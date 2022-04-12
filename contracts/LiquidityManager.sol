@@ -149,8 +149,6 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
             ,
             ,
             ,
-            ,
-            ,
         ) = IiZiSwapPool(pool).state();
         return (sqrtPrice_96, currPt);
     }
