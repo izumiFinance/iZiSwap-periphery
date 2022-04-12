@@ -193,29 +193,41 @@ function getContractJson(path) {
     let data = JSON.parse(rawdata);
     return data;
 }
+
 async function getPoolParts(signer) {
-    var izumiswapPoolPartJson = getContractJson(__dirname + '/core/swapX2Y.sol/SwapX2YModule.json');
-    var IzumiswapPoolPartFactory = await ethers.getContractFactory(izumiswapPoolPartJson.abi, izumiswapPoolPartJson.bytecode, signer);
-
-    const izumiswapPoolPart = await IzumiswapPoolPartFactory.deploy();
-    await izumiswapPoolPart.deployed();
-
-    var izumiswapPoolPartDesireJson = getContractJson(__dirname + '/core/swapY2X.sol/SwapY2XModule.json');
-    var IzsumiswapPoolPartDesireFactory = await ethers.getContractFactory(izumiswapPoolPartDesireJson.abi, izumiswapPoolPartDesireJson.bytecode, signer);
-    const izumiswapPoolPartDesire = await IzsumiswapPoolPartDesireFactory.deploy();
-    await izumiswapPoolPartDesire.deployed();
-
-    var mintModuleJson = getContractJson(__dirname + '/core/mint.sol/MintModule.json');
-    var MintModuleFactory = await ethers.getContractFactory(mintModuleJson.abi, mintModuleJson.bytecode, signer);
+    const swapX2YModuleJson = getContractJson(__dirname + '/core/SwapX2YModule.json');
+    const SwapX2YModuleFactory = await ethers.getContractFactory(swapX2YModuleJson.abi, swapX2YModuleJson.bytecode, signer);
+    const swapX2YModule = await SwapX2YModuleFactory.deploy();
+    await swapX2YModule.deployed();
+    
+    const swapY2XModuleJson = getContractJson(__dirname + '/core/SwapY2XModule.json');
+    const SwapY2XModuleFactory = await ethers.getContractFactory(swapY2XModuleJson.abi, swapY2XModuleJson.bytecode, signer);
+    const swapY2XModule = await SwapY2XModuleFactory.deploy();
+    await swapY2XModule.deployed();
+  
+    const mintModuleJson = getContractJson(__dirname + '/core/MintModule.json');
+    const MintModuleFactory = await ethers.getContractFactory(mintModuleJson.abi, mintModuleJson.bytecode, signer);
     const mintModule = await MintModuleFactory.deploy();
     await mintModule.deployed();
-    return [izumiswapPoolPart.address, izumiswapPoolPartDesire.address, mintModule.address];
-}
+  
+    const limitOrderModuleJson = getContractJson(__dirname + '/core/LimitOrderModule.json');
+    const LimitOrderModuleFactory = await ethers.getContractFactory(limitOrderModuleJson.abi, limitOrderModuleJson.bytecode, signer);
+    const limitOrderModule = await LimitOrderModuleFactory.deploy();
+    await limitOrderModule.deployed();
+    return {
+      swapX2YModule: swapX2YModule.address,
+      swapY2XModule: swapY2XModule.address,
+      mintModule: mintModule.address,
+      limitOrderModule: limitOrderModule.address,
+    };
+  }
 
-async function getIzumiswapFactory(receiverAddr, poolPart, poolPartDesire, mintModule, signer) {
-    var izumiswapJson = getContractJson(__dirname + '/core/iZiSwapFactory.sol/iZiSwapFactory.json');
-    var IzumiswapFactory = await ethers.getContractFactory(izumiswapJson.abi, izumiswapJson.bytecode, signer);
-    var factory = await IzumiswapFactory.deploy(receiverAddr, poolPart, poolPartDesire, mintModule);
+async function getIzumiswapFactory(receiverAddr, swapX2YModule, swapY2XModule, mintModule, limitOrderModule, signer) {
+    const iZiSwapJson = getContractJson(__dirname + '/core/iZiSwapFactory.json');
+    
+    const iZiSwapFactory = await ethers.getContractFactory(iZiSwapJson.abi, iZiSwapJson.bytecode, signer);
+
+    const factory = await iZiSwapFactory.deploy(receiverAddr, swapX2YModule, swapY2XModule, mintModule, limitOrderModule);
     await factory.deployed();
     return factory;
 }
@@ -269,8 +281,8 @@ describe("miner deposit", function () {
     var rate;
     beforeEach(async function() {
         [signer, miner1, miner2, miner3, receiver] = await ethers.getSigners();
-        [poolPart, poolPartDesire, mintModule] = await getPoolParts();
-        izumiswapFactory = await getIzumiswapFactory(receiver.address, poolPart, poolPartDesire, mintModule, signer);
+        const {swapX2YModule, swapY2XModule, mintModule, limitOrderModule} = await getPoolParts();
+        izumiswapFactory = await getIzumiswapFactory(receiver.address, swapX2YModule, swapY2XModule, mintModule, limitOrderModule, signer);
         console.log("get izumiswapFactory");
         weth9 = await getWETH9(signer);
         console.log("get weth9");
