@@ -4,13 +4,13 @@ const { ethers } = require("hardhat");
 const BigNumber = require('bignumber.js');
 const { sign } = require("crypto");
 
-async function getToken() {
+async function getToken(decimalx, decimaly) {
 
     // deploy token
     const tokenFactory = await ethers.getContractFactory("Token")
-    tokenX = await tokenFactory.deploy('a', 'a');
+    tokenX = await tokenFactory.deploy('a', 'a', decimalx);
     await tokenX.deployed();
-    tokenY = await tokenFactory.deploy('b', 'b');
+    tokenY = await tokenFactory.deploy('b', 'b', decimaly);
     await tokenY.deployed();
 
     txAddr = tokenX.address.toLowerCase();
@@ -288,7 +288,7 @@ describe("limorder", function () {
         limorderManager = await getLimorderManager(izumiswapFactory, weth9);
         viewLimorder = await getViewLimorder(izumiswapFactory);
 
-        [tokenX, tokenY] = await getToken();
+        [tokenX, tokenY] = await getToken(18, 18);
         txAddr = tokenX.address.toLowerCase();
         tyAddr = tokenY.address.toLowerCase();
 

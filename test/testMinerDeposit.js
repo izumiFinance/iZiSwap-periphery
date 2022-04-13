@@ -3,17 +3,14 @@ const { ethers } = require("hardhat");
 
 const BigNumber = require('bignumber.js');
 
-async function getToken() {
+async function getToken(dx, dy) {
 
     // deploy token
     const tokenFactory = await ethers.getContractFactory("Token")
-    tokenX = await tokenFactory.deploy('a', 'a');
+    tokenX = await tokenFactory.deploy('a', 'a', dx);
     await tokenX.deployed();
-    tokenY = await tokenFactory.deploy('b', 'b');
+    tokenY = await tokenFactory.deploy('b', 'b', dy);
     await tokenY.deployed();
-
-    console.log("tokenX: " + tokenX.address.toLowerCase());
-    console.log("tokenY: " + tokenY.address.toLowerCase());
 
     txAddr = tokenX.address.toLowerCase();
     tyAddr = tokenY.address.toLowerCase();
@@ -27,11 +24,7 @@ async function getToken() {
       tokenY = tokenX;
       tokenX = tmpToken;
     }
-    console.log("txAddr: " + txAddr);
-    console.log("tyAddr: " + tyAddr);
-
-    console.log("tx: " + tokenX.address);
-    console.log("ty: " + tokenY.address);
+    
     return [tokenX, tokenY];
 }
 
@@ -289,7 +282,7 @@ describe("miner deposit", function () {
         nflm = await getNFTLiquidityManager(izumiswapFactory, weth9);
         console.log("get nflm");
 
-        [tokenX, tokenY] = await getToken();
+        [tokenX, tokenY] = await getToken(18, 18);
         txAddr = tokenX.address.toLowerCase();
         tyAddr = tokenY.address.toLowerCase();
     
