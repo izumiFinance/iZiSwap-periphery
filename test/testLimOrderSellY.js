@@ -6,7 +6,7 @@ const BigNumber = require('bignumber.js');
 async function getToken(dx, dy) {
 
     // deploy token
-    const tokenFactory = await ethers.getContractFactory("Token")
+    const tokenFactory = await ethers.getContractFactory("TestToken")
     tokenX = await tokenFactory.deploy('a', 'a', dx);
     await tokenX.deployed();
     tokenY = await tokenFactory.deploy('b', 'b', dy);
@@ -62,11 +62,11 @@ function getAmountY(l, r, rate, liquidity, up) {
     return floor(amountY);
 }
 
-async function newLimOrderWithY(tokenX, tokenY, seller, limorderManager, amountY, point) {
+async function newLimOrderWithY(slotIdx, tokenX, tokenY, seller, limorderManager, amountY, point) {
     await tokenY.transfer(seller.address, amountY);
     await tokenY.connect(seller).approve(limorderManager.address, amountY);
     await limorderManager.connect(seller).newLimOrder(
-        seller.address,
+        slotIdx,
         {
             tokenX: tokenX.address,
             tokenY: tokenY.address,
@@ -93,23 +93,22 @@ function blockNum2BigNumber(num) {
     var b = BigNumber(num._hex);
     return b;
 }
-async function getLimorder(sellId, limorderManager) {
-     var pt, amount, sellingRemain, accSellingDec, sellingDesc, earn, lastAccEarn, poolId, sellXEarnY;
-     [pt, amount, sellingRemain, accSellingDec, sellingDesc, earn, lastAccEarn, poolId, sellXEarnY] = await limorderManager.limOrders(sellId);
+async function getLimorder(userAddress, orderIdx, limorderManager) {
+     const {pt, amount, sellingRemain, accSellingDec, sellingDec, earn, lastAccEarn, poolId, sellXEarnY} = await limorderManager.getActiveOrder(userAddress, orderIdx);
      return {
          pt: pt,
          sellingRemain: blockNum2BigNumber(sellingRemain),
-         sellingDesc: blockNum2BigNumber(sellingDesc),
+         sellingDec: blockNum2BigNumber(sellingDec),
          earn: blockNum2BigNumber(earn),
          lastAccEarn: blockNum2BigNumber(lastAccEarn),
          poolId: blockNum2BigNumber(poolId),
          sellXEarnY: sellXEarnY
      };
 }
-async function checkLimOrder(sellId, limorderManager, limorderExpect) {
-    limorder = await getLimorder(sellId, limorderManager);
+async function checkLimOrder(userAddress, orderIdx, limorderManager, limorderExpect) {
+    const limorder = await getLimorder(userAddress, orderIdx, limorderManager);
     expect(limorder.sellingRemain.toFixed(0)).to.equal(limorderExpect.sellingRemain.toFixed(0));
-    expect(limorder.sellingDesc.toFixed(0)).to.equal(limorderExpect.sellingDesc.toFixed(0));
+    expect(limorder.sellingDec.toFixed(0)).to.equal(limorderExpect.sellingDec.toFixed(0));
     expect(limorder.earn.toFixed(0)).to.equal(limorderExpect.earn.toFixed(0));
     expect(limorder.lastAccEarn.toFixed(0)).to.equal(limorderExpect.lastAccEarn.toFixed(0));
     expect(limorder.sellXEarnY).to.equal(limorderExpect.sellXEarnY);
@@ -281,9 +280,9 @@ describe("limorder", function () {
     
     it("first claim first earn", async function() {
         sellY1 = BigNumber("1000000000");
-        await newLimOrderWithY(tokenX, tokenY, seller1, limorderManager, sellY1.toFixed(0), 5050);
+        await newLimOrderWithY(0, tokenX, tokenY, seller1, limorderManager, sellY1.toFixed(0), 5050);
         sellY2 = BigNumber("2000000000");
-        await newLimOrderWithY(tokenX, tokenY, seller2, limorderManager, sellY2.toFixed(0), 5050);
+        await newLimOrderWithY(0, tokenX, tokenY, seller2, limorderManager, sellY2.toFixed(0), 5050);
 
         await checkBalance(tokenX, seller1, BigNumber(0));
         await checkBalance(tokenY, seller1, BigNumber(0));
@@ -308,10 +307,10 @@ describe("limorder", function () {
 
         await decLimOrderWithY(seller1, "0", limorderManager, "500000000");
         seller1EarnPhase1 = getAcquireX(5050, rate, sellY1);
-        await checkLimOrder("0", limorderManager, {
+        await checkLimOrder(seller1.address, "0", limorderManager, {
             pt: 5050,
             sellingRemain: BigNumber("0"),
-            sellingDesc: BigNumber("0"),
+            sellingDec: BigNumber("0"),
             earn: seller1EarnPhase1,
             lastAccEarn: costX,
             sellXEarnY: false
@@ -325,13 +324,13 @@ describe("limorder", function () {
             earnAssign: seller1EarnPhase1
         });
         sellY2_p2 = BigNumber("1500000000");
-        await decLimOrderWithY(seller2, "1", limorderManager, "10000");
+        await decLimOrderWithY(seller2, "0", limorderManager, "10000");
         seller2EarnPhase1 = costX.minus(getAcquireX(5050, rate, sellY1));
         seller2RemainPhase1 = sellY2.minus(getCostY(5050, rate, seller2EarnPhase1)).minus("10000");
-        await checkLimOrder("1", limorderManager, {
+        await checkLimOrder(seller2.address, "0", limorderManager, {
             pt: 5050,
             sellingRemain: seller2RemainPhase1,
-            sellingDesc: BigNumber("10000"),
+            sellingDec: BigNumber("10000"),
             earn: seller2EarnPhase1,
             lastAccEarn: costX,
             sellXEarnY: false
@@ -341,15 +340,15 @@ describe("limorder", function () {
             earnAssign: seller1EarnPhase1.plus(seller2EarnPhase1)
         });
         // check collect
-        await collectLimOrder(seller2, "1", recipient2.address, limorderManager, "100000000000000000", "100000000000000000");
+        await collectLimOrder(seller2, "0", recipient2.address, limorderManager, "100000000000000000", "100000000000000000");
 
         await checkBalance(tokenX, recipient2, seller2EarnPhase1);
         await checkBalance(tokenY, recipient2, BigNumber("10000"));
 
-        await checkLimOrder("1", limorderManager, {
+        await checkLimOrder(seller2.address, "0", limorderManager, {
             pt: 5050,
             sellingRemain: seller2RemainPhase1,
-            sellingDesc: BigNumber("0"),
+            sellingDec: BigNumber("0"),
             earn: BigNumber("0"),
             lastAccEarn: costX,
             sellXEarnY: false

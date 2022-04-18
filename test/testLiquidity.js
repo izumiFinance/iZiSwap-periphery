@@ -6,7 +6,7 @@ const BigNumber = require('bignumber.js');
 async function getToken(dx, dy) {
 
     // deploy token
-    const tokenFactory = await ethers.getContractFactory("Token")
+    const tokenFactory = await ethers.getContractFactory("TestToken")
     tokenX = await tokenFactory.deploy('a', 'a', dx);
     await tokenX.deployed();
     tokenY = await tokenFactory.deploy('b', 'b', dy);

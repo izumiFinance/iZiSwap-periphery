@@ -132,9 +132,15 @@ async function getNFTLiquidityManager(factory, weth) {
 }
 async function getSwap(factory, weth) {
     const SwapManager = await ethers.getContractFactory("Swap");
-    var swap = await SwapManager.deploy(factory.address, weth.address);
+    const swap = await SwapManager.deploy(factory.address, weth.address);
     await swap.deployed();
     return swap;
+}
+async function getQuoter(factory, weth) {
+    const QuoterManager = await ethers.getContractFactory("Quoter");
+    const Quoter = await QuoterManager.deploy(factory.address, weth.address);
+    await Quoter.deployed();
+    return Quoter;
 }
 function blockNumber2BigNumber(num) {
     var b = BigNumber(num);
@@ -216,7 +222,7 @@ describe("swap", function () {
         console.log("get weth9");
         nflm = await getNFTLiquidityManager(izumiswapFactory, weth9);
         console.log("get nflm");
-        swap = await getSwap(izumiswapFactory, weth9);
+        quoter = await getQuoter(izumiswapFactory, weth9);
 
         tokenX = await getToken('a', 'a', 18);
         tokenY = await getToken('b', 'b', 18);
@@ -246,9 +252,9 @@ describe("swap", function () {
         await tokenY.connect(miner).approve(nflm.address, '1000000000000000000000000000000');
         await tokenZ.connect(miner).approve(nflm.address, '1000000000000000000000000000000');
 
-        await tokenX.connect(trader).approve(swap.address, '1000000000000000000000000000000');
-        await tokenY.connect(trader).approve(swap.address, '1000000000000000000000000000000');
-        await tokenZ.connect(trader).approve(swap.address, '1000000000000000000000000000000');
+        await tokenX.connect(trader).approve(quoter.address, '1000000000000000000000000000000');
+        await tokenY.connect(trader).approve(quoter.address, '1000000000000000000000000000000');
+        await tokenZ.connect(trader).approve(quoter.address, '1000000000000000000000000000000');
 
         console.log('aaaaa');
         await addLiquidity(nflm, miner, tokenX, tokenY, 3000, 1500, 8000, '100000000000000000000', '100000000000000000000');
@@ -283,7 +289,8 @@ describe("swap", function () {
         console.log('tokenY: ', tokenY.address);
         console.log('tokenZ: ', tokenZ.address);
         console.log('trader: ', trader.address);
-        await swap.connect(trader).swapAmount(params);
+        const res = await quoter.connect(trader).swapAmount(params.amount, params.path);
+        console.log(res);
 
         const balanceXAfter = (await tokenX.balanceOf(trader.address)).toString();
         const balanceYAfter = (await tokenY.balanceOf(trader.address)).toString();
@@ -295,42 +302,42 @@ describe("swap", function () {
 
     });
 
-    it("check swap amount z2y2x", async function() {
-        const tokenXAddr = tokenX.address.toLowerCase();
-        const tokenYAddr = tokenY.address.toLowerCase();
-        const tokenZAddr = tokenZ.address.toLowerCase();
-        let hexString = appendHex(tokenZAddr, fee2Hex(3000));
-        hexString = appendHex(hexString, tokenYAddr);
-        hexString = appendHex(hexString, fee2Hex(3000));
-        hexString = appendHex(hexString, tokenXAddr);
+    // it("check swap amount z2y2x", async function() {
+    //     const tokenXAddr = tokenX.address.toLowerCase();
+    //     const tokenYAddr = tokenY.address.toLowerCase();
+    //     const tokenZAddr = tokenZ.address.toLowerCase();
+    //     let hexString = appendHex(tokenZAddr, fee2Hex(3000));
+    //     hexString = appendHex(hexString, tokenYAddr);
+    //     hexString = appendHex(hexString, fee2Hex(3000));
+    //     hexString = appendHex(hexString, tokenXAddr);
 
-        const params = {
-            path: hexString,
-            recipient: trader.address,
-            amount: '100000000',
-            minAcquired: '0',
-        }
+    //     const params = {
+    //         path: hexString,
+    //         recipient: trader.address,
+    //         amount: '100000000',
+    //         minAcquired: '0',
+    //     }
 
-        const balanceXBefore = (await tokenX.balanceOf(trader.address)).toString();
-        const balanceYBefore = (await tokenY.balanceOf(trader.address)).toString();
-        const balanceZBefore = (await tokenZ.balanceOf(trader.address)).toString();
+    //     const balanceXBefore = (await tokenX.balanceOf(trader.address)).toString();
+    //     const balanceYBefore = (await tokenY.balanceOf(trader.address)).toString();
+    //     const balanceZBefore = (await tokenZ.balanceOf(trader.address)).toString();
 
-        console.log('hexstring: ', hexString);
-        console.log('tokenX: ', tokenX.address);
-        console.log('tokenY: ', tokenY.address);
-        console.log('tokenZ: ', tokenZ.address);
-        console.log('trader: ', trader.address);
-        await swap.connect(trader).swapAmount(params);
+    //     console.log('hexstring: ', hexString);
+    //     console.log('tokenX: ', tokenX.address);
+    //     console.log('tokenY: ', tokenY.address);
+    //     console.log('tokenZ: ', tokenZ.address);
+    //     console.log('trader: ', trader.address);
+    //     await swap.connect(trader).swapAmount(params);
 
-        const balanceXAfter = (await tokenX.balanceOf(trader.address)).toString();
-        const balanceYAfter = (await tokenY.balanceOf(trader.address)).toString();
-        const balanceZAfter = (await tokenZ.balanceOf(trader.address)).toString();
+    //     const balanceXAfter = (await tokenX.balanceOf(trader.address)).toString();
+    //     const balanceYAfter = (await tokenY.balanceOf(trader.address)).toString();
+    //     const balanceZAfter = (await tokenZ.balanceOf(trader.address)).toString();
 
-        console.log(stringMinus(balanceZBefore, balanceZAfter));
-        console.log(stringMinus(balanceYAfter, balanceYBefore));
-        console.log(stringMinus(balanceXAfter, balanceXBefore));
+    //     console.log(stringMinus(balanceZBefore, balanceZAfter));
+    //     console.log(stringMinus(balanceYAfter, balanceYBefore));
+    //     console.log(stringMinus(balanceXAfter, balanceXBefore));
 
-    });
+    // });
     it("check swap desire x2y2z", async function() {
         const tokenXAddr = tokenX.address.toLowerCase();
         const tokenYAddr = tokenY.address.toLowerCase();
@@ -343,7 +350,7 @@ describe("swap", function () {
         const params = {
             path: hexString,
             recipient: trader.address,
-            desire: '100000000',
+            desire: '1000000',
             maxPayed: '200000000',
         }
 
@@ -356,7 +363,7 @@ describe("swap", function () {
         console.log('tokenY: ', tokenY.address);
         console.log('tokenZ: ', tokenZ.address);
         console.log('trader: ', trader.address);
-        await swap.connect(trader).swapDesire(params);
+        await quoter.connect(trader).swapDesire(params.desire, params.path);
 
         const balanceXAfter = (await tokenX.balanceOf(trader.address)).toString();
         const balanceYAfter = (await tokenY.balanceOf(trader.address)).toString();
@@ -368,10 +375,10 @@ describe("swap", function () {
 
     });
     
-    it("check swap desire z2y2x", async function() {
-        const tokenXAddr = tokenX.address.toLowerCase();
-        const tokenYAddr = tokenY.address.toLowerCase();
+    it("check swap desire x2y2z", async function() {
         const tokenZAddr = tokenZ.address.toLowerCase();
+        const tokenYAddr = tokenY.address.toLowerCase();
+        const tokenXAddr = tokenX.address.toLowerCase();
         let hexString = appendHex(tokenXAddr, fee2Hex(3000));
         hexString = appendHex(hexString, tokenYAddr);
         hexString = appendHex(hexString, fee2Hex(3000));
@@ -380,7 +387,7 @@ describe("swap", function () {
         const params = {
             path: hexString,
             recipient: trader.address,
-            desire: '100000000',
+            desire: '1000000',
             maxPayed: '200000000',
         }
 
@@ -393,15 +400,30 @@ describe("swap", function () {
         console.log('tokenY: ', tokenY.address);
         console.log('tokenZ: ', tokenZ.address);
         console.log('trader: ', trader.address);
-        await swap.connect(trader).swapDesire(params);
+        await quoter.connect(trader).swapDesire(params.desire, params.path);
 
         const balanceXAfter = (await tokenX.balanceOf(trader.address)).toString();
         const balanceYAfter = (await tokenY.balanceOf(trader.address)).toString();
         const balanceZAfter = (await tokenZ.balanceOf(trader.address)).toString();
 
-        console.log(stringMinus(balanceZBefore, balanceZAfter));
+        console.log(stringMinus(balanceXBefore, balanceXAfter));
         console.log(stringMinus(balanceYAfter, balanceYBefore));
-        console.log(stringMinus(balanceXAfter, balanceXBefore));
+        console.log(stringMinus(balanceZAfter, balanceZBefore));
 
     });
+
+    // it("check swap desire x2y2z", async function() {
+        
+    //     const hexString = '0x41BC21bdcF0FA87ae6eeFcBE0e4dB29dB2b650C10001F4e507AAC9eFb2A08F53C7BC73B3B1b8BCf883E41B';
+
+    //     const params = {
+    //         path: hexString,
+    //         recipient: trader.address,
+    //         desire: '1000000',
+    //         maxPayed: '200000000',
+    //     }
+
+    //     await quoter.connect(trader).swapDesire(params.desire, params.path);
+
+    // });
 });

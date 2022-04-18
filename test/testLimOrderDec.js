@@ -7,7 +7,7 @@ const { sign } = require("crypto");
 async function getToken(decimalx, decimaly) {
 
     // deploy token
-    const tokenFactory = await ethers.getContractFactory("Token")
+    const tokenFactory = await ethers.getContractFactory("TestToken")
     tokenX = await tokenFactory.deploy('a', 'a', decimalx);
     await tokenX.deployed();
     tokenY = await tokenFactory.deploy('b', 'b', decimaly);
@@ -63,11 +63,11 @@ function getAmountY(l, r, rate, liquidity, up) {
     return floor(amountY);
 }
 
-async function newLimOrderWithX(tokenX, tokenY, seller, limorderManager, amountX, point) {
+async function newLimOrderWithX(slotIdx, tokenX, tokenY, seller, limorderManager, amountX, point) {
     await tokenX.transfer(seller.address, amountX);
     await tokenX.connect(seller).approve(limorderManager.address, amountX);
     await limorderManager.connect(seller).newLimOrder(
-        seller.address,
+        slotIdx,
         {
             tokenX: tokenX.address,
             tokenY: tokenY.address,
@@ -79,17 +79,22 @@ async function newLimOrderWithX(tokenX, tokenY, seller, limorderManager, amountX
     );
 }
 
-async function decLimOrderWithX(seller, sellId, limorderManager, amountX) {
+async function decLimOrderWithX(seller, orderIdx, limorderManager, amountX) {
     await limorderManager.connect(seller).decLimOrder(
-        sellId,
+        orderIdx,
         amountX
     );
 }
-async function collectLimOrder(seller, sellId, recipient, limorderManager, amountX, amountY) {
+
+async function collectLimOrder(limorderManager, seller, orderIdx, collectDec, collectEarn) {
     await limorderManager.connect(seller).collectLimOrder(
-        recipient, sellId, amountX, amountY
+        seller.address,
+        orderIdx,
+        collectDec,
+        collectEarn
     );
 }
+
 function blockNum2BigNumber(num) {
     var b = BigNumber(num);
     return b;
@@ -246,25 +251,33 @@ async function checkCoreEarnY(tokenX, tokenY, viewLimorder, limorderManager, pt,
     expect(earnY.earn).to.equal(expectData.earn.toFixed(0));
     expect(earnY.earnAssign).to.equal(expectData.earnAssign.toFixed(0));
 }
-async function checkpoolid(orderId, nflomAddr) {
+async function checkpoolid(nflomAddr, userAddress, orderIdx) {
 
     const LimitOrderManager = await ethers.getContractFactory("LimitOrderManager");
     var nflom = LimitOrderManager.attach(nflomAddr);
+    try {
+        const {pt, amount, sellingRemain, accSellingDec, sellingDec, earn, lastAccEarn, poolId, sellXEarnY} = await nflom.getActiveOrder(userAddress, orderIdx);
 
-    var pt;
-    var amount;
-    var sellingRemain;
-    var accSellingDec;
-    var sellingDec;
-    var earn;
-    var lastAccEarn;
-    var poolId;
-    var sellXEarnY;
-    [pt, amount, sellingRemain, accSellingDec, sellingDec, earn, lastAccEarn, poolId, sellXEarnY] = await nflom.limOrders(orderId);
+        console.log("-----------pt: ", pt);
+        console.log("-----------selling remain: ", sellingRemain.toString());
+        console.log("-----------poolId: ", poolId);
+    } catch (err) {
+        console.log(err);
+    }
+}
 
-    console.log("-----------pt: ", pt);
-    console.log("-----------selling remain: ", sellingRemain.toString());
-    console.log("-----------poolId: ", poolId);
+function translateLimOrder(limOrder) {
+    return {
+        pt: limOrder.pt,
+        amount: limOrder.amount.toString(),
+        sellingRemain: limOrder.sellingRemain.toString(),
+        accSellingDec: limOrder.accSellingDec.toString(),
+        sellingDec: limOrder.sellingDec.toString(),
+        earn: limOrder.earn.toString(),
+        lastAccEarn: limOrder.lastAccEarn.toString(),
+        poolId: limOrder.poolId.toString(),
+        sellXEarnY: limOrder.sellXEarnY
+    }
 }
 describe("limorder", function () {
     var signer, seller1, seller2, seller3, trader, trader2;
@@ -292,7 +305,7 @@ describe("limorder", function () {
         txAddr = tokenX.address.toLowerCase();
         tyAddr = tokenY.address.toLowerCase();
 
-        poolAddr = await nflm.createPool(tokenX.address, tokenY.address, 3000, -230250);
+        poolAddr = await nflm.createPool(tokenX.address, tokenY.address, 3000, -500000);
         rate = BigNumber("1.0001");
         await tokenY.transfer(trader.address, "100000000000000");
         await tokenY.connect(trader).approve(swap.address, "100000000000000");
@@ -301,27 +314,193 @@ describe("limorder", function () {
     
     it("first claim first earn", async function() {
         sellX1 = BigNumber("1000000000");
-        await newLimOrderWithX(tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -230250);
-        await checkpoolid("0", limorderManager.address);
+        await newLimOrderWithX(0, tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -230250);
+        await checkpoolid(limorderManager.address, seller1.address, 0);
         
-        await newLimOrderWithX(tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -230250);
-        await checkpoolid("1", limorderManager.address);
+        await newLimOrderWithX(1, tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -230250);
+        await checkpoolid(limorderManager.address, seller1.address, 1);
 
-        await newLimOrderWithX(tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -230250);
-        await checkpoolid("2", limorderManager.address);
+        await newLimOrderWithX(2, tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -230250);
+        await checkpoolid(limorderManager.address, seller1.address, 2);
 
-        await newLimOrderWithX(tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -230250);
-        await checkpoolid("3", limorderManager.address);
+        await newLimOrderWithX(3, tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -230250);
+        await checkpoolid(limorderManager.address, seller1.address, 3);
 
-        await newLimOrderWithX(tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -230250);
-        await checkpoolid("4", limorderManager.address);
+        await newLimOrderWithX(4, tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -230250);
+        await checkpoolid(limorderManager.address, seller1.address, 4);
 
-        await newLimOrderWithX(tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -230250);
-        await checkpoolid("5", limorderManager.address);
+        await newLimOrderWithX(5, tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -230250);
+        await checkpoolid(limorderManager.address, seller1.address, 5);
 
 
 
-        await decLimOrderWithX(seller1, "5", limorderManager, "500000000000");
-        await checkpoolid("5", limorderManager.address);
+        await decLimOrderWithX(seller1, 5, limorderManager, "500000000000");
+        await checkpoolid(limorderManager.address, seller1.address, 6);
+    });
+
+
+    it("first claim first earn", async function() {
+        sellX1 = BigNumber("1000000000");
+        await newLimOrderWithX(0, tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -210000);
+        await checkpoolid(limorderManager.address, seller1.address, 0);
+        
+        await newLimOrderWithX(1, tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -210100);
+        await checkpoolid(limorderManager.address, seller1.address, 1);
+
+        await newLimOrderWithX(0, tokenX, tokenY, seller2, limorderManager, sellX1.toFixed(0), -310000);
+        await checkpoolid(limorderManager.address, seller2.address, 0);
+        await newLimOrderWithX(1, tokenX, tokenY, seller2, limorderManager, sellX1.toFixed(0), -310100);
+        await checkpoolid(limorderManager.address, seller2.address, 1);
+        await newLimOrderWithX(2, tokenX, tokenY, seller2, limorderManager, sellX1.toFixed(0), -310200);
+        await checkpoolid(limorderManager.address, seller2.address, 2);
+        
+
+        await newLimOrderWithX(2, tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -210200);
+        await checkpoolid(limorderManager.address, seller1.address, 2);
+
+        await newLimOrderWithX(3, tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -210300);
+        await checkpoolid(limorderManager.address, seller1.address, 3);
+
+        await newLimOrderWithX(4, tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -210400);
+        await checkpoolid(limorderManager.address, seller1.address, 4);
+
+        await newLimOrderWithX(5, tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -210500);
+        await checkpoolid(limorderManager.address, seller1.address, 5);
+        await newLimOrderWithX(6, tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -210600);
+        await checkpoolid(limorderManager.address, seller1.address, 6);
+
+
+        await newLimOrderWithX(3, tokenX, tokenY, seller2, limorderManager, sellX1.toFixed(0), -310300);
+        await checkpoolid(limorderManager.address, seller2.address, 3);
+        await newLimOrderWithX(4, tokenX, tokenY, seller2, limorderManager, sellX1.toFixed(0), -310400);
+        await checkpoolid(limorderManager.address, seller2.address, 4);
+        await newLimOrderWithX(5, tokenX, tokenY, seller2, limorderManager, sellX1.toFixed(0), -310500);
+        await checkpoolid(limorderManager.address, seller2.address, 5);
+        await newLimOrderWithX(6, tokenX, tokenY, seller2, limorderManager, sellX1.toFixed(0), -310600);
+        await checkpoolid(limorderManager.address, seller2.address, 6);
+        await newLimOrderWithX(7, tokenX, tokenY, seller2, limorderManager, sellX1.toFixed(0), -310700);
+        await checkpoolid(limorderManager.address, seller2.address, 7);
+
+        await newLimOrderWithX(7, tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -210700);
+        await checkpoolid(limorderManager.address, seller1.address, 7);
+        await newLimOrderWithX(8, tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -210800);
+        await checkpoolid(limorderManager.address, seller1.address, 8);
+
+        await decLimOrderWithX(seller1, 5, limorderManager, "500000000000");
+        await decLimOrderWithX(seller1, 2, limorderManager, "500000000000");
+        await decLimOrderWithX(seller2, 2, limorderManager, "500000000000");
+        await decLimOrderWithX(seller2, 6, limorderManager, "500000000000");
+
+        let {activeIdx, activeLimitOrder} = await limorderManager.getActiveOrders(seller1.address); //.map((e)=>translateLimOrder(e));
+        activeIdx = activeIdx.map((e)=>e.toString());
+        activeLimitOrder = activeLimitOrder.map((e)=>translateLimOrder(e));
+        console.log('idxList: ', activeIdx);
+        console.log('LimitOrder: ', activeLimitOrder)
+
+        await collectLimOrder(limorderManager, seller1, 5, '500000000000', '500000000000');
+        await collectLimOrder(limorderManager, seller1, 2, '500000000000', '500000000000');
+
+        let {activeIdx: activeIdx2, activeLimitOrder: activeLimitOrder2} = await limorderManager.getActiveOrders(seller1.address); //.map((e)=>translateLimOrder(e));
+        activeIdx2 = activeIdx2.map((e)=>e.toString());
+        activeLimitOrder2 = activeLimitOrder2.map((e)=>translateLimOrder(e));
+        console.log('idxList: ', activeIdx2);
+        console.log('LimitOrder: ', activeLimitOrder2)
+
+        let deactiveLimitOrder = await limorderManager.getDeactiveOrders(seller1.address);
+        deactiveLimitOrder = deactiveLimitOrder.map((e)=>translateLimOrder(e));
+        console.log('deactive LimitOrder: ', deactiveLimitOrder)
+
+
+        await collectLimOrder(limorderManager, seller2, 6, '500000000000', '500000000000');
+        await decLimOrderWithX(seller2, 7, limorderManager, "500000000000");
+        await collectLimOrder(limorderManager, seller2, 7, '500000000000', '500000000000');
+        await decLimOrderWithX(seller2, 4, limorderManager, "500000000000");
+        await collectLimOrder(limorderManager, seller2, 4, '500000000000', '500000000000');
+
+
+        await newLimOrderWithX(2, tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -230200);
+        await checkpoolid(limorderManager.address, seller1.address, 2);
+        let {activeIdx: activeIdx3, activeLimitOrder: activeLimitOrder3} = await limorderManager.getActiveOrders(seller1.address); //.map((e)=>translateLimOrder(e));
+        activeIdx3 = activeIdx3.map((e)=>e.toString());
+        activeLimitOrder3 = activeLimitOrder3.map((e)=>translateLimOrder(e));
+        console.log('idxList: ', activeIdx3);
+        console.log('LimitOrder: ', activeLimitOrder3)
+
+        await decLimOrderWithX(seller1, 3, limorderManager, "500000000000");
+        await decLimOrderWithX(seller1, 0, limorderManager, "500000000000");
+        await decLimOrderWithX(seller1, 6, limorderManager, "500000000000");
+        await collectLimOrder(limorderManager, seller1, 6, '500000000000', '500000000000');
+
+        await newLimOrderWithX(6, tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -240600);
+        await checkpoolid(limorderManager.address, seller1.address, 6);
+        let {activeIdx: activeIdx4, activeLimitOrder: activeLimitOrder4} = await limorderManager.getActiveOrders(seller1.address); //.map((e)=>translateLimOrder(e));
+        activeIdx4 = activeIdx4.map((e)=>e.toString());
+        activeLimitOrder4 = activeLimitOrder4.map((e)=>translateLimOrder(e));
+        console.log('idxList: ', activeIdx4);
+        console.log('LimitOrder: ', activeLimitOrder4)
+
+        await decLimOrderWithX(seller1, 8, limorderManager, "500000000000");
+        await collectLimOrder(limorderManager, seller1, 8, '500000000000', '500000000000');
+
+        await newLimOrderWithX(8, tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -250800);
+        await checkpoolid(limorderManager.address, seller1.address, 8);
+        let {activeIdx: activeIdx5, activeLimitOrder: activeLimitOrder5} = await limorderManager.getActiveOrders(seller1.address); //.map((e)=>translateLimOrder(e));
+        activeIdx5 = activeIdx5.map((e)=>e.toString());
+        activeLimitOrder5 = activeLimitOrder5.map((e)=>translateLimOrder(e));
+        console.log('idxList: ', activeIdx5);
+        console.log('LimitOrder: ', activeLimitOrder5)
+
+
+        await newLimOrderWithX(9, tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -260900);
+        await newLimOrderWithX(6, tokenX, tokenY, seller2, limorderManager, sellX1.toFixed(0), -360600);
+        await checkpoolid(limorderManager.address, seller1.address, 9);
+        let {activeIdx: activeIdx6, activeLimitOrder: activeLimitOrder6} = await limorderManager.getActiveOrders(seller1.address); //.map((e)=>translateLimOrder(e));
+        activeIdx6 = activeIdx6.map((e)=>e.toString());
+        activeLimitOrder6 = activeLimitOrder6.map((e)=>translateLimOrder(e));
+        console.log('idxList: ', activeIdx6);
+        console.log('LimitOrder: ', activeLimitOrder6)
+
+
+        await collectLimOrder(limorderManager, seller1, 0, '500000000000', '500000000000');
+
+        // let {activeIdx: activeIdx7, activeLimitOrder: activeLimitOrder7} = await limorderManager.getActiveOrders(seller1.address); //.map((e)=>translateLimOrder(e));
+        // activeIdx7 = activeIdx7.map((e)=>e.toString());
+        // activeLimitOrder7 = activeLimitOrder7.map((e)=>translateLimOrder(e));
+        // console.log('idxList: ', activeIdx7);
+        // console.log('LimitOrder: ', activeLimitOrder7)
+
+        await newLimOrderWithX(0, tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -270000);
+        await checkpoolid(limorderManager.address, seller1.address, 0);
+        let {activeIdx: activeIdx7, activeLimitOrder: activeLimitOrder7} = await limorderManager.getActiveOrders(seller1.address); //.map((e)=>translateLimOrder(e));
+        activeIdx7 = activeIdx7.map((e)=>e.toString());
+        activeLimitOrder7 = activeLimitOrder7.map((e)=>translateLimOrder(e));
+        console.log('idxList7: ', activeIdx7);
+        console.log('LimitOrder7: ', activeLimitOrder7)
+
+
+        await decLimOrderWithX(seller1, 8, limorderManager, "500000000000");
+        await collectLimOrder(limorderManager, seller1, 8, '500000000000', '500000000000');
+
+        await newLimOrderWithX(8, tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), -280800);
+        await checkpoolid(limorderManager.address, seller1.address, 8);
+        let {activeIdx: activeIdx8, activeLimitOrder: activeLimitOrder8} = await limorderManager.getActiveOrders(seller1.address); //.map((e)=>translateLimOrder(e));
+        activeIdx8 = activeIdx8.map((e)=>e.toString());
+        activeLimitOrder8 = activeLimitOrder8.map((e)=>translateLimOrder(e));
+        console.log('idxList8: ', activeIdx8);
+        console.log('LimitOrder8: ', activeLimitOrder8)
+
+        let {activeIdx: activeIdx8_2, activeLimitOrder: activeLimitOrder8_2} = await limorderManager.getActiveOrders(seller2.address); //.map((e)=>translateLimOrder(e));
+        activeIdx8_2 = activeIdx8_2.map((e)=>e.toString());
+        activeLimitOrder8_2 = activeLimitOrder8_2.map((e)=>translateLimOrder(e));
+        console.log('idxList 8_2: ', activeIdx8_2);
+        console.log('LimitOrder 8_2: ', activeLimitOrder8_2)
+
+        let deactiveLimitOrder8 = await limorderManager.getDeactiveOrders(seller1.address);
+        deactiveLimitOrder8 = deactiveLimitOrder8.map((e)=>translateLimOrder(e));
+        console.log('deactive LimitOrder8: ', deactiveLimitOrder8)
+
+        let deactiveLimitOrder8_2 = await limorderManager.getDeactiveOrders(seller2.address);
+        deactiveLimitOrder8_2 = deactiveLimitOrder8_2.map((e)=>translateLimOrder(e));
+        console.log('deactive LimitOrder 8_2: ', deactiveLimitOrder8_2)
     });
 });
