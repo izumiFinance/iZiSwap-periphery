@@ -13,11 +13,11 @@ const net = process.env.HARDHAT_NETWORK
 
 async function main() {
     // deploy nft
-    const NonfungibleLOrderManager = await ethers.getContractFactory("NonfungibleLOrderManager");
+    const LimitOrderManager = await ethers.getContractFactory("LimitOrderManager");
     const iZiSwapFactory = deployed[net].iZiSwapFactory;
     const weth = deployed[net].WETH9
-    const nflom = await NonfungibleLOrderManager.deploy(iZiSwapFactory, weth);
-    console.log("NonfungibleLOrderManager: ", nflom.address);
+    const nflom = await LimitOrderManager.deploy(iZiSwapFactory, weth);
+    console.log("LimitOrderManager: ", nflom.address);
     await nflom.deployed();
 }
 

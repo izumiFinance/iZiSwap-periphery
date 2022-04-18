@@ -12,7 +12,7 @@ HARDHAT_NETWORK='izumiTest' node scripts/swap/deploySwap.js
 const net = process.env.HARDHAT_NETWORK
 
 async function main() {
-    // deploy nft
+
     const factory = deployed[net].iZiSwapFactory;
     const weth = deployed[net].WETH9;
 

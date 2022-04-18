@@ -13,11 +13,11 @@ const net = process.env.HARDHAT_NETWORK
 
 async function main() {
     // deploy nft
-    const NonfungibleLiquidityManager = await ethers.getContractFactory("NonfungibleLiquidityManager");
+    const LiquidityManager = await ethers.getContractFactory("LiquidityManager");
     const iZiSwapFactory = deployed[net].iZiSwapFactory;
     const weth = deployed[net].WETH9
-    nflm = await NonfungibleLiquidityManager.deploy(iZiSwapFactory, weth);
-    console.log("NonfungibleLiquidityManager: ", nflm.address);
+    nflm = await LiquidityManager.deploy(iZiSwapFactory, weth);
+    console.log("LiquidityManager: ", nflm.address);
     await nflm.deployed();
 }
 
