@@ -1,22 +1,33 @@
-const settings = require("../.settings.js");
 const { ethers, waffle} = require("hardhat");
-const provider = waffle.provider;
+
+const hardhat = require("hardhat");
+const contracts = require("./deployed.js");
+
+
+// example
+// HARDHAT_NETWORK='izumiTest' \
+//     node getPool.js iZi WETH9 3000
+const v = process.argv
+const net = process.env.HARDHAT_NETWORK
+
+const para = {
+  tokenXAddress: contracts[net][v[2]],
+  tokenYAddress: contracts[net][v[3]],
+  fee: v[4]
+}
+
+
+
 
 async function main() {
-    [signer] = await ethers.getSigners();
+    for ( var i in para) { console.log("    " + i + ": " + para[i]); }
     // deploy nft
-    const NonfungibleLiquidityManager = await ethers.getContractFactory("NonfungibleLiquidityManager");
-    nflm = NonfungibleLiquidityManager.attach(settings.nflmAddr);
-    // get pool
-    // pool_usdc_usdt = await nflm.pool(settings.usdc, settings.usdt, 3000);
-    // pool_usdc_weth = await nflm.pool(settings.usdc, settings.weth, 3000);
-    pool_izi_usdc = await nflm.pool(settings.IZI, settings.USDC, 3000);
-    pool_bit_usdc = await nflm.pool(settings.BIT, settings.USDC, 3000);
+    const LiquidityManagerFactory = await ethers.getContractFactory("LiquidityManager");
+    const liquidityManager = LiquidityManagerFactory.attach(contracts[net].liquidityManager);
+    
+    const pool = await liquidityManager.pool(para.tokenXAddress, para.tokenYAddress, para.fee);
 
-    // console.log("pool_usdc_usdt: ", pool_usdc_usdt);
-    // console.log("pool_usdc_weth: ", pool_usdc_weth);
-    console.log("pool_izi_usdc: ", pool_izi_usdc);
-    console.log("pool_bit_usdc: ", pool_bit_usdc);
+    console.log('pool: ', pool)
 }
 
 main().then(() => process.exit(0))

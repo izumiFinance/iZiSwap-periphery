@@ -29,7 +29,7 @@ async function main() {
     // );
     
     // console.log("tx 4: ", tx);
-    var tx = await nflom.decLimOrder("0", "0xffffffffffffffffffffffffffffffff");
+    var tx = await nflom.updateOrder("0");
     console.log('tx: ', tx);
 }
 

@@ -52,6 +52,23 @@ interface IiZiSwapPool {
         uint256 amountY
     );
 
+
+    /// @notice Emitted by the pool for any flashes of tokenX/tokenY
+    /// @param sender The address that initiated the swap call, and that received the callback
+    /// @param recipient The address that received the tokens from flash
+    /// @param amountX The amount of tokenX that was flashed
+    /// @param amountY The amount of tokenY that was flashed
+    /// @param paidX The amount of tokenX paid for the flash, which can exceed the amountX plus the fee
+    /// @param paidY The amount of tokenY paid for the flash, which can exceed the amountY plus the fee
+    event Flash(
+        address indexed sender,
+        address indexed recipient,
+        uint256 amountX,
+        uint256 amountY,
+        uint256 paidX,
+        uint256 paidY
+    );
+
     /// @notice Emitted when a seller successfully add a limit order
     /// @param amount amount of token to sell the seller added
     /// @param point point of limit order
@@ -77,8 +94,8 @@ interface IiZiSwapPool {
     /// @return liquidity The amount of liquidity,
     /// Returns lastFeeScaleX_128 fee growth of tokenX inside the range as of the last mint/burn/collect,
     /// Returns lastFeeScaleY_128 fee growth of tokenY inside the range as of the last mint/burn/collect,
-    /// Returns remainFeeX the computed amount of tokenX miner can collect as of the last mint/burn/collect,
-    /// Returns remainFeeY the computed amount of tokenY miner can collect as of the last mint/burn/collect
+    /// Returns tokenOwedX the computed amount of tokenX miner can collect as of the last mint/burn/collect,
+    /// Returns tokenOwedY the computed amount of tokenY miner can collect as of the last mint/burn/collect
     function liquidity(bytes32 key)
         external
         view
@@ -86,8 +103,8 @@ interface IiZiSwapPool {
             uint128 liquidity,
             uint256 lastFeeScaleX_128,
             uint256 lastFeeScaleY_128,
-            uint256 remainFeeX,
-            uint256 remainFeeY
+            uint256 tokenOwedX,
+            uint256 tokenOwedY
         );
     
     /// @notice return the information about a user's limit order (sell tokenY and earn tokenX)
@@ -308,10 +325,8 @@ interface IiZiSwapPool {
     /// @notice some values of pool
     /// @return sqrtPrice_96 a 96 fixpoing number describe the sqrt value of current price(tokenX/tokenY)
     /// @return currentPoint The current point of the pool, 1.0001 ^ currentPoint = price
-    /// @return currX amount of tokenX (from liquidity) on the currentPoint, this value is meaningless if allX is true
-    /// @return currY amount of tokenY (from liquidity) on the currentPoint, this value is meaningless if allX is true
     /// @return liquidity liquidity on the currentPoint (currX * sqrtPrice + currY / sqrtPrice)
-    /// @return allX whether there is no tokenY on the currentPoint
+    /// @return liquidityX liquidity of tokenX
     /// @return observationCurrentIndex The index of the last oracle observation that was written,
     /// @return observationQueueLen The current maximum number of observations stored in the pool,
     /// @return observationNextQueueLen The next maximum number of observations, to be updated when the observation.
@@ -321,10 +336,8 @@ interface IiZiSwapPool {
         returns(
             uint160 sqrtPrice_96,
             int24 currentPoint,
-            uint256 currX,
-            uint256 currY,
             uint128 liquidity,
-            bool allX,
+            uint128 liquidityX,
             uint16 observationCurrentIndex,
             uint16 observationQueueLen,
             uint16 observationNextQueueLen,
@@ -373,19 +386,19 @@ interface IiZiSwapPool {
 
     /// @notice returns infomation of a point in the pool
     /// @param point the point
-    /// @return liquidAcc the total amount of liquidity that uses the point either as left endpoint or right endpoint
+    /// @return liquidSum the total amount of liquidity that uses the point either as left endpoint or right endpoint
     /// @return liquidDelta how much liquidity changes when the pool price crosses the point from left to right
-    /// @return feeScaleXBeyond_128 the fee growth on the other side of the point from the current point in tokenX
-    /// @return feeScaleYBeyond_128 the fee growth on the other side of the point from the current point in tokenY
-    /// @return isEndpt whether the point is an endpoint of a some miner's liquidity, true if liquidAcc > 0
+    /// @return accFeeXOut_128 the fee growth on the other side of the point from the current point in tokenX
+    /// @return accFeeYOut_128 the fee growth on the other side of the point from the current point in tokenY
+    /// @return isEndpt whether the point is an endpoint of a some miner's liquidity, true if liquidSum > 0
     function points(int24 point)
         external
         view
         returns (
-            uint128 liquidAcc,
+            uint128 liquidSum,
             int128 liquidDelta,
-            uint256 feeScaleXBeyond_128,
-            uint256 feeScaleYBeyond_128,
+            uint256 accFeeXOut_128,
+            uint256 accFeeYOut_128,
             bool isEndpt
         );
 
@@ -408,6 +421,21 @@ interface IiZiSwapPool {
     /// @notice expand max-length of observation queue
     /// @param newNextQueueLen new value of observationNextQueueLen, which should be greater than current observationNextQueueLen
     function expandObservationQueue(uint16 newNextQueueLen) external;
+
+    /// @notice Receive tokenX and/or tokenY and pay it back, plus a fee, in the callback
+    /// @dev The caller of this method receives a callback in the form of IiZiSwapPool#flashCallback
+    /// @dev Can be used to donate underlying tokens pro-rata to currently in-range liquidity providers by calling
+    /// with 0 amount{0,1} and sending the donation amount(s) from the callback
+    /// @param recipient The address which will receive the token0 and token1 amounts
+    /// @param amountX The amount of tokenX to borrow
+    /// @param amountY The amount of tokenY to borrow
+    /// @param data Any data to be passed through to the callback
+    function flash(
+        address recipient,
+        uint256 amountX,
+        uint256 amountY,
+        bytes calldata data
+    ) external;
 
     /// @notice return a snapshot infomation of Liquidity in [leftPoint, rightPoint)
     /// @param leftPoint left endpoint of range, should be times of pointDelta

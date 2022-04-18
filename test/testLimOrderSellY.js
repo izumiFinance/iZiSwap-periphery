@@ -3,13 +3,13 @@ const { ethers } = require("hardhat");
 
 const BigNumber = require('bignumber.js');
 
-async function getToken() {
+async function getToken(dx, dy) {
 
     // deploy token
-    const tokenFactory = await ethers.getContractFactory("Token")
-    tokenX = await tokenFactory.deploy('a', 'a');
+    const tokenFactory = await ethers.getContractFactory("TestToken")
+    tokenX = await tokenFactory.deploy('a', 'a', dx);
     await tokenX.deployed();
-    tokenY = await tokenFactory.deploy('b', 'b');
+    tokenY = await tokenFactory.deploy('b', 'b', dy);
     await tokenY.deployed();
 
     txAddr = tokenX.address.toLowerCase();
@@ -62,11 +62,11 @@ function getAmountY(l, r, rate, liquidity, up) {
     return floor(amountY);
 }
 
-async function newLimOrderWithY(tokenX, tokenY, seller, limorderManager, amountY, point) {
+async function newLimOrderWithY(slotIdx, tokenX, tokenY, seller, limorderManager, amountY, point) {
     await tokenY.transfer(seller.address, amountY);
     await tokenY.connect(seller).approve(limorderManager.address, amountY);
     await limorderManager.connect(seller).newLimOrder(
-        seller.address,
+        slotIdx,
         {
             tokenX: tokenX.address,
             tokenY: tokenY.address,
@@ -93,23 +93,22 @@ function blockNum2BigNumber(num) {
     var b = BigNumber(num._hex);
     return b;
 }
-async function getLimorder(sellId, limorderManager) {
-     var pt, amount, sellingRemain, accSellingDec, sellingDesc, earn, lastAccEarn, poolId, sellXEarnY;
-     [pt, amount, sellingRemain, accSellingDec, sellingDesc, earn, lastAccEarn, poolId, sellXEarnY] = await limorderManager.limOrders(sellId);
+async function getLimorder(userAddress, orderIdx, limorderManager) {
+     const {pt, amount, sellingRemain, accSellingDec, sellingDec, earn, lastAccEarn, poolId, sellXEarnY} = await limorderManager.getActiveOrder(userAddress, orderIdx);
      return {
          pt: pt,
          sellingRemain: blockNum2BigNumber(sellingRemain),
-         sellingDesc: blockNum2BigNumber(sellingDesc),
+         sellingDec: blockNum2BigNumber(sellingDec),
          earn: blockNum2BigNumber(earn),
          lastAccEarn: blockNum2BigNumber(lastAccEarn),
          poolId: blockNum2BigNumber(poolId),
          sellXEarnY: sellXEarnY
      };
 }
-async function checkLimOrder(sellId, limorderManager, limorderExpect) {
-    limorder = await getLimorder(sellId, limorderManager);
+async function checkLimOrder(userAddress, orderIdx, limorderManager, limorderExpect) {
+    const limorder = await getLimorder(userAddress, orderIdx, limorderManager);
     expect(limorder.sellingRemain.toFixed(0)).to.equal(limorderExpect.sellingRemain.toFixed(0));
-    expect(limorder.sellingDesc.toFixed(0)).to.equal(limorderExpect.sellingDesc.toFixed(0));
+    expect(limorder.sellingDec.toFixed(0)).to.equal(limorderExpect.sellingDec.toFixed(0));
     expect(limorder.earn.toFixed(0)).to.equal(limorderExpect.earn.toFixed(0));
     expect(limorder.lastAccEarn.toFixed(0)).to.equal(limorderExpect.lastAccEarn.toFixed(0));
     expect(limorder.sellXEarnY).to.equal(limorderExpect.sellXEarnY);
@@ -151,28 +150,39 @@ function getContractJson(path) {
 }
 
 async function getPoolParts(signer) {
-    var izumiswapPoolPartJson = getContractJson(__dirname + '/core/swapX2Y.sol/SwapX2YModule.json');
-    var IzumiswapPoolPartFactory = await ethers.getContractFactory(izumiswapPoolPartJson.abi, izumiswapPoolPartJson.bytecode, signer);
-
-    const izumiswapPoolPart = await IzumiswapPoolPartFactory.deploy();
-    await izumiswapPoolPart.deployed();
-
-    var izumiswapPoolPartDesireJson = getContractJson(__dirname + '/core/swapY2X.sol/SwapY2XModule.json');
-    var IzsumiswapPoolPartDesireFactory = await ethers.getContractFactory(izumiswapPoolPartDesireJson.abi, izumiswapPoolPartDesireJson.bytecode, signer);
-    const izumiswapPoolPartDesire = await IzsumiswapPoolPartDesireFactory.deploy();
-    await izumiswapPoolPartDesire.deployed();
-
-    var mintModuleJson = getContractJson(__dirname + '/core/mint.sol/MintModule.json');
-    var MintModuleFactory = await ethers.getContractFactory(mintModuleJson.abi, mintModuleJson.bytecode, signer);
+    const swapX2YModuleJson = getContractJson(__dirname + '/core/SwapX2YModule.json');
+    const SwapX2YModuleFactory = await ethers.getContractFactory(swapX2YModuleJson.abi, swapX2YModuleJson.bytecode, signer);
+    const swapX2YModule = await SwapX2YModuleFactory.deploy();
+    await swapX2YModule.deployed();
+    
+    const swapY2XModuleJson = getContractJson(__dirname + '/core/SwapY2XModule.json');
+    const SwapY2XModuleFactory = await ethers.getContractFactory(swapY2XModuleJson.abi, swapY2XModuleJson.bytecode, signer);
+    const swapY2XModule = await SwapY2XModuleFactory.deploy();
+    await swapY2XModule.deployed();
+  
+    const mintModuleJson = getContractJson(__dirname + '/core/MintModule.json');
+    const MintModuleFactory = await ethers.getContractFactory(mintModuleJson.abi, mintModuleJson.bytecode, signer);
     const mintModule = await MintModuleFactory.deploy();
     await mintModule.deployed();
-    return [izumiswapPoolPart.address, izumiswapPoolPartDesire.address, mintModule.address];
-}
+  
+    const limitOrderModuleJson = getContractJson(__dirname + '/core/LimitOrderModule.json');
+    const LimitOrderModuleFactory = await ethers.getContractFactory(limitOrderModuleJson.abi, limitOrderModuleJson.bytecode, signer);
+    const limitOrderModule = await LimitOrderModuleFactory.deploy();
+    await limitOrderModule.deployed();
+    return {
+      swapX2YModule: swapX2YModule.address,
+      swapY2XModule: swapY2XModule.address,
+      mintModule: mintModule.address,
+      limitOrderModule: limitOrderModule.address,
+    };
+  }
 
-async function getIzumiswapFactory(receiverAddr, poolPart, poolPartDesire, mintModule, signer) {
-    var izumiswapJson = getContractJson(__dirname + '/core/iZiSwapFactory.sol/iZiSwapFactory.json');
-    var IzumiswapFactory = await ethers.getContractFactory(izumiswapJson.abi, izumiswapJson.bytecode, signer);
-    var factory = await IzumiswapFactory.deploy(receiverAddr, poolPart, poolPartDesire, mintModule);
+async function getIzumiswapFactory(receiverAddr, swapX2YModule, swapY2XModule, mintModule, limitOrderModule, signer) {
+    const iZiSwapJson = getContractJson(__dirname + '/core/iZiSwapFactory.json');
+    
+    const iZiSwapFactory = await ethers.getContractFactory(iZiSwapJson.abi, iZiSwapJson.bytecode, signer);
+
+    const factory = await iZiSwapFactory.deploy(receiverAddr, swapX2YModule, swapY2XModule, mintModule, limitOrderModule);
     await factory.deployed();
     return factory;
 }
@@ -184,8 +194,8 @@ async function getWETH9(signer) {
     return WETH9;
 }
 async function getNFTLiquidityManager(factory, weth) {
-    const NonfungibleLiquidityManager = await ethers.getContractFactory("NonfungibleLiquidityManager");
-    var nflm = await NonfungibleLiquidityManager.deploy(factory.address, weth.address);
+    const LiquidityManager = await ethers.getContractFactory("LiquidityManager");
+    var nflm = await LiquidityManager.deploy(factory.address, weth.address);
     await nflm.deployed();
     return nflm;
 }
@@ -196,7 +206,7 @@ async function getSwap(factory, weth) {
     return swap;
 }
 async function getLimorderManager(factory, weth) {
-    const LimorderManager = await ethers.getContractFactory("NonfungibleLOrderManager");
+    const LimorderManager = await ethers.getContractFactory("LimitOrderManager");
     var limorderManager = await LimorderManager.deploy(factory.address, weth.address);
     await limorderManager.deployed();
     return limorderManager;
@@ -233,6 +243,9 @@ async function checkCoreEarnX(tokenX, tokenY, viewLimorder, limorderManager, pt,
     expect(earnX.earn).to.equal(expectData.earn.toFixed(0));
     expect(earnX.earnAssign).to.equal(expectData.earnAssign.toFixed(0));
 }
+function amountAddFee(amount) {
+    return ceil(amount.times(1000).div(997));
+}
 describe("limorder", function () {
     var signer, seller1, seller2, seller3, trader, trader2;
     var poolPart, poolPartDesire;
@@ -246,15 +259,15 @@ describe("limorder", function () {
     var rate;
     beforeEach(async function() {
         [signer, seller1, seller2, seller3, trader, trader2, recipient2, receiver] = await ethers.getSigners();
-        [poolPart, poolPartDesire, mintModule] = await getPoolParts();
-        izumiswapFactory = await getIzumiswapFactory(receiver.address, poolPart, poolPartDesire, mintModule, signer);
+        const {swapX2YModule, swapY2XModule, mintModule, limitOrderModule} = await getPoolParts();
+        izumiswapFactory = await getIzumiswapFactory(receiver.address, swapX2YModule, swapY2XModule, mintModule, limitOrderModule, signer);
         weth9 = await getWETH9(signer);
         nflm = await getNFTLiquidityManager(izumiswapFactory, weth9);
         swap = await getSwap(izumiswapFactory, weth9);
         limorderManager = await getLimorderManager(izumiswapFactory, weth9);
         viewLimorder = await getViewLimorder(izumiswapFactory);
 
-        [tokenX, tokenY] = await getToken();
+        [tokenX, tokenY] = await getToken(18, 18);
         txAddr = tokenX.address.toLowerCase();
         tyAddr = tokenY.address.toLowerCase();
 
@@ -267,9 +280,9 @@ describe("limorder", function () {
     
     it("first claim first earn", async function() {
         sellY1 = BigNumber("1000000000");
-        await newLimOrderWithY(tokenX, tokenY, seller1, limorderManager, sellY1.toFixed(0), 5050);
+        await newLimOrderWithY(0, tokenX, tokenY, seller1, limorderManager, sellY1.toFixed(0), 5050);
         sellY2 = BigNumber("2000000000");
-        await newLimOrderWithY(tokenX, tokenY, seller2, limorderManager, sellY2.toFixed(0), 5050);
+        await newLimOrderWithY(0, tokenX, tokenY, seller2, limorderManager, sellY2.toFixed(0), 5050);
 
         await checkBalance(tokenX, seller1, BigNumber(0));
         await checkBalance(tokenY, seller1, BigNumber(0));
@@ -285,7 +298,7 @@ describe("limorder", function () {
                 tokenY: tokenY.address, 
                 fee: 3000,
                 recipient: trader.address,
-                amount: costX.toFixed(0),
+                amount: amountAddFee(costX).toFixed(0),
                 boundaryPt: 5050,
                 maxPayed: costX.toFixed(0),
                 minAcquired: 0
@@ -294,10 +307,10 @@ describe("limorder", function () {
 
         await decLimOrderWithY(seller1, "0", limorderManager, "500000000");
         seller1EarnPhase1 = getAcquireX(5050, rate, sellY1);
-        await checkLimOrder("0", limorderManager, {
+        await checkLimOrder(seller1.address, "0", limorderManager, {
             pt: 5050,
             sellingRemain: BigNumber("0"),
-            sellingDesc: BigNumber("0"),
+            sellingDec: BigNumber("0"),
             earn: seller1EarnPhase1,
             lastAccEarn: costX,
             sellXEarnY: false
@@ -311,13 +324,13 @@ describe("limorder", function () {
             earnAssign: seller1EarnPhase1
         });
         sellY2_p2 = BigNumber("1500000000");
-        await decLimOrderWithY(seller2, "1", limorderManager, "10000");
+        await decLimOrderWithY(seller2, "0", limorderManager, "10000");
         seller2EarnPhase1 = costX.minus(getAcquireX(5050, rate, sellY1));
         seller2RemainPhase1 = sellY2.minus(getCostY(5050, rate, seller2EarnPhase1)).minus("10000");
-        await checkLimOrder("1", limorderManager, {
+        await checkLimOrder(seller2.address, "0", limorderManager, {
             pt: 5050,
             sellingRemain: seller2RemainPhase1,
-            sellingDesc: BigNumber("10000"),
+            sellingDec: BigNumber("10000"),
             earn: seller2EarnPhase1,
             lastAccEarn: costX,
             sellXEarnY: false
@@ -327,15 +340,15 @@ describe("limorder", function () {
             earnAssign: seller1EarnPhase1.plus(seller2EarnPhase1)
         });
         // check collect
-        await collectLimOrder(seller2, "1", recipient2.address, limorderManager, "100000000000000000", "100000000000000000");
+        await collectLimOrder(seller2, "0", recipient2.address, limorderManager, "100000000000000000", "100000000000000000");
 
         await checkBalance(tokenX, recipient2, seller2EarnPhase1);
         await checkBalance(tokenY, recipient2, BigNumber("10000"));
 
-        await checkLimOrder("1", limorderManager, {
+        await checkLimOrder(seller2.address, "0", limorderManager, {
             pt: 5050,
             sellingRemain: seller2RemainPhase1,
-            sellingDesc: BigNumber("0"),
+            sellingDec: BigNumber("0"),
             earn: BigNumber("0"),
             lastAccEarn: costX,
             sellXEarnY: false

@@ -6,19 +6,28 @@ import "./base/base.sol";
 import "./core/interfaces/IiZiSwapCallback.sol";
 import "./core/interfaces/IiZiSwapFactory.sol";
 import "./core/interfaces/IiZiSwapPool.sol";
+import "./libraries/Path.sol";
+
+// import 'hardhat/console.sol';
 
 contract Swap is Base, IiZiSwapCallback {
 
-    // callback data passed through swap interfaces to the callback
+    // // callback data passed through swap interfaces to the callback
+    // struct SwapCallbackData {
+    //     // amount of token0 is input param
+    //     address token0;
+    //     // amount of token1 is calculated param
+    //     address token1;
+    //     // address to pay token
+    //     address payer;
+    //     // fee amount of swap
+    //     uint24 fee;
+    // }
+
+    using Path for bytes;
     struct SwapCallbackData {
-        // amount of token0 is input param
-        address token0;
-        // amount of token1 is calculated param
-        address token1;
-        // address to pay token
+        bytes path;
         address payer;
-        // fee amount of swap
-        uint24 fee;
     }
 
     /// @notice callback for swapY2X and swapY2XDesireX, in order to pay tokenY from trader
@@ -31,15 +40,22 @@ contract Swap is Base, IiZiSwapCallback {
         bytes calldata data
     ) external override {
         SwapCallbackData memory dt = abi.decode(data, (SwapCallbackData));
-        verify(dt.token0, dt.token1, dt.fee);
-        if (dt.token0 < dt.token1) {
+
+        (address token0, address token1, uint24 fee) = dt.path.decodeFirstPool();
+        verify(token0, token1, fee);
+        if (token0 < token1) {
             // token1 is y, amount of token1 is calculated
             // called from swapY2XDesireX(...)
-            pay(dt.token1, dt.payer, msg.sender, y);
+            if (dt.path.hasMultiplePools()) {
+                dt.path = dt.path.skipToken();
+                swapDesireInternal(y, msg.sender, dt);
+            } else {
+                pay(token1, dt.payer, msg.sender, y);
+            }
         } else {
             // token0 is y, amount of token0 is input param
             // called from swapY2X(...)
-            pay(dt.token0, dt.payer, msg.sender, y);
+            pay(token0, dt.payer, msg.sender, y);
         }
     }
 
@@ -53,16 +69,146 @@ contract Swap is Base, IiZiSwapCallback {
         bytes calldata data
     ) external override {
         SwapCallbackData memory dt = abi.decode(data, (SwapCallbackData));
-        verify(dt.token0, dt.token1, dt.fee);
-        if (dt.token0 < dt.token1) {
+        (address token0, address token1, uint24 fee) = dt.path.decodeFirstPool();
+        verify(token0, token1, fee);
+        if (token0 < token1) {
             // token0 is x, amount of token0 is input param
             // called from swapX2Y(...)
-            pay(dt.token0, dt.payer, msg.sender, x);
+            pay(token0, dt.payer, msg.sender, x);
         } else {
             // token1 is x, amount of token1 is calculated param
             // called from swapX2YDesireY(...)
-            pay(dt.token1, dt.payer, msg.sender, x);
+            if (dt.path.hasMultiplePools()) {
+                dt.path = dt.path.skipToken();
+                swapDesireInternal(x, msg.sender, dt);
+            } else {
+                pay(token1, dt.payer, msg.sender, x);
+            }
         }
+    }
+
+    function swapDesireInternal(
+        uint256 desire,
+        address recipient,
+        SwapCallbackData memory data
+    ) private returns (uint256 cost, uint256 acquire) {
+        // allow swapping to the router address with address 0
+        if (recipient == address(0)) recipient = address(this);
+
+        (address tokenOut, address tokenIn, uint24 fee) = data.path.decodeFirstPool();
+
+        address poolAddr = pool(tokenOut, tokenIn, fee);
+        if (tokenOut < tokenIn) {
+            // tokenOut is tokenX
+            // tokenIn is tokenY
+            // we should call y2XDesireX
+
+            (acquire, cost) = IiZiSwapPool(poolAddr).swapY2XDesireX(
+                recipient, uint128(desire), 800001,
+                abi.encode(data)
+            );
+        } else {
+            // tokenOut is tokenY
+            // tokenIn is tokenX
+            (cost, acquire) = IiZiSwapPool(poolAddr).swapX2YDesireY(
+                recipient, uint128(desire), -800001,
+                abi.encode(data)
+            );
+        }
+    }
+
+    function swapAmountInternal(
+        uint128 amount,
+        address recipient,
+        SwapCallbackData memory data
+    ) private returns (uint256 cost, uint256 acquire) {
+        // allow swapping to the router address with address 0
+        if (recipient == address(0)) recipient = address(this);
+
+        address payer = msg.sender; // msg.sender pays for the first hop
+
+        bool firstHop = true;
+
+        while (true) {
+            bool hasMultiplePools = data.path.hasMultiplePools();
+            (address tokenIn, address tokenOut, uint24 fee) = data.path.decodeFirstPool();
+            address poolAddr = pool(tokenOut, tokenIn, fee);
+            if (tokenIn < tokenOut) {
+                // swapX2Y
+                uint256 costX;
+                (costX, acquire) = IiZiSwapPool(poolAddr).swapX2Y(
+                    hasMultiplePools? address(this): recipient, amount, -799999,
+                    abi.encode(SwapCallbackData({path: abi.encodePacked(tokenIn, fee, tokenOut), payer: payer}))
+                );
+                if (firstHop) {
+                    cost = costX;
+                }
+            } else {
+                // swapY2X
+                uint256 costY;
+                (acquire, costY) = IiZiSwapPool(poolAddr).swapY2X(
+                    hasMultiplePools? address(this): recipient, amount, 799999,
+                    abi.encode(SwapCallbackData({path: abi.encodePacked(tokenIn, fee, tokenOut), payer: payer}))
+                );
+                if (firstHop) {
+                    cost = costY;
+                }
+            }
+            firstHop = false;
+
+            // decide whether to continue or terminate
+            if (hasMultiplePools) {
+                payer = address(this); // at this point, the caller has paid
+                data.path = data.path.skipToken();
+                amount = uint128(acquire);
+            } else {
+                break;
+            }
+        }
+    }
+
+    struct SwapDesireParams {
+        bytes path;
+        address recipient;
+        // uint256 deadline;
+        uint128 desire;
+        uint256 maxPayed;
+    }
+
+    function swapDesire(SwapDesireParams calldata params)
+        external
+        payable
+        returns (uint256 cost, uint256 acquire)
+    {
+        
+        (cost, acquire) = swapDesireInternal(
+            params.desire,
+            params.recipient,
+            SwapCallbackData({path: params.path, payer: msg.sender})
+        );
+
+        require(cost <= params.maxPayed, 'Too much payed');
+        require(acquire >= params.desire, 'Too much requested');
+    }
+
+    struct SwapAmountParams {
+        bytes path;
+        address recipient;
+        // uint256 deadline;
+        uint128 amount;
+        uint256 minAcquired;
+    }
+    function swapAmount(SwapAmountParams calldata params)
+        external
+        payable
+        returns (uint256 cost, uint256 acquire) 
+    {
+        (cost, acquire) = swapAmountInternal(
+            params.amount, 
+            params.recipient, 
+            SwapCallbackData({path: params.path, payer: msg.sender})
+        );
+        require(acquire >= params.minAcquired, 'Too much requested');
     }
 
     /// @notice constructor to create this contract
@@ -81,16 +227,17 @@ contract Swap is Base, IiZiSwapCallback {
         uint24 fee;
         // highPt for y2x, lowPt for x2y
         // here y2X is calling swapY2X or swapY2XDesireX
+        // in swapY2XDesireX, if boundaryPt is 800001, means user wants to get enough X
+        // in swapX2YDesireY, if boundaryPt is -800001, means user wants to get enough Y
         int24 boundaryPt; 
         // who will receive acquired token
         address recipient;
         // desired amount for desired mode, paid amount for non-desired mode
         // here, desire mode is calling swapX2YDesireY or swapY2XDesireX
         uint128 amount;
-        // max amount of paid token trader willing to pay
-        // only used in desire mode
+        // max amount of payed token from trader, used in desire mode
         uint256 maxPayed;
-        // min amount of received token trader wanted
+        // min amount of received token trader wanted, used in undesire mode
         uint256 minAcquired;
     }
 
@@ -113,7 +260,7 @@ contract Swap is Base, IiZiSwapCallback {
         address recipient = (swapParams.recipient == address(0)) ? address(this): swapParams.recipient;
         (uint256 amountX, ) = IiZiSwapPool(poolAddr).swapY2X(
             recipient, swapParams.amount, swapParams.boundaryPt,
-            abi.encode(SwapCallbackData({token0: swapParams.tokenY, token1:swapParams.tokenX, fee: swapParams.fee, payer: payer}))
+            abi.encode(SwapCallbackData({path: abi.encodePacked(swapParams.tokenY, swapParams.fee, swapParams.tokenX), payer: payer}))
         );
         require(amountX >= swapParams.minAcquired, "XMIN");
     }
@@ -130,9 +277,11 @@ contract Swap is Base, IiZiSwapCallback {
         ExchangeAmount memory amount;
         (amount.amountX, amount.amountY) = IiZiSwapPool(poolAddr).swapY2XDesireX(
             recipient, swapParams.amount, swapParams.boundaryPt,
-            abi.encode(SwapCallbackData({token0: swapParams.tokenX, token1:swapParams.tokenY, fee: swapParams.fee, payer: payer}))
+            abi.encode(SwapCallbackData({path: abi.encodePacked(swapParams.tokenX, swapParams.fee, swapParams.tokenY), payer: payer}))
         );
-        require(amount.amountX >= swapParams.minAcquired, "XMIN");
+        if (swapParams.boundaryPt == 800001) {
+            require(amount.amountX >= swapParams.amount, 'Too much requested');
+        }
         require(amount.amountY <= swapParams.maxPayed, "YMAX");
     }
 
@@ -147,7 +296,7 @@ contract Swap is Base, IiZiSwapCallback {
         address recipient = (swapParams.recipient == address(0)) ? address(this): swapParams.recipient;
         (, uint256 amountY) = IiZiSwapPool(poolAddr).swapX2Y(
             recipient, swapParams.amount, swapParams.boundaryPt,
-            abi.encode(SwapCallbackData({token0: swapParams.tokenX, token1:swapParams.tokenY, fee: swapParams.fee, payer: payer}))
+            abi.encode(SwapCallbackData({path: abi.encodePacked(swapParams.tokenX, swapParams.fee, swapParams.tokenY), payer: payer}))
         );
         require(amountY >= swapParams.minAcquired, "YMIN");
     }
@@ -164,9 +313,11 @@ contract Swap is Base, IiZiSwapCallback {
         ExchangeAmount memory amount;
         (amount.amountX, amount.amountY) = IiZiSwapPool(poolAddr).swapX2YDesireY(
             recipient, swapParams.amount, swapParams.boundaryPt,
-            abi.encode(SwapCallbackData({token0: swapParams.tokenY, token1:swapParams.tokenX, fee: swapParams.fee, payer: payer}))
+            abi.encode(SwapCallbackData({path: abi.encodePacked(swapParams.tokenY, swapParams.fee, swapParams.tokenX), payer: payer}))
         );
         require(amount.amountX <= swapParams.maxPayed, "XMAX");
-        require(amount.amountY >= swapParams.minAcquired, "YMIN");
+        if (swapParams.boundaryPt == -800001) {
+            require(amount.amountY >= swapParams.amount, 'Too much requested');
+        }
     }
 }

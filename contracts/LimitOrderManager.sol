@@ -12,46 +12,19 @@ import "./base/base.sol";
 import "./libraries/LogPowMath.sol";
 import "hardhat/console.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
+// import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
 
-contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
+import './libraries/LimOrder.sol';
+import './libraries/LimOrderCircularQueue.sol';
 
-    using EnumerableSet for EnumerableSet.UintSet;
+contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
+
+    // using EnumerableSet for EnumerableSet.UintSet;
+    using LimOrderCircularQueue for LimOrderCircularQueue.Queue;
 
     // max-poolId in poolIds, poolId starts from 1
     uint128 maxPoolId = 1;
 
-    // infomation of a limit order
-    struct LimOrder {
-        // point (price) of limit order
-        int24 pt;
-        // initial amount of token on sale
-        uint256 amount;
-        // remaing amount of token on sale
-        uint256 sellingRemain;
-        // accumulated decreased token
-        uint256 accSellingDec;
-        // uncollected decreased token
-        uint256 sellingDec;
-        // uncollected earned token
-        uint256 earn;
-        // total amount of earned token by all users at this point 
-        // with same direction (sell x or sell y) as of the last update(add/dec)
-        uint256 lastAccEarn;
-        // id of pool in which this liquidity is added
-        uint128 poolId;
-        // direction of limit order (sellx or sell y)
-        bool sellXEarnY;
-        // block.timestamp when add a limit order
-        uint256 timestamp;
-    }
-
-    // mapping from limit order id to limit order info
-    mapping(uint256 =>LimOrder) public limOrders;
-
-    // number of limit order add via this contract
-    uint256 public sellNum = 0;
-    
     // owners of limit order
     mapping(uint256 =>address) public sellers;
     
@@ -71,12 +44,12 @@ contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
     mapping(address =>uint128) public poolIds;
 
     // seller's active order id
-    mapping(address => EnumerableSet.UintSet) private addr2ActiveOrderID;
-    // seller's canceled or finished order id
-    mapping(address => EnumerableSet.UintSet) private addr2DeactiveOrderID;
+    mapping(address => LimOrder[]) private addr2ActiveOrder;
+    mapping(address => LimOrderCircularQueue.Queue) private addr2DeactiveOrder;
+    // // seller's canceled or finished order id
 
     // maximum number of active order per user
-    uint256 public immutable ACTIVE_ORDER_LIM = 300;
+    uint256 public immutable DEACTIVE_ORDER_LIM = 300;
 
     // callback data passed through iZiSwapPool#addLimOrderWithX(Y) to the callback
     struct LimCallbackData {
@@ -109,14 +82,14 @@ contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
         }
     }
 
-    modifier checkAuth(uint256 lid) {
-        require(sellers[lid] == msg.sender, "Not approved");
-        _;
-    }
+    // modifier checkAuth(uint256 lid) {
+    //     require(sellers[lid] == msg.sender, "Not approved");
+    //     _;
+    // }
 
-    modifier checkActive(uint256 lid) {
-        EnumerableSet.UintSet storage activeIDs = addr2ActiveOrderID[msg.sender];
-        require(activeIDs.contains(lid), "Not Active");
+    modifier checkActive(uint256 lIdx) {
+        require(addr2ActiveOrder[msg.sender].length > lIdx, 'Out Of Length!');
+        require(addr2ActiveOrder[msg.sender][lIdx].active, 'Not Active!');
         _;
     }
 
@@ -196,36 +169,52 @@ contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
     }
 
     /// @notice add a limit order for recipient
-    /// @param recipient owner of the limit order and will benefit from it
+    /// @param idx slot in the addr2ActiveOrder[msg.sender]
     /// @param addLimitOrderParam describe params of added limit order, see AddLimOrderParam for more
-    /// @return orderId id of added limit order
     /// @return orderAmount actual amount of token added in limit order
     /// @return acquire amount of tokenY acquired if there is a limit order to sell the other token before adding
     function newLimOrder(
-        address recipient,
+        uint256 idx,
         AddLimOrderParam calldata addLimitOrderParam
-    ) external payable returns (uint256 orderId, uint128 orderAmount, uint256 acquire) {
+    ) external payable returns (uint128 orderAmount, uint256 acquire) {
         require(addLimitOrderParam.tokenX < addLimitOrderParam.tokenY, 'x<y');
-        require(addr2ActiveOrderID[recipient].length() < ACTIVE_ORDER_LIM, "Active Limit");
+
         address pool = IiZiSwapFactory(factory).pool(addLimitOrderParam.tokenX, addLimitOrderParam.tokenY, addLimitOrderParam.fee);
         (orderAmount, acquire) = _addLimOrder(pool, addLimitOrderParam);
-        orderId = sellNum ++;
         (uint256 accEarn, ) = getEarn(pool, address(this), addLimitOrderParam.pt, addLimitOrderParam.sellXEarnY);
         uint128 poolId = cachePoolKey(pool, PoolMeta({tokenX: addLimitOrderParam.tokenX, tokenY: addLimitOrderParam.tokenY, fee: addLimitOrderParam.fee}));
-        limOrders[orderId] = LimOrder({
-            pt: addLimitOrderParam.pt,
-            amount: addLimitOrderParam.amount,
-            sellingRemain: orderAmount,
-            accSellingDec: 0,
-            sellingDec: 0,
-            earn: acquire,
-            lastAccEarn: accEarn,
-            poolId: poolId,
-            sellXEarnY: addLimitOrderParam.sellXEarnY,
-            timestamp: block.timestamp
-        });
-        addr2ActiveOrderID[recipient].add(orderId);
-        sellers[orderId] = recipient;
+        LimOrder[] storage limOrders = addr2ActiveOrder[msg.sender];
+        if (idx < limOrders.length) {
+            // replace
+            require(limOrders[idx].active == false, 'active conflict!');
+            limOrders[idx] = LimOrder({
+                pt: addLimitOrderParam.pt,
+                amount: addLimitOrderParam.amount,
+                sellingRemain: orderAmount,
+                accSellingDec: 0,
+                sellingDec: 0,
+                earn: acquire,
+                lastAccEarn: accEarn,
+                poolId: poolId,
+                sellXEarnY: addLimitOrderParam.sellXEarnY,
+                timestamp: block.timestamp,
+                active: true
+            });
+        } else {
+            limOrders.push(LimOrder({
+                pt: addLimitOrderParam.pt,
+                amount: addLimitOrderParam.amount,
+                sellingRemain: orderAmount,
+                accSellingDec: 0,
+                sellingDec: 0,
+                earn: acquire,
+                lastAccEarn: accEarn,
+                poolId: poolId,
+                sellXEarnY: addLimitOrderParam.sellXEarnY,
+                timestamp: block.timestamp,
+                active: true
+            }));
+        }
     }
 
     /// @notice compute max amount of earned token the seller can claim
@@ -312,26 +301,26 @@ contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
 
     /// @notice update an limit order
     ///    the principle to update is to make this order claim earned tokens as much as posible
-    /// @param orderId id of order to update
+    /// @param orderIdx idx of order to update
     /// @return earn amount of earned token this limit order can claim
     function updateOrder(
-        uint256 orderId
-    ) external checkAuth(orderId) checkActive(orderId) returns (uint256 earn) {
-        LimOrder storage order = limOrders[orderId];
+        uint256 orderIdx
+    ) external checkActive(orderIdx) returns (uint256 earn) {
+        LimOrder storage order = addr2ActiveOrder[msg.sender][orderIdx];
         address pool = poolAddrs[order.poolId];
         earn = _updateOrder(order, pool);
     }
 
     /// @notice decrease amount of selling-token of a limit order
-    /// @param orderId point of seller's limit order
+    /// @param orderIdx point of seller's limit order
     /// @param amount max amount of selling-token to decrease
     /// @return actualDelta actual amount of selling-token decreased
     function decLimOrder(
-        uint256 orderId,
+        uint256 orderIdx,
         uint128 amount
-    ) external checkAuth(orderId) checkActive(orderId) returns (uint128 actualDelta) {
+    ) external checkActive(orderIdx) returns (uint128 actualDelta) {
         require(amount > 0, "A0");
-        LimOrder storage order = limOrders[orderId];
+        LimOrder storage order = addr2ActiveOrder[msg.sender][orderIdx];
         address pool = poolAddrs[order.poolId];
         // update order first
         _updateOrder(order, pool);
@@ -360,18 +349,18 @@ contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
 
     /// @notice collect earned or decreased token from limit order
     /// @param recipient address to benefit
-    /// @param orderId id of limit order
+    /// @param orderIdx idx of limit order
     /// @param collectDec max amount of decreased selling token to collect
     /// @param collectEarn max amount of earned token to collect
     /// @return actualCollectDec actual amount of decresed selling token collected
     /// @return actualCollectEarn actual amount of earned token collected
     function collectLimOrder(
         address recipient,
-        uint256 orderId,
+        uint256 orderIdx,
         uint256 collectDec,
         uint256 collectEarn
-    ) external checkAuth(orderId) checkActive(orderId) returns (uint256 actualCollectDec, uint256 actualCollectEarn) {
-        LimOrder storage order = limOrders[orderId];
+    ) external checkActive(orderIdx) returns (uint256 actualCollectDec, uint256 actualCollectEarn) {
+        LimOrder storage order = addr2ActiveOrder[msg.sender][orderIdx];
         address pool = poolAddrs[order.poolId];
         // update order first
         _updateOrder(order, pool);
@@ -398,48 +387,82 @@ contract NonfungibleLOrderManager is Base, IiZiSwapAddLimOrderCallback {
         }
 
         if (order.sellingDec == 0 && noRemain && order.earn == 0) {
-            addr2ActiveOrderID[msg.sender].remove(orderId);
-            addr2DeactiveOrderID[msg.sender].add(orderId);
+            order.active = false;
+            // addr2DeactiveOrderID[msg.sender].add(orderId);
+            addr2DeactiveOrder[msg.sender].add(order, DEACTIVE_ORDER_LIM);
         }
     }
 
-    /// @notice return active order ids for seller
-    /// @param _user address of seller
-    /// @return list of active order ids
-    function getActiveOrderIDs(address _user)
-        external
-        view
-        returns (uint256[] memory)
-    {
-        EnumerableSet.UintSet storage ids = addr2ActiveOrderID[_user];
-        // push could not be used in memory array
-        // we set the tokenIdList into a fixed-length array rather than dynamic
-        uint256[] memory tokenIdList = new uint256[](ids.length());
-        for (uint256 i = 0; i < ids.length(); i++) {
-            tokenIdList[i] = ids.at(i);
+    function getDeactiveSlot(address user) external view returns (uint256 slotIdx) {
+        slotIdx = addr2ActiveOrder[user].length;
+        for (uint256 i = 0; i < addr2ActiveOrder[user].length; i ++) {
+            if (!addr2ActiveOrder[user][i].active) {
+                return i;
+            }
         }
-        return tokenIdList;
+        return slotIdx;
     }
 
-    /// @notice return deactive order ids for seller
-    /// @param _user address of seller
-    /// @return list of deactive order ids
-    function getDeactiveOrderIDs(address _user)
+    /// @notice return active order for seller
+    /// @param user address of seller
+    /// @return activeIdx list of active order idx
+    /// @return activeLimitOrder list of active order
+    function getActiveOrders(address user)
         external
         view
-        returns (uint256[] memory)
+        returns (uint256[] memory activeIdx, LimOrder[] memory activeLimitOrder)
     {
-        EnumerableSet.UintSet storage ids = addr2DeactiveOrderID[_user];
-        // push could not be used in memory array
-        // we set the tokenIdList into a fixed-length array rather than dynamic
-        uint256 len = ids.length();
-        if (len > ACTIVE_ORDER_LIM) {
-            len = ACTIVE_ORDER_LIM;
+        uint256 activeNum = 0;
+        uint256 length = addr2ActiveOrder[user].length;
+        for (uint256 i = 0; i < length; i ++) {
+            if (addr2ActiveOrder[user][i].active) {
+                activeNum += 1;
+            }
         }
-        uint256[] memory tokenIdList = new uint256[](len);
-        for (uint256 i = 0; i < len; i++) {
-            tokenIdList[i] = ids.at(i);
+        if (activeNum == 0) {
+            return (activeIdx, activeLimitOrder);
         }
-        return tokenIdList;
+        activeIdx = new uint256[](activeNum);
+        activeLimitOrder = new LimOrder[](activeNum);
+        activeNum = 0;
+        for (uint256 i = 0; i < length; i ++) {
+            if (addr2ActiveOrder[user][i].active) {
+                activeIdx[activeNum] = i;
+                activeLimitOrder[activeNum] = addr2ActiveOrder[user][i];
+                activeNum += 1;
+            }
+        }
+        return (activeIdx, activeLimitOrder);
+    }
+
+    function getActiveOrder(address user, uint256 idx) external view returns (LimOrder memory limOrder) {
+        require(idx < addr2ActiveOrder[user].length, 'Out Of Length');
+        return addr2ActiveOrder[user][idx];
+    }
+
+    /// @notice return deactive order for seller
+    /// @param user address of seller
+    /// @return deactiveLimitOrder list of deactive order
+    function getDeactiveOrders(address user)
+        external
+        view
+        returns (LimOrder[] memory deactiveLimitOrder)
+    {
+        LimOrderCircularQueue.Queue storage queue = addr2DeactiveOrder[user];
+        if (queue.limOrders.length == 0) {
+            return deactiveLimitOrder;
+        }
+        deactiveLimitOrder = new LimOrder[](queue.limOrders.length);
+        uint256 start = queue.start;
+        for (uint256 i = 0; i < queue.limOrders.length; i ++) {
+            deactiveLimitOrder[i] = queue.limOrders[(start + i) % queue.limOrders.length];
+        }
+        return deactiveLimitOrder;
+    }
+
+    function getDeactiveOrder(address user, uint256 idx) external view returns (LimOrder memory limOrder) {
+        LimOrderCircularQueue.Queue storage queue = addr2DeactiveOrder[user];
+        require(idx < queue.limOrders.length, 'Out Of Length');
+        return queue.limOrders[(queue.start + idx) % queue.limOrders.length];
     }
 }

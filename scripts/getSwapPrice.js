@@ -23,8 +23,8 @@ async function main() {
     web3.eth.defaultAccount = "0x11f4d0A3c12e86B4b5F39B213F7E19D048276DAe";
     var quoterABI = getQuoterABI();
     var quoter = new web3.eth.Contract(quoterABI, settings.quoterAddr);
-    var ret = await quoter.methods.swapX2YDesireY(settings.BIT, settings.USDC, 3000, "68000000000000000000000", -300000).call();
-    console.log(ret.toString());
+    var ret = await quoter.methods.swapX2YDesireY(settings.BIT, settings.USDC, 500, "68000000000000000000000", -300000).call();
+    console.log(ret);
 }
 
 main().then(() => process.exit(0))
