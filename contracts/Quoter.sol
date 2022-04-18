@@ -8,6 +8,8 @@ import "./core/interfaces/IiZiSwapFactory.sol";
 import "./core/interfaces/IiZiSwapPool.sol";
 import "./libraries/Path.sol";
 
+import 'hardhat/console.sol';
+
 contract Quoter is Base, IiZiSwapCallback {
 
     // // callback data passed through swap interfaces to the callback
@@ -57,7 +59,7 @@ contract Quoter is Base, IiZiSwapCallback {
         if (token0 < token1) {
             // token1 is y, amount of token1 is calculated
             // called from swapY2XDesireX(...)
-            require(y >= amountDesireCached, 'Pool Not Enough');
+            require(x >= amountDesireCached, 'x Pool Not Enough');
             assembly {  
                 let ptr := mload(0x40)
                 mstore(ptr, y)
@@ -112,7 +114,7 @@ contract Quoter is Base, IiZiSwapCallback {
         } else {
             // token1 is x, amount of token1 is calculated param
             // called from swapX2YDesireY(...)
-            require(x >= amountDesireCached, 'Pool Not Enough');
+            require(y >= amountDesireCached, 'y Pool Not Enough');
             assembly {  
                 let ptr := mload(0x40)
                 mstore(ptr, x)
@@ -168,6 +170,7 @@ contract Quoter is Base, IiZiSwapCallback {
             (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
             int24 finalPt;
             (acquire, finalPt) = swapAmountSingleInternal(tokenIn, tokenOut, fee, amount);
+            console.log('acquire: %d', acquire);
             pointAfterList[i] = finalPt;
             i ++;
 
@@ -222,8 +225,13 @@ contract Quoter is Base, IiZiSwapCallback {
         while (true) {
             bool hasMultiplePools = path.hasMultiplePools();
             (address tokenOut, address tokenIn, uint24 fee) = path.decodeFirstPool();
+            console.log('tokenin: %s', tokenIn);
+            console.log('tokenOut: %s', tokenOut);
+            console.log('fee: %d', uint256(fee));
             int24 finalPt;
+            console.log('desire: %d', uint256(desire));
             (cost, finalPt) = swapDesireSingleInternal(tokenIn, tokenOut, fee, desire);
+            console.log('cost: %d', uint256(cost));
             pointAfterList[i] = finalPt;
             i ++;
 
