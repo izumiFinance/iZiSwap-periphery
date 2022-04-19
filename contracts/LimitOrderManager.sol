@@ -114,21 +114,21 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
             poolAddrs[poolId] = pool;
         }
     }
-    function getEarnX(address pool, bytes32 key) private view returns(uint256, uint256) {
-        (uint256 lastAccEarn, , , uint256 earn, ) = IiZiSwapPool(pool).userEarnX(key);
+    function getEarnX(address pool, bytes32 key) private view returns(uint256, uint128) {
+        (uint256 lastAccEarn, , , uint128 earn, ) = IiZiSwapPool(pool).userEarnX(key);
         return (lastAccEarn, earn);
     }
     function getEarnX(address pool, address miner, int24 pt) private view returns(uint256 accEarn, uint256 earn) {
         (accEarn, earn) = getEarnX(pool, limOrderKey(miner, pt));
     }
-    function getEarnY(address pool, bytes32 key) private view returns(uint256, uint256) {
-        (uint256 lastAccEarn, , , uint256 earn, ) = IiZiSwapPool(pool).userEarnY(key);
+    function getEarnY(address pool, bytes32 key) private view returns(uint256, uint128) {
+        (uint256 lastAccEarn, , , uint128 earn, ) = IiZiSwapPool(pool).userEarnY(key);
         return (lastAccEarn, earn);
     }
-    function getEarnY(address pool, address miner, int24 pt) private view returns(uint256 accEarn, uint256 earn) {
+    function getEarnY(address pool, address miner, int24 pt) private view returns(uint256 accEarn, uint128 earn) {
         (accEarn, earn) = getEarnY(pool, limOrderKey(miner, pt));
     }
-    function getEarn(address pool, address miner, int24 pt, bool sellXEarnY) private view returns(uint256 accEarn, uint256 earn) {
+    function getEarn(address pool, address miner, int24 pt, bool sellXEarnY) private view returns(uint256 accEarn, uint128 earn) {
         if (sellXEarnY) {
             (accEarn, earn) = getEarnY(pool, limOrderKey(miner, pt));
         } else {
@@ -154,7 +154,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
 
     function _addLimOrder(
         address pool, AddLimOrderParam memory addLimitOrderParam
-    ) private returns (uint128 order, uint256 acquire) {
+    ) private returns (uint128 order, uint128 acquire) {
         if (addLimitOrderParam.sellXEarnY) {
             (order, acquire) = IiZiSwapPool(pool).addLimOrderWithX(
                 address(this), addLimitOrderParam.pt, addLimitOrderParam.amount,
@@ -176,7 +176,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
     function newLimOrder(
         uint256 idx,
         AddLimOrderParam calldata addLimitOrderParam
-    ) external payable returns (uint128 orderAmount, uint256 acquire) {
+    ) external payable returns (uint128 orderAmount, uint128 acquire) {
         require(addLimitOrderParam.tokenX < addLimitOrderParam.tokenY, 'x<y');
 
         address pool = IiZiSwapFactory(factory).pool(addLimitOrderParam.tokenX, addLimitOrderParam.tokenY, addLimitOrderParam.fee);
@@ -222,12 +222,13 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
     /// @param accEarn total amount of earned token of all users on this point now
     /// @param earnRemain total amount of unclaimed earned token of all users on this point
     /// @return earnLim max amount of earned token the seller can claim
-    function getEarnLim(uint256 lastAccEarn, uint256 accEarn, uint256 earnRemain) private pure returns(uint256 earnLim) {
+    function getEarnLim(uint256 lastAccEarn, uint256 accEarn, uint128 earnRemain) private pure returns(uint128 earnLim) {
         require(accEarn >= lastAccEarn, "AEO");
-        earnLim = accEarn - lastAccEarn;
-        if (earnLim > earnRemain) {
-            earnLim = earnRemain;
+        uint256 earnLim256 = accEarn - lastAccEarn;
+        if (earnLim256 > earnRemain) {
+            earnLim256 = earnRemain;
         }
+        earnLim = uint128(earnLim256);
     }
 
     /// @notice compute amount of earned token and amount of sold token for a limit order
@@ -240,33 +241,35 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
     /// @return sold amount of sold token which will be minused from sellingRemain
     function getEarnSold(
         uint160 sqrtPrice_96,
-        uint256 earnLim,
-        uint256 sellingRemain,
+        uint128 earnLim,
+        uint128 sellingRemain,
         bool isEarnY
-    ) private pure returns (uint256 earn, uint256 sold) {
+    ) private pure returns (uint128 earn, uint128 sold) {
         earn = earnLim;
+        uint256 sold256;
         if (isEarnY) {
             uint256 l = MulDivMath.mulDivCeil(earn, FixedPoint96.Q96, sqrtPrice_96);
-            sold = MulDivMath.mulDivCeil(l, FixedPoint96.Q96, sqrtPrice_96);
+            sold256 = MulDivMath.mulDivCeil(l, FixedPoint96.Q96, sqrtPrice_96);
         } else {
             uint256 l = MulDivMath.mulDivCeil(earn, sqrtPrice_96, FixedPoint96.Q96);
-            sold = MulDivMath.mulDivCeil(l, sqrtPrice_96, FixedPoint96.Q96);
+            sold256 = MulDivMath.mulDivCeil(l, sqrtPrice_96, FixedPoint96.Q96);
         }
-        if (sold > sellingRemain) {
-            sold = sellingRemain;
+        if (sold256 > sellingRemain) {
+            sold256 = sellingRemain;
             if (isEarnY) {
-                uint256 l = MulDivMath.mulDivFloor(sold, sqrtPrice_96, FixedPoint96.Q96);
-                earn = MulDivMath.mulDivFloor(l, sqrtPrice_96, FixedPoint96.Q96);
+                uint256 l = MulDivMath.mulDivFloor(sold256, sqrtPrice_96, FixedPoint96.Q96);
+                earn = uint128(MulDivMath.mulDivFloor(l, sqrtPrice_96, FixedPoint96.Q96));
             } else {
-                uint256 l = MulDivMath.mulDivFloor(sold, FixedPoint96.Q96, sqrtPrice_96);
-                earn = MulDivMath.mulDivFloor(l, FixedPoint96.Q96, sqrtPrice_96);
+                uint256 l = MulDivMath.mulDivFloor(sold256, FixedPoint96.Q96, sqrtPrice_96);
+                earn = uint128(MulDivMath.mulDivFloor(l, FixedPoint96.Q96, sqrtPrice_96));
             }
         }
+        sold = uint128(sold256);
     }
 
     function assignLimOrderEarn(
-        address pool, int24 pt, uint256 amount, bool isEarnY
-    ) private returns(uint256 actualAssign) {
+        address pool, int24 pt, uint128 amount, bool isEarnY
+    ) private returns(uint128 actualAssign) {
         if (isEarnY) {
             actualAssign = IiZiSwapPool(pool).assignLimOrderEarnY(pt, amount);
         } else {
@@ -282,16 +285,16 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
     function _updateOrder(
         LimOrder storage order,
         address pool
-    ) private returns (uint256 earn) {
+    ) private returns (uint128 earn) {
         if (order.sellXEarnY) {
             IiZiSwapPool(pool).decLimOrderWithX(order.pt, 0);
         } else {
             IiZiSwapPool(pool).decLimOrderWithY(order.pt, 0);
         }
-        (uint256 accEarn, uint256 earnLim) = getEarn(pool, address(this), order.pt, order.sellXEarnY);
+        (uint256 accEarn, uint128 earnLim) = getEarn(pool, address(this), order.pt, order.sellXEarnY);
         earnLim = getEarnLim(order.lastAccEarn, accEarn, earnLim);
         uint160 sqrtPrice_96 = LogPowMath.getSqrtPrice(order.pt);
-        uint256 sold;
+        uint128 sold;
         (earn, sold) = getEarnSold(sqrtPrice_96, earnLim, order.sellingRemain, order.sellXEarnY);
         earn = assignLimOrderEarn(pool, order.pt, earn, order.sellXEarnY);
         order.earn = order.earn + earn;
@@ -357,9 +360,9 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
     function collectLimOrder(
         address recipient,
         uint256 orderIdx,
-        uint256 collectDec,
-        uint256 collectEarn
-    ) external checkActive(orderIdx) returns (uint256 actualCollectDec, uint256 actualCollectEarn) {
+        uint128 collectDec,
+        uint128 collectEarn
+    ) external checkActive(orderIdx) returns (uint128 actualCollectDec, uint128 actualCollectEarn) {
         LimOrder storage order = addr2ActiveOrder[msg.sender][orderIdx];
         address pool = poolAddrs[order.poolId];
         // update order first
