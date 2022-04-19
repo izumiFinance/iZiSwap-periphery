@@ -197,7 +197,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
                 lastAccEarn: accEarn,
                 poolId: poolId,
                 sellXEarnY: addLimitOrderParam.sellXEarnY,
-                timestamp: block.timestamp,
+                timestamp: uint128(block.timestamp),
                 active: true
             });
         } else {
@@ -211,7 +211,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
                 lastAccEarn: accEarn,
                 poolId: poolId,
                 sellXEarnY: addLimitOrderParam.sellXEarnY,
-                timestamp: block.timestamp,
+                timestamp: uint128(block.timestamp),
                 active: true
             }));
         }

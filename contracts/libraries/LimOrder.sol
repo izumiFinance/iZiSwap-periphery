@@ -19,12 +19,12 @@ struct LimOrder {
     uint128 earn;
     // id of pool in which this liquidity is added
     uint128 poolId;
+    // block.timestamp when add a limit order
+    uint128 timestamp;
+    // point (price) of limit order
+    int24 pt;
     // direction of limit order (sellx or sell y)
     bool sellXEarnY;
     // active or not
     bool active;
-    // point (price) of limit order
-    int24 pt;
-    // block.timestamp when add a limit order
-    uint256 timestamp;
 }
