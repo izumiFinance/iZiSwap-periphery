@@ -12,18 +12,6 @@ import "./libraries/Path.sol";
 
 contract Swap is Base, IiZiSwapCallback {
 
-    // // callback data passed through swap interfaces to the callback
-    // struct SwapCallbackData {
-    //     // amount of token0 is input param
-    //     address token0;
-    //     // amount of token1 is calculated param
-    //     address token1;
-    //     // address to pay token
-    //     address payer;
-    //     // fee amount of swap
-    //     uint24 fee;
-    // }
-
     using Path for bytes;
     struct SwapCallbackData {
         bytes path;
@@ -99,17 +87,14 @@ contract Swap is Base, IiZiSwapCallback {
 
         address poolAddr = pool(tokenOut, tokenIn, fee);
         if (tokenOut < tokenIn) {
-            // tokenOut is tokenX
-            // tokenIn is tokenY
+            // tokenOut is tokenX, tokenIn is tokenY
             // we should call y2XDesireX
-
             (acquire, cost) = IiZiSwapPool(poolAddr).swapY2XDesireX(
                 recipient, uint128(desire), 800001,
                 abi.encode(data)
             );
         } else {
-            // tokenOut is tokenY
-            // tokenIn is tokenX
+            // tokenOut is tokenY, tokenIn is tokenX
             (cost, acquire) = IiZiSwapPool(poolAddr).swapX2YDesireY(
                 recipient, uint128(desire), -800001,
                 abi.encode(data)

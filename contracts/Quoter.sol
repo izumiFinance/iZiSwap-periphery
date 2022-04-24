@@ -8,21 +8,9 @@ import "./core/interfaces/IiZiSwapFactory.sol";
 import "./core/interfaces/IiZiSwapPool.sol";
 import "./libraries/Path.sol";
 
-import 'hardhat/console.sol';
+//import 'hardhat/console.sol';
 
 contract Quoter is Base, IiZiSwapCallback {
-
-    // // callback data passed through swap interfaces to the callback
-    // struct SwapCallbackData {
-    //     // amount of token0 is input param
-    //     address token0;
-    //     // amount of token1 is calculated param
-    //     address token1;
-    //     // address to pay token
-    //     address payer;
-    //     // fee amount of swap
-    //     uint24 fee;
-    // }
 
     using Path for bytes;
     struct SwapCallbackData {
@@ -170,7 +158,6 @@ contract Quoter is Base, IiZiSwapCallback {
             (address tokenIn, address tokenOut, uint24 fee) = path.decodeFirstPool();
             int24 finalPt;
             (acquire, finalPt) = swapAmountSingleInternal(tokenIn, tokenOut, fee, amount);
-            console.log('acquire: %d', acquire);
             pointAfterList[i] = finalPt;
             i ++;
 
@@ -225,13 +212,8 @@ contract Quoter is Base, IiZiSwapCallback {
         while (true) {
             bool hasMultiplePools = path.hasMultiplePools();
             (address tokenOut, address tokenIn, uint24 fee) = path.decodeFirstPool();
-            console.log('tokenin: %s', tokenIn);
-            console.log('tokenOut: %s', tokenOut);
-            console.log('fee: %d', uint256(fee));
             int24 finalPt;
-            console.log('desire: %d', uint256(desire));
             (cost, finalPt) = swapDesireSingleInternal(tokenIn, tokenOut, fee, desire);
-            console.log('cost: %d', uint256(cost));
             pointAfterList[i] = finalPt;
             i ++;
 
