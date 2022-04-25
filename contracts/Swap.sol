@@ -92,8 +92,7 @@ contract Swap is Base, IiZiSwapCallback {
 
         address poolAddr = pool(tokenOut, tokenIn, fee);
         if (tokenOut < tokenIn) {
-            // tokenOut is tokenX
-            // tokenIn is tokenY
+            // tokenOut is tokenX, tokenIn is tokenY
             // we should call y2XDesireX
 
             (acquire, ) = IiZiSwapPool(poolAddr).swapY2XDesireX(
