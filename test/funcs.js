@@ -45,6 +45,8 @@ async function getIzumiswapFactory(receiverAddr, swapX2YModule, swapY2XModule, l
 
     const factory = await iZiSwapFactory.deploy(receiverAddr, swapX2YModule, swapY2XModule, liquidityModule, limitOrderModule);
     await factory.deployed();
+
+    await factory.enableFeeAmount(3000, 50);
     return factory;
 }
 
