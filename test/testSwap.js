@@ -3,6 +3,7 @@ const { ethers } = require("hardhat");
 
 const BigNumber = require('bignumber.js');
 
+const { getPoolParts, getIzumiswapFactory } = require("./funcs.js")
 async function getToken(dx, dy) {
 
     // deploy token
@@ -219,43 +220,6 @@ function getContractJson(path) {
     return data;
 }
 
-async function getPoolParts(signer) {
-    const swapX2YModuleJson = getContractJson(__dirname + '/core/SwapX2YModule.json');
-    const SwapX2YModuleFactory = await ethers.getContractFactory(swapX2YModuleJson.abi, swapX2YModuleJson.bytecode, signer);
-    const swapX2YModule = await SwapX2YModuleFactory.deploy();
-    await swapX2YModule.deployed();
-    
-    const swapY2XModuleJson = getContractJson(__dirname + '/core/SwapY2XModule.json');
-    const SwapY2XModuleFactory = await ethers.getContractFactory(swapY2XModuleJson.abi, swapY2XModuleJson.bytecode, signer);
-    const swapY2XModule = await SwapY2XModuleFactory.deploy();
-    await swapY2XModule.deployed();
-  
-    const mintModuleJson = getContractJson(__dirname + '/core/MintModule.json');
-    const MintModuleFactory = await ethers.getContractFactory(mintModuleJson.abi, mintModuleJson.bytecode, signer);
-    const mintModule = await MintModuleFactory.deploy();
-    await mintModule.deployed();
-  
-    const limitOrderModuleJson = getContractJson(__dirname + '/core/LimitOrderModule.json');
-    const LimitOrderModuleFactory = await ethers.getContractFactory(limitOrderModuleJson.abi, limitOrderModuleJson.bytecode, signer);
-    const limitOrderModule = await LimitOrderModuleFactory.deploy();
-    await limitOrderModule.deployed();
-    return {
-      swapX2YModule: swapX2YModule.address,
-      swapY2XModule: swapY2XModule.address,
-      mintModule: mintModule.address,
-      limitOrderModule: limitOrderModule.address,
-    };
-  }
-
-async function getIzumiswapFactory(receiverAddr, swapX2YModule, swapY2XModule, mintModule, limitOrderModule, signer) {
-    const iZiSwapJson = getContractJson(__dirname + '/core/iZiSwapFactory.json');
-    
-    const iZiSwapFactory = await ethers.getContractFactory(iZiSwapJson.abi, iZiSwapJson.bytecode, signer);
-
-    const factory = await iZiSwapFactory.deploy(receiverAddr, swapX2YModule, swapY2XModule, mintModule, limitOrderModule);
-    await factory.deployed();
-    return factory;
-}
 async function getWETH9(signer) {
     var WETH9Json = getContractJson(__dirname + '/core/WETH9.json');
     var WETH9Factory = await ethers.getContractFactory(WETH9Json.abi, WETH9Json.bytecode, signer);
@@ -326,8 +290,8 @@ describe("swap", function () {
     beforeEach(async function() {
         [signer, miner1, miner2, miner3, trader1, trader2, trader3, trader4, receiver] = await ethers.getSigners();
         
-        const {swapX2YModule, swapY2XModule, mintModule, limitOrderModule} = await getPoolParts();
-        izumiswapFactory = await getIzumiswapFactory(receiver.address, swapX2YModule, swapY2XModule, mintModule, limitOrderModule, signer);
+        const {swapX2YModule, swapY2XModule, liquidityModule, limitOrderModule} = await getPoolParts();
+        izumiswapFactory = await getIzumiswapFactory(receiver.address, swapX2YModule, swapY2XModule, liquidityModule, limitOrderModule, signer);
         console.log("get izumiswapFactory");
         weth9 = await getWETH9(signer);
         console.log("get weth9");
@@ -346,7 +310,7 @@ describe("swap", function () {
         await tokenX.transfer(miner3.address, 50000000000);
         await tokenY.transfer(miner3.address, 60000000000);
 
-        poolAddr = await nflm.createPool(tokenX.address, tokenY.address, 3000, 5010);
+        poolAddr = await nflm.createPool(tokenX.address, tokenY.address, 100, 5010);
         rate = BigNumber("1.0001");
 
         await addLiquidityByLiquid(nflm, tokenX, tokenY, miner1, 4900, 5100, 5010, rate, BigNumber("10000"));
