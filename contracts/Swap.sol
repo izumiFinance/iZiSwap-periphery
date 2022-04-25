@@ -12,17 +12,8 @@ import "./libraries/Path.sol";
 
 contract Swap is Base, IiZiSwapCallback {
 
-    // // callback data passed through swap interfaces to the callback
-    // struct SwapCallbackData {
-    //     // amount of token0 is input param
-    //     address token0;
-    //     // amount of token1 is calculated param
-    //     address token1;
-    //     // address to pay token
-    //     address payer;
-    //     // fee amount of swap
-    //     uint24 fee;
-    // }
+    uint256 private constant DEFAULT_PAYED_CACHED = type(uint256).max;
+    uint256 private payedCached = DEFAULT_PAYED_CACHED;
 
     using Path for bytes;
     struct SwapCallbackData {
@@ -51,6 +42,7 @@ contract Swap is Base, IiZiSwapCallback {
                 swapDesireInternal(y, msg.sender, dt);
             } else {
                 pay(token1, dt.payer, msg.sender, y);
+                payedCached = y;
             }
         } else {
             // token0 is y, amount of token0 is input param
@@ -83,6 +75,7 @@ contract Swap is Base, IiZiSwapCallback {
                 swapDesireInternal(x, msg.sender, dt);
             } else {
                 pay(token1, dt.payer, msg.sender, x);
+                payedCached = x;
             }
         }
     }
@@ -91,7 +84,7 @@ contract Swap is Base, IiZiSwapCallback {
         uint256 desire,
         address recipient,
         SwapCallbackData memory data
-    ) private returns (uint256 cost, uint256 acquire) {
+    ) private returns (uint256 acquire) {
         // allow swapping to the router address with address 0
         if (recipient == address(0)) recipient = address(this);
 
@@ -103,14 +96,14 @@ contract Swap is Base, IiZiSwapCallback {
             // tokenIn is tokenY
             // we should call y2XDesireX
 
-            (acquire, cost) = IiZiSwapPool(poolAddr).swapY2XDesireX(
+            (acquire, ) = IiZiSwapPool(poolAddr).swapY2XDesireX(
                 recipient, uint128(desire), 800001,
                 abi.encode(data)
             );
         } else {
             // tokenOut is tokenY
             // tokenIn is tokenX
-            (cost, acquire) = IiZiSwapPool(poolAddr).swapX2YDesireY(
+            (, acquire) = IiZiSwapPool(poolAddr).swapX2YDesireY(
                 recipient, uint128(desire), -800001,
                 abi.encode(data)
             );
@@ -181,14 +174,15 @@ contract Swap is Base, IiZiSwapCallback {
         returns (uint256 cost, uint256 acquire)
     {
         
-        (cost, acquire) = swapDesireInternal(
+        acquire = swapDesireInternal(
             params.desire,
             params.recipient,
             SwapCallbackData({path: params.path, payer: msg.sender})
         );
-
+        cost = payedCached;
         require(cost <= params.maxPayed, 'Too much payed');
         require(acquire >= params.desire, 'Too much requested');
+        payedCached = DEFAULT_PAYED_CACHED;
     }
 
     struct SwapAmountParams {
