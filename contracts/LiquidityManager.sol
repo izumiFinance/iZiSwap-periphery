@@ -236,6 +236,17 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
         _mint(mintParam.miner, lid);
     }
 
+    /// @notice burn a generated nft
+    /// @param lid nft (liquidity) id
+    /// @return success successfully burn or not
+    function burn(uint256 lid) external checkAuth(lid) returns (bool success) {
+        Liquidity storage liquid = liquidities[lid];
+        require(liquid.liquidity == 0 && liquid.remainTokenX == 0 && liquid.remainTokenY == 0, 'NC');
+        delete liquidities[lid];
+        _burn(lid);
+        return true;
+    }
+
     /// parameters when calling addLiquidity, grouped together to avoid stake too deep
     struct AddLiquidityParam {
         // id of nft
