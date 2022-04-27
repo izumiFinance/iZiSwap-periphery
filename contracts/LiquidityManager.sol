@@ -175,6 +175,8 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
         uint128 amountXMin;
         // minimum amount of tokenY miner willing to deposit
         uint128 amountYMin;
+
+        uint256 deadline;
     }
 
     function _addLiquidity(MintParam memory mp) private returns(
@@ -207,7 +209,7 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
     /// @return liquidity amount of liquidity added
     /// @return amountX amount of tokenX deposited
     /// @return amountY amount of tokenY depsoited
-    function mint(MintParam calldata mintParam) external payable returns(
+    function mint(MintParam calldata mintParam) external payable checkDeadline(mintParam.deadline) returns(
         uint256 lid,
         uint128 liquidity,
         uint256 amountX,
@@ -259,6 +261,8 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
         uint128 amountXMin;
         // min amount of tokenY user willing to deposit
         uint128 amountYMin;
+
+        uint256 deadline;
     }
     function updateLiquidity(
         Liquidity storage liquid,
@@ -289,7 +293,7 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
     /// @return amountY amonut of tokenY deposited
     function addLiquidity(
         AddLiquidityParam calldata addLiquidityParam
-    ) external payable checkAuth(addLiquidityParam.lid) returns(
+    ) external payable checkAuth(addLiquidityParam.lid) checkDeadline(addLiquidityParam.deadline) returns(
         uint128 liquidityDelta,
         uint256 amountX,
         uint256 amountY
@@ -300,7 +304,7 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
         int24 currPt;
         uint160 sqrtPrice_96;
         address pool = IiZiSwapFactory(factory).pool(poolMeta.tokenX, poolMeta.tokenY, poolMeta.fee);
-        uint160 sqrtRate_96 = IiZiSwapPool(pool).sqrtRate_96();
+        // uint160 sqrtRate_96 = IiZiSwapPool(pool).sqrtRate_96();
         require(pool != address(0), "P0");
         (sqrtPrice_96, currPt) = getPoolPrice(pool);
         liquidityDelta = MintMath.computeLiquidity(
@@ -312,7 +316,8 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
             }),
             currPt,
             sqrtPrice_96,
-            sqrtRate_96
+            // sqrtRate_96
+            IiZiSwapPool(pool).sqrtRate_96()
         );
         require(int128(liquid.liquidity) == int256(uint256(liquid.liquidity)), "LO");
         uint128 newLiquidity = liquidityDelta + liquid.liquidity;
@@ -328,14 +333,16 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
     /// @param liquidDelta amount of liqudity to decrease
     /// @param amountXMin min amount of tokenX user want to withdraw
     /// @param amountYMin min amount of tokenY user want to withdraw
+    /// @param deadline deadline timestamp of transaction
     /// @return amountX amount of tokenX refund to user
     /// @return amountY amount of tokenY refund to user
     function decLiquidity(
         uint256 lid,
         uint128 liquidDelta,
         uint256 amountXMin,
-        uint256 amountYMin
-    ) external checkAuth(lid) returns(
+        uint256 amountYMin,
+        uint256 deadline
+    ) external checkAuth(lid) checkDeadline(deadline) returns(
         uint256 amountX,
         uint256 amountY
     ) {

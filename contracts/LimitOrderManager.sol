@@ -150,6 +150,8 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         uint128 amount;
         // sell tokenX or sell tokenY
         bool sellXEarnY;
+
+        uint256 deadline;
     }
 
     function _addLimOrder(
@@ -176,7 +178,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
     function newLimOrder(
         uint256 idx,
         AddLimOrderParam calldata addLimitOrderParam
-    ) external payable returns (uint128 orderAmount, uint128 acquire) {
+    ) external payable checkDeadline(addLimitOrderParam.deadline) returns (uint128 orderAmount, uint128 acquire) {
         require(addLimitOrderParam.tokenX < addLimitOrderParam.tokenY, 'x<y');
 
         address pool = IiZiSwapFactory(factory).pool(addLimitOrderParam.tokenX, addLimitOrderParam.tokenY, addLimitOrderParam.fee);
@@ -317,11 +319,13 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
     /// @notice decrease amount of selling-token of a limit order
     /// @param orderIdx point of seller's limit order
     /// @param amount max amount of selling-token to decrease
+    /// @param deadline deadline timestamp of transaction
     /// @return actualDelta actual amount of selling-token decreased
     function decLimOrder(
         uint256 orderIdx,
-        uint128 amount
-    ) external checkActive(orderIdx) returns (uint128 actualDelta) {
+        uint128 amount,
+        uint256 deadline
+    ) external checkActive(orderIdx) checkDeadline(deadline) returns (uint128 actualDelta) {
         require(amount > 0, "A0");
         LimOrder storage order = addr2ActiveOrder[msg.sender][orderIdx];
         address pool = poolAddrs[order.poolId];

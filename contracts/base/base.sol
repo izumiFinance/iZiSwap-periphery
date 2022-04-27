@@ -177,6 +177,12 @@ abstract contract Base {
         require (msg.sender == pool(tokenX, tokenY, fee), "sp");
     }
 
+
+    modifier checkDeadline(uint256 deadline) {
+        require(block.timestamp <= deadline, 'Out of time');
+        _;
+    }
+
     /// @notice constructor of base
     /// @param _factory address of iZiSwapFactory
     /// @param _WETH9 address of weth9 token

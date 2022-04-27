@@ -165,11 +165,14 @@ contract Swap is Base, IiZiSwapCallback {
         // uint256 deadline;
         uint128 desire;
         uint256 maxPayed;
+
+        uint256 deadline;
     }
 
     function swapDesire(SwapDesireParams calldata params)
         external
         payable
+        checkDeadline(params.deadline)
         returns (uint256 cost, uint256 acquire)
     {
         
@@ -190,10 +193,13 @@ contract Swap is Base, IiZiSwapCallback {
         // uint256 deadline;
         uint128 amount;
         uint256 minAcquired;
+
+        uint256 deadline;
     }
     function swapAmount(SwapAmountParams calldata params)
         external
         payable
+        checkDeadline(params.deadline)
         returns (uint256 cost, uint256 acquire) 
     {
         (cost, acquire) = swapAmountInternal(
@@ -232,6 +238,8 @@ contract Swap is Base, IiZiSwapCallback {
         uint256 maxPayed;
         // min amount of received token trader wanted, used in undesire mode
         uint256 minAcquired;
+
+        uint256 deadline;
     }
 
     // amount of exchanged tokens
@@ -246,7 +254,7 @@ contract Swap is Base, IiZiSwapCallback {
     /// @param swapParams params(for example: max amount in above line), see SwapParams for more
     function swapY2X(
         SwapParams calldata swapParams
-    ) external payable {
+    ) external payable checkDeadline(swapParams.deadline) {
         require(swapParams.tokenX < swapParams.tokenY, "x<y");
         address poolAddr = pool(swapParams.tokenX, swapParams.tokenY, swapParams.fee);
         address payer = msg.sender;
@@ -262,7 +270,7 @@ contract Swap is Base, IiZiSwapCallback {
     /// @param swapParams params(for example: desired amount in above line), see SwapParams for more
     function swapY2XDesireX(
         SwapParams calldata swapParams
-    ) external payable {
+    ) external payable checkDeadline(swapParams.deadline) {
         require(swapParams.tokenX < swapParams.tokenY, "x<y");
         address poolAddr = pool(swapParams.tokenX, swapParams.tokenY, swapParams.fee);
         address payer = msg.sender;
@@ -282,7 +290,7 @@ contract Swap is Base, IiZiSwapCallback {
     /// @param swapParams params(for example: max amount in above line), see SwapParams for more
     function swapX2Y(
         SwapParams calldata swapParams
-    ) external payable {
+    ) external payable checkDeadline(swapParams.deadline) {
         require(swapParams.tokenX < swapParams.tokenY, "x<y");
         address poolAddr = pool(swapParams.tokenX, swapParams.tokenY, swapParams.fee);
         address payer = msg.sender;
@@ -298,7 +306,7 @@ contract Swap is Base, IiZiSwapCallback {
     /// @param swapParams params(for example: desired amount in above line), see SwapParams for more
     function swapX2YDesireY(
         SwapParams calldata swapParams
-    ) external payable {
+    ) external payable checkDeadline(swapParams.deadline) {
         require(swapParams.tokenX < swapParams.tokenY, "x<y");
         address poolAddr = pool(swapParams.tokenX, swapParams.tokenY, swapParams.fee);
         address payer = msg.sender;
