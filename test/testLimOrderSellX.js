@@ -253,7 +253,7 @@ describe("limorder", function () {
         txAddr = tokenX.address.toLowerCase();
         tyAddr = tokenY.address.toLowerCase();
 
-        poolAddr = await nflm.createPool(tokenX.address, tokenY.address, 2000, 5050);
+        poolAddr = await nflm.createPool(tokenX.address, tokenY.address, 3000, 5050);
         rate = BigNumber("1.0001");
         await tokenY.transfer(trader.address, "100000000000000");
         await tokenY.connect(trader).approve(swap.address, "100000000000000");

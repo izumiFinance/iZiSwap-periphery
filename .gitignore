@@ -4,3 +4,5 @@ package-lock.json
 .secret*
 artifacts/*
 cache/*
+
+test/core/*

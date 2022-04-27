@@ -310,7 +310,7 @@ describe("swap", function () {
         await tokenX.transfer(miner3.address, 50000000000);
         await tokenY.transfer(miner3.address, 60000000000);
 
-        poolAddr = await nflm.createPool(tokenX.address, tokenY.address, 100, 5010);
+        poolAddr = await nflm.createPool(tokenX.address, tokenY.address, 3000, 5010);
         rate = BigNumber("1.0001");
 
         await addLiquidityByLiquid(nflm, tokenX, tokenY, miner1, 4900, 5100, 5010, rate, BigNumber("10000"));
