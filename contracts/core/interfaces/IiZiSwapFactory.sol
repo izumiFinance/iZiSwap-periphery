@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.4;
 
 interface IiZiSwapFactory {
@@ -31,6 +32,10 @@ interface IiZiSwapFactory {
     /// @notice address of module for user to manage limit orders
     /// @return limitOrderModule address
     function limitOrderModule() external returns (address);
+
+    /// @notice address of module for flash loan
+    /// @return flashModule address
+    function flashModule() external returns (address);
 
     /// @notice Enables a fee amount with the given pointDelta
     /// @dev Fee amounts may never be removed once enabled

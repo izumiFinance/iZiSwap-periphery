@@ -401,8 +401,8 @@ describe("swap", function () {
     var startTotalLiquidity;
     beforeEach(async function() {
         [signer, miner1, miner2, miner3, miner4, trader1, trader2, receiver] = await ethers.getSigners();
-        const {swapX2YModule, swapY2XModule, liquidityModule, limitOrderModule} = await getPoolParts();
-        izumiswapFactory = await getIzumiswapFactory(receiver.address, swapX2YModule, swapY2XModule, liquidityModule, limitOrderModule, signer);
+        const {swapX2YModule, swapY2XModule, liquidityModule, limitOrderModule, flashModule} = await getPoolParts();
+        izumiswapFactory = await getIzumiswapFactory(receiver.address, swapX2YModule, swapY2XModule, liquidityModule, limitOrderModule, flashModule, signer);
         console.log("get izumiswapFactory");
         weth9 = await getWETH9(signer);
         console.log("get weth9");

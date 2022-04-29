@@ -241,8 +241,8 @@ describe("limorder", function () {
     beforeEach(async function() {
         [signer, seller1, seller2, seller3, trader, trader2, recipient1, recipient2, receiver] = await ethers.getSigners();
 
-        const {swapX2YModule, swapY2XModule, liquidityModule, limitOrderModule} = await getPoolParts();
-        izumiswapFactory = await getIzumiswapFactory(receiver.address, swapX2YModule, swapY2XModule, liquidityModule, limitOrderModule, signer);
+        const {swapX2YModule, swapY2XModule, liquidityModule, limitOrderModule, flashModule} = await getPoolParts();
+        izumiswapFactory = await getIzumiswapFactory(receiver.address, swapX2YModule, swapY2XModule, liquidityModule, limitOrderModule, flashModule, signer);
         weth9 = await getWETH9(signer);
         nflm = await getNFTLiquidityManager(izumiswapFactory, weth9);
         swap = await getSwap(izumiswapFactory, weth9);

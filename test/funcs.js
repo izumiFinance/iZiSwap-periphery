@@ -38,12 +38,12 @@ function stringLess(a, b) {
     return BigNumber(a).lt(b);
 }
 
-async function getIzumiswapFactory(receiverAddr, swapX2YModule, swapY2XModule, liquidityModule, limitOrderModule, signer) {
+async function getIzumiswapFactory(receiverAddr, swapX2YModule, swapY2XModule, liquidityModule, limitOrderModule, flashModule, signer) {
     const iZiSwapJson = getContractJson(__dirname + '/core/iZiSwapFactory.json');
     
     const iZiSwapFactory = await ethers.getContractFactory(iZiSwapJson.abi, iZiSwapJson.bytecode, signer);
 
-    const factory = await iZiSwapFactory.deploy(receiverAddr, swapX2YModule, swapY2XModule, liquidityModule, limitOrderModule);
+    const factory = await iZiSwapFactory.deploy(receiverAddr, swapX2YModule, swapY2XModule, liquidityModule, limitOrderModule, flashModule);
     await factory.deployed();
 
     await factory.enableFeeAmount(3000, 50);
@@ -78,11 +78,18 @@ async function getPoolParts(signer) {
     const LimitOrderModuleFactory = await ethers.getContractFactory(limitOrderModuleJson.abi, limitOrderModuleJson.bytecode, signer);
     const limitOrderModule = await LimitOrderModuleFactory.deploy();
     await limitOrderModule.deployed();
+
+    const flashModuleJson = getContractJson(__dirname + '/core/FlashModule.json');
+    const FlashModuleFactory = await ethers.getContractFactory(flashModuleJson.abi, flashModuleJson.bytecode, signer);
+    const flashModule = await FlashModuleFactory.deploy();
+    await flashModule.deployed();
+
     return {
       swapX2YModule: swapX2YModule.address,
       swapY2XModule: swapY2XModule.address,
       liquidityModule: liquidityModule.address,
       limitOrderModule: limitOrderModule.address,
+      flashModule: flashModule.address,
     };
   }
 
