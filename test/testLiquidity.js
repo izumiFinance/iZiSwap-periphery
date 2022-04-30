@@ -61,6 +61,7 @@ async function mint(nflm, miner, tokenX, tokenY, fee, pl, pr, amountX, amountY) 
             yLim: amountY.toFixed(0),
             amountXMin: 0,
             amountYMin: 0,
+            deadline: BigNumber("1000000000000").toFixed(0)
         }
     );
     console.log('after mint');
@@ -84,6 +85,7 @@ async function addLiquidity(nflm, miner, tokenX, tokenY, lid, amountX, amountY) 
             yLim: amountY.toFixed(0),
             amountXMin: 0,
             amountYMin: 0,
+            deadline: BigNumber("1000000000000").toFixed(0)
         }
     );
 }
@@ -94,6 +96,7 @@ async function decLiquidity(nflm, miner, lid, liquidDelta) {
         liquidDelta,
         0,
         0,
+        BigNumber("1000000000000").toFixed(0)
     );
 }
   
@@ -460,7 +463,8 @@ describe("swap", function () {
                 amount: amountY1.toFixed(0),
                 boundaryPt: 5100,
                 minAcquired: 0,
-                maxPayed: amountY1.toFixed(0)
+                maxPayed: amountY1.toFixed(0),
+                deadline: BigNumber("1000000000000").toFixed(0)
             }
         );
         await checkBalance(tokenY, trader1, amountY1Origin.minus(amountY1));
@@ -472,7 +476,8 @@ describe("swap", function () {
         var miner2FeeY = BigNumber(stringDiv(stringMul(lastFeeScaleY_128.toFixed(0), liquid2), q128));
         var miner1FeeY = BigNumber(stringDiv(stringMul(lastFeeScaleY_128.toFixed(0), liquid1), q128));
 
-        await decLiquidity(nflm, miner3, "2", "10000");
+        await decLiquidity(nflm, miner3, "2", "10000", BigNumber("1000000000000").toFixed(0));
+        console.log('1121313');
         await checkLiquidity(
             nflm, "2", BigNumber(liquid3).minus("10000"),
             BigNumber("0"),
@@ -480,6 +485,7 @@ describe("swap", function () {
             BigNumber("0"),
             getAmountY(4900, 5100, rate, BigNumber("10000"), false).plus(miner3FeeY)
         );
+        console.log('1121313');
         liquid3 = BigNumber(liquid3).minus("10000").toFixed(0);
         await addByLiquid(nflm, tokenX, tokenY, miner2, 4900, 5100, 5100, rate, "1", BigNumber("10000"));
         await checkLiquidity(
@@ -489,6 +495,7 @@ describe("swap", function () {
             BigNumber("0"),
             miner2FeeY
         );
+        console.log('1121313');
         liquid2 = BigNumber(liquid2).plus("9999").toFixed(0);
         await mintByLiquid(nflm, tokenX, tokenY, miner4, 4900, 5100, 5100, rate, BigNumber("20000"));
         await checkLiquidity(
@@ -521,7 +528,8 @@ describe("swap", function () {
                 amount: amountX2.toFixed(0),
                 boundaryPt: 4900,
                 minAcquired: 0,
-                maxPayed: amountX2.toFixed(0)
+                maxPayed: amountX2.toFixed(0),
+                deadline: BigNumber("1000000000000").toFixed(0)
             }
         );
         await checkBalance(tokenX, trader2, amountX2Origin.minus(amountX2));
@@ -536,7 +544,7 @@ describe("swap", function () {
 
         console.log("miner2FeeX: ", miner2FeeX.toFixed(0));
 
-        await decLiquidity(nflm, miner1, "0", liquid1);
+        await decLiquidity(nflm, miner1, "0", liquid1, BigNumber("1000000000000").toFixed(0));
         await checkLiquidity(
             nflm, "0", BigNumber("0"),
             lastFeeScaleX_128,
@@ -547,7 +555,7 @@ describe("swap", function () {
             miner1FeeY
         );
 
-        await decLiquidity(nflm, miner2, "1", liquid2);
+        await decLiquidity(nflm, miner2, "1", liquid2, BigNumber("1000000000000").toFixed(0));
         await checkLiquidity(
             nflm, "1", BigNumber("0"),
             lastFeeScaleX_128,
@@ -558,7 +566,7 @@ describe("swap", function () {
             miner2FeeY
         );
 
-        await decLiquidity(nflm, miner3, "2", liquid3);
+        await decLiquidity(nflm, miner3, "2", liquid3, BigNumber("1000000000000").toFixed(0));
         await checkLiquidity(
             nflm, "2", BigNumber("0"),
             lastFeeScaleX_128,
@@ -569,7 +577,7 @@ describe("swap", function () {
             getAmountY(4900, 5100, rate, BigNumber("10000"), false).plus(miner3FeeY)
         );
 
-        await decLiquidity(nflm, miner4, "3", "19999");
+        await decLiquidity(nflm, miner4, "3", "19999", BigNumber("1000000000000").toFixed(0));
         await checkLiquidity(
             nflm, "3", BigNumber("0"),
             lastFeeScaleX_128,

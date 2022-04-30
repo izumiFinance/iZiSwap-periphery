@@ -3,7 +3,7 @@ const { ethers } = require("hardhat");
 
 const BigNumber = require('bignumber.js');
 const { strictEqual } = require("assert");
-const { getPoolParts, getIzumiswapFactory } = require("./funcs.js")
+const { getPoolParts, getIzumiswapFactory, addLiquidity } = require("./funcs.js")
 
 async function getToken(name, symbol, decimal) {
     const tokenFactory = await ethers.getContractFactory("TestToken")
@@ -49,31 +49,6 @@ function floor(b) {
     return BigNumber(b.toFixed(0, 3));
 }
 
-async function addLiquidity(nflm, miner, tokenX, tokenY, fee, pl, pr, amountX, amountY) {
-    if (tokenX.address.toLowerCase() > tokenY.address.toLowerCase()) {
-        let tmp = tokenX;
-        tokenX = tokenY;
-        tokenY = tmp;
-
-        let amount = amountX;
-        amountX = amountY;
-        amountY = amount;
-    }
-    await nflm.connect(miner).mint(
-        {
-            miner: miner.address,
-            tokenX: tokenX.address,
-            tokenY: tokenY.address,
-            fee: fee,
-            pl: pl,
-            pr: pr,
-            xLim: amountX,
-            yLim: amountY,
-            amountXMin: 0,
-            amountYMin: 0
-        }
-    );
-}
 function getContractJson(path) {
     const fs = require('fs');
     let rawdata = fs.readFileSync(path);

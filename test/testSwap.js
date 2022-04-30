@@ -58,7 +58,8 @@ async function addLiquidity(nflm, miner, tokenX, tokenY, fee, pl, pr, amountX, a
             xLim: amountX.toFixed(0),
             yLim: amountY.toFixed(0),
             amountXMin: 0,
-            amountYMin: 0
+            amountYMin: 0,
+            deadline: BigNumber("1000000000000").toFixed(0)
         }
     );
   }
@@ -341,6 +342,7 @@ describe("swap", function () {
                 boundaryPt: 5100,
                 minAcquired: 0,
                 maxPayed: amountY.toFixed(0),
+                deadline: BigNumber("1000000000000").toFixed(0)
             }
         );
         console.log('after swapy2x!!!!!!!!!!!!!!!!!!!!!');
@@ -365,7 +367,8 @@ describe("swap", function () {
                 amount: amountX.toFixed(0),
                 boundaryPt: 4900,
                 minAcquired: 0,
-                maxPayed: amountX.toFixed(0)
+                maxPayed: amountX.toFixed(0),
+                deadline: BigNumber("1000000000000").toFixed(0)
             }
         );
         await checkBalance(tokenX, trader1, amountXOrigin.minus(amountX));
@@ -388,7 +391,8 @@ describe("swap", function () {
                 amount: amountX.toFixed(0),
                 boundaryPt: 5100,
                 minAcquired: 0,
-                maxPayed: '1000000000000'
+                maxPayed: '1000000000000',
+                deadline: BigNumber("1000000000000").toFixed(0)
             }
         );
         await checkBalance(tokenY, trader1, amountYOrigin.minus(amountY));
@@ -411,7 +415,8 @@ describe("swap", function () {
                 amount: amountY.toFixed(0),
                 boundaryPt: 4900,
                 minAcquired: 0,
-                maxPayed: '1000000000000'
+                maxPayed: '1000000000000',
+                deadline: BigNumber("1000000000000").toFixed(0)
             }
         );
         await checkBalance(tokenX, trader1, amountXOrigin.minus(amountX));

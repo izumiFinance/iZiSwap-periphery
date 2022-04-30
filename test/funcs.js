@@ -214,6 +214,86 @@ function l2y(liquidity, sqrtPrice_96, up) {
     }
 }
 
+async function newLimOrderWithX(slotIdx, tokenX, tokenY, seller, limorderManager, amountX, point) {
+    await tokenX.transfer(seller.address, amountX);
+    await tokenX.connect(seller).approve(limorderManager.address, amountX);
+    await limorderManager.connect(seller).newLimOrder(
+        slotIdx,
+        {
+            tokenX: tokenX.address,
+            tokenY: tokenY.address,
+            fee: 3000,
+            pt: point,
+            amount: amountX,
+            sellXEarnY: true,
+            deadline: BigNumber("1000000000000").toFixed(0)
+        }
+    );
+}
+
+async function decLimOrderWithX(seller, orderIdx, limorderManager, amountX) {
+    await limorderManager.connect(seller).decLimOrder(
+        orderIdx,
+        amountX,
+        BigNumber("10000000000").toFixed(0)
+    );
+}
+
+
+
+async function newLimOrderWithY(slotIdx, tokenX, tokenY, seller, limorderManager, amountY, point) {
+    await tokenY.transfer(seller.address, amountY);
+    await tokenY.connect(seller).approve(limorderManager.address, amountY);
+    await limorderManager.connect(seller).newLimOrder(
+        slotIdx,
+        {
+            tokenX: tokenX.address,
+            tokenY: tokenY.address,
+            fee: 3000,
+            pt: point,
+            amount: amountY,
+            sellXEarnY: false,
+            deadline: BigNumber("1000000000000").toFixed(0)
+        }
+    );
+}
+
+async function decLimOrderWithY(seller, sellId, limorderManager, amountY) {
+    await limorderManager.connect(seller).decLimOrder(
+        sellId,
+        amountY,
+        BigNumber("10000000000").toFixed(0)
+    );
+}
+
+async function addLiquidity(nflm, miner, tokenX, tokenY, fee, pl, pr, amountX, amountY) {
+    if (tokenX.address.toLowerCase() > tokenY.address.toLowerCase()) {
+        let tmp = tokenX;
+        tokenX = tokenY;
+        tokenY = tmp;
+
+        let amount = amountX;
+        amountX = amountY;
+        amountY = amount;
+    }
+    await nflm.connect(miner).mint(
+        {
+            miner: miner.address,
+            tokenX: tokenX.address,
+            tokenY: tokenY.address,
+            fee: fee,
+            pl: pl,
+            pr: pr,
+            xLim: amountX,
+            yLim: amountY,
+            amountXMin: 0,
+            amountYMin: 0,
+            deadline: BigNumber("1000000000000").toFixed(0)
+        }
+    );
+}
+
+
 module.exports ={
     getPoolParts,
     getIzumiswapFactory,
@@ -229,5 +309,10 @@ module.exports ={
     acquiredFeeLiquidity,
     amountAddFee,
     l2x,
-    l2y
+    l2y,
+    newLimOrderWithX,
+    decLimOrderWithX,
+    newLimOrderWithY,
+    decLimOrderWithY,
+    addLiquidity
 }

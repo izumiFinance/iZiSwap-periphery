@@ -59,6 +59,7 @@ async function addLiquidity(nflm, miner, tokenX, tokenY, fee, pl, pr, amountX, a
             yLim: amountY.toFixed(0),
             amountXMin: 0,
             amountYMin: 0,
+            deadline: BigNumber("1000000000000").toFixed(0)
         }
     );
   }
@@ -213,12 +214,12 @@ async function checkLiquidity(nflm, lid, expectLiquid) {
     console.log("aaa");
 }
 async function checkOwner(nflm, lid, owner) {
-    await nflm.connect(owner).decLiquidity(lid, "1", 0, 0);
+    await nflm.connect(owner).decLiquidity(lid, "1", 0, 0, BigNumber("1000000000000").toFixed(0) );
 }
 async function checkNotOwner(nflm, lid, notOwner) {
 
     try {
-        await nflm.connect(notOwner).decLiquidity(lid, "1", 0, 0);
+        await nflm.connect(notOwner).decLiquidity(lid, "1", 0, 0, BigNumber("1000000000000").toFixed(0));
     } catch(err) {
         // console.log(str(err));
         // console.log(err);
@@ -238,8 +239,8 @@ describe("miner deposit", function () {
     var rate;
     beforeEach(async function() {
         [signer, miner1, miner2, miner3, receiver] = await ethers.getSigners();
-        const {swapX2YModule, swapY2XModule, liquidityModule, limitOrderModule} = await getPoolParts();
-        izumiswapFactory = await getIzumiswapFactory(receiver.address, swapX2YModule, swapY2XModule, liquidityModule, limitOrderModule, signer);
+        const {swapX2YModule, swapY2XModule, liquidityModule, limitOrderModule, flashModule} = await getPoolParts();
+        izumiswapFactory = await getIzumiswapFactory(receiver.address, swapX2YModule, swapY2XModule, liquidityModule, limitOrderModule, flashModule, signer);
         console.log("get izumiswapFactory");
         weth9 = await getWETH9(signer);
         console.log("get weth9");
