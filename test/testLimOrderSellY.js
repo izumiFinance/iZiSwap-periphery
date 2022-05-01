@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 const BigNumber = require('bignumber.js');
-const { getPoolParts, getIzumiswapFactory } = require("./funcs.js")
+const { getPoolParts, getIzumiswapFactory, newLimOrderWithY, decLimOrderWithY } = require("./funcs.js")
 
 
 async function getToken(dx, dy) {
@@ -64,28 +64,6 @@ function getAmountY(l, r, rate, liquidity, up) {
     return floor(amountY);
 }
 
-async function newLimOrderWithY(slotIdx, tokenX, tokenY, seller, limorderManager, amountY, point) {
-    await tokenY.transfer(seller.address, amountY);
-    await tokenY.connect(seller).approve(limorderManager.address, amountY);
-    await limorderManager.connect(seller).newLimOrder(
-        slotIdx,
-        {
-            tokenX: tokenX.address,
-            tokenY: tokenY.address,
-            fee: 3000,
-            pt: point,
-            amount: amountY,
-            sellXEarnY: false
-        }
-    );
-}
-
-async function decLimOrderWithY(seller, sellId, limorderManager, amountY) {
-    await limorderManager.connect(seller).decLimOrder(
-        sellId,
-        amountY
-    );
-}
 async function collectLimOrder(seller, sellId, recipient, limorderManager, amountX, amountY) {
     await limorderManager.connect(seller).collectLimOrder(
         recipient, sellId, amountX, amountY
@@ -266,7 +244,8 @@ describe("limorder", function () {
                 amount: amountAddFee(costX).toFixed(0),
                 boundaryPt: 5050,
                 maxPayed: costX.toFixed(0),
-                minAcquired: 0
+                minAcquired: 0,
+                deadline: BigNumber("1000000000000").toFixed(0)
             }
         );
 

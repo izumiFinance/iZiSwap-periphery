@@ -3,7 +3,7 @@ const { ethers } = require("hardhat");
 
 const BigNumber = require('bignumber.js');
 const { sign } = require("crypto");
-const { getPoolParts, getIzumiswapFactory } = require("./funcs.js")
+const { getPoolParts, getIzumiswapFactory, newLimOrderWithX, decLimOrderWithX } = require("./funcs.js")
 
 async function getToken(decimalx, decimaly) {
 
@@ -62,31 +62,6 @@ function getAmountY(l, r, rate, liquidity, up) {
         return ceil(amountY);
     }
     return floor(amountY);
-}
-
-async function newLimOrderWithX(slotIdx, tokenX, tokenY, seller, limorderManager, amountX, point) {
-    await tokenX.transfer(seller.address, amountX);
-    await tokenX.connect(seller).approve(limorderManager.address, amountX);
-    await limorderManager.connect(seller).newLimOrder(
-        slotIdx,
-        {
-            tokenX: tokenX.address,
-            tokenY: tokenY.address,
-            fee: 3000,
-            pt: point,
-            amount: amountX,
-            sellXEarnY: true,
-            deadline: BigNumber("1000000000000").toFixed(0)
-        }
-    );
-}
-
-async function decLimOrderWithX(seller, orderIdx, limorderManager, amountX) {
-    await limorderManager.connect(seller).decLimOrder(
-        orderIdx,
-        amountX,
-        BigNumber("10000000000").toFixed(0)
-    );
 }
 
 async function collectLimOrder(limorderManager, seller, orderIdx, collectDec, collectEarn) {
