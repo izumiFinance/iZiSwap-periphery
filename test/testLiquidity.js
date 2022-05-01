@@ -340,7 +340,7 @@ function getFee(amount) {
 }
 
 function getFeeAfterCharge(fee) {
-    const charged = floor(fee.times(20).div(100));
+    const charged = floor(fee.times(50).div(100));
     return fee.minus(charged);
 }
 
