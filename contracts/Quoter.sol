@@ -182,7 +182,7 @@ contract Quoter is Base, IiZiSwapCallback {
         if (tokenIn < tokenOut) {
             try
                 IiZiSwapPool(poolAddr).swapX2YDesireY(
-                    address(this), desire, -799999,
+                    address(this), desire + 1, -799999,
                     abi.encodePacked(tokenOut, fee, tokenIn)
                 )
             {} catch (bytes memory reason) {
@@ -191,7 +191,7 @@ contract Quoter is Base, IiZiSwapCallback {
         } else {
             try
                 IiZiSwapPool(poolAddr).swapY2XDesireX(
-                    address(this), desire, 799999,
+                    address(this), desire + 1, 799999,
                     abi.encodePacked(tokenOut, fee, tokenIn)
                 )
             {} catch (bytes memory reason) {
