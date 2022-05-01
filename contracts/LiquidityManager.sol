@@ -103,7 +103,7 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
     constructor(
         address factory,
         address weth
-    ) ERC721("izumiswap Liquidity NFT", "IZUMI-LIQUIDITY-NFT") Base(factory, weth) {
+    ) ERC721("iZiSwap Liquidity NFT", "IZISWAP-LIQUIDITY-NFT") Base(factory, weth) {
     }
 
     /// @notice get or create a pool for (tokenX/tokenY/fee) if not exists
