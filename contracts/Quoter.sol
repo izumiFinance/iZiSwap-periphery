@@ -20,8 +20,14 @@ contract Quoter is Base, IiZiSwapCallback {
 
     uint256 private amountDesireCached;
 
-    /// @notice callback for swapY2X and swapY2XDesireX, in order to mark computed-amount of token
-    ///    and point after exchange
+    /// @notice construct this contract
+    /// @param _factory address iZiSwapFactory
+    /// @param _weth address of weth token
+    constructor(address _factory, address _weth) Base(_factory, _weth) {
+    }
+
+
+    /// @notice callback for swapY2X and swapY2XDesireX, in order to mark computed-amount of token and point after exchange
     /// @param x amount of tokenX trader acquired
     /// @param y amount of tokenY need to pay from trader
     /// @param path encoded SwapCallbackData
@@ -66,8 +72,7 @@ contract Quoter is Base, IiZiSwapCallback {
         }
     }
 
-    /// @notice callback for swapX2Y and swapX2YDesireY
-    ///    in order to mark computed-amount of token and point after exchange
+    /// @notice callback for swapX2Y and swapX2YDesireY in order to mark computed-amount of token and point after exchange
     /// @param x amount of tokenX need to pay from trader
     /// @param y amount of tokenY trader acquired
     /// @param path encoded SwapCallbackData
@@ -111,10 +116,6 @@ contract Quoter is Base, IiZiSwapCallback {
             }
         }
     }
-
-    // function swapAmountSingle(
-        
-    // ) public returns(uint256 amount)
 
     function swapAmountSingleInternal(
         address tokenIn,
@@ -227,12 +228,7 @@ contract Quoter is Base, IiZiSwapCallback {
         }
     }
 
-    /// @notice construct this contract
-    /// @param _factory address iZiSwapFactory
-    /// @param _weth address of weth token
-    constructor(address _factory, address _weth) Base(_factory, _weth) {
-    }
-
+   
     function parseRevertReason(bytes memory reason)
         private
         pure
@@ -251,9 +247,8 @@ contract Quoter is Base, IiZiSwapCallback {
         return abi.decode(reason, (uint256, int24));
     }
 
-    /// @notice estimate amount of tokenX acquired when user wants to buy tokenX
-    ///    given max amount of tokenY user willing to pay
-    ///    calling this function will not generate any real exchanges in the pool
+    /// @notice estimate amount of tokenX acquired when user wants to buy tokenX given max amount of tokenY user willing to pay 
+    /// calling this function will not generate any real exchanges in the pool
     /// @param tokenX tokenX of swap pool
     /// @param tokenY tokenY of swap pool
     /// @param fee fee amount of swap pool
@@ -280,8 +275,7 @@ contract Quoter is Base, IiZiSwapCallback {
         }
     }
 
-    /// @notice estimate amount of tokenY required when user wants to buy tokenX
-    ///    given amount of tokenX user wants to buy
+    /// @notice estimate amount of tokenY required when user wants to buy token given amount of tokenX user wants to buy
     ///    calling this function will not generate any real exchanges in the pool
     /// @param tokenX tokenX of swap pool
     /// @param tokenY tokenY of swap pool
@@ -315,8 +309,7 @@ contract Quoter is Base, IiZiSwapCallback {
         amountDesireCached = 0;
     }
 
-    /// @notice estimate amount of tokenY acquired when user wants to buy tokenY
-    ///    given max amount of tokenX user willing to pay
+    /// @notice estimate amount of tokenY acquired when user wants to buy tokenY given max amount of tokenX user willing to pay
     ///    calling this function will not generate any real exchanges in the pool
     /// @param tokenX tokenX of swap pool
     /// @param tokenY tokenY of swap pool
@@ -344,8 +337,7 @@ contract Quoter is Base, IiZiSwapCallback {
         }
     }
 
-    /// @notice estimate amount of tokenX required when user wants to buy tokenY
-    ///    given amount of tokenX user wants to buy
+    /// @notice estimate amount of tokenX required when user wants to buy tokenY given amount of tokenX user wants to buy
     ///    calling this function will not generate any real exchanges in the pool
     /// @param tokenX tokenX of swap pool
     /// @param tokenY tokenY of swap pool
