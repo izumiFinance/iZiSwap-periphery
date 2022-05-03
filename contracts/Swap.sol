@@ -213,8 +213,7 @@ contract Swap is Base, IiZiSwapCallback {
     /// @notice constructor to create this contract
     /// @param _factory address of iZiSwapFactory
     /// @param _weth address of weth token
-    constructor(address _factory, address _weth) Base(_factory, _weth) {
-    }
+    constructor(address _factory, address _weth) Base(_factory, _weth) {}
 
     /// parameters when calling Swap.swap..., grouped together to avoid stake too deep
     struct SwapParams {

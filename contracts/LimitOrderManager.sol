@@ -12,14 +12,12 @@ import "./base/base.sol";
 import "./libraries/LogPowMath.sol";
 import "hardhat/console.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-// import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
 
 import './libraries/LimOrder.sol';
 import './libraries/LimOrderCircularQueue.sol';
 
 contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
 
-    // using EnumerableSet for EnumerableSet.UintSet;
     using LimOrderCircularQueue for LimOrderCircularQueue.Queue;
 
     // max-poolId in poolIds, poolId starts from 1
@@ -45,10 +43,13 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
 
     // seller's active order id
     mapping(address => LimOrder[]) private addr2ActiveOrder;
+    // seller's canceled or finished order id
     mapping(address => LimOrderCircularQueue.Queue) private addr2DeactiveOrder;
-    // // seller's canceled or finished order id
 
     // maximum number of active order per user
+    // TODO: 
+    //   currently we used a fixed number of storage space. A better way is to allow user to expand it.
+    //   Otherwise, the first 300 orders need more gas for storage.
     uint256 public immutable DEACTIVE_ORDER_LIM = 300;
 
     // callback data passed through iZiSwapPool#addLimOrderWithX(Y) to the callback
@@ -82,11 +83,6 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         }
     }
 
-    // modifier checkAuth(uint256 lid) {
-    //     require(sellers[lid] == msg.sender, "Not approved");
-    //     _;
-    // }
-
     modifier checkActive(uint256 lIdx) {
         require(addr2ActiveOrder[msg.sender].length > lIdx, 'Out Of Length!');
         require(addr2ActiveOrder[msg.sender][lIdx].active, 'Not Active!');
@@ -114,20 +110,25 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
             poolAddrs[poolId] = pool;
         }
     }
+
     function getEarnX(address pool, bytes32 key) private view returns(uint256, uint128) {
         (uint256 lastAccEarn, , , uint128 earn, ) = IiZiSwapPool(pool).userEarnX(key);
         return (lastAccEarn, earn);
     }
+
     function getEarnX(address pool, address miner, int24 pt) private view returns(uint256 accEarn, uint256 earn) {
         (accEarn, earn) = getEarnX(pool, limOrderKey(miner, pt));
     }
+
     function getEarnY(address pool, bytes32 key) private view returns(uint256, uint128) {
         (uint256 lastAccEarn, , , uint128 earn, ) = IiZiSwapPool(pool).userEarnY(key);
         return (lastAccEarn, earn);
     }
+
     function getEarnY(address pool, address miner, int24 pt) private view returns(uint256 accEarn, uint128 earn) {
         (accEarn, earn) = getEarnY(pool, limOrderKey(miner, pt));
     }
+
     function getEarn(address pool, address miner, int24 pt, bool sellXEarnY) private view returns(uint256 accEarn, uint128 earn) {
         if (sellXEarnY) {
             (accEarn, earn) = getEarnY(pool, limOrderKey(miner, pt));
@@ -233,7 +234,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         earnLim = uint128(earnLim256);
     }
 
-    /// @notice compute amount of earned token and amount of sold token for a limit order
+    /// @notice Compute amount of earned token and amount of sold token for a limit order
     ///    we will make amount of earned token as max as possible
     /// @param sqrtPrice_96 a 96 bit fixpoint number to describe sqrt(price) of pool
     /// @param earnLim max amount of earned token computed by getEarnLim(...)
@@ -279,8 +280,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         }
     }
 
-    /// @notice update an limit order
-    ///    the principle to update is to make this order claim earned tokens as much as posible
+    /// @notice Update a limit order to claim earned tokens as much as posible
     /// @param order the order to update, see LimOrder for more
     /// @param pool address of swap pool
     /// @return earn amount of earned token this limit order can claim
@@ -304,8 +304,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         order.lastAccEarn = accEarn;
     }
 
-    /// @notice update an limit order
-    ///    the principle to update is to make this order claim earned tokens as much as posible
+    /// @notice Update a limit order to claim earned tokens as much as possible.
     /// @param orderIdx idx of order to update
     /// @return earn amount of earned token this limit order can claim
     function updateOrder(
@@ -316,7 +315,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         earn = _updateOrder(order, pool);
     }
 
-    /// @notice decrease amount of selling-token of a limit order
+    /// @notice Decrease amount of selling-token of a limit order
     /// @param orderIdx point of seller's limit order
     /// @param amount max amount of selling-token to decrease
     /// @param deadline deadline timestamp of transaction
@@ -354,7 +353,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         order.accSellingDec += actualDeltaRefund;
     }
 
-    /// @notice collect earned or decreased token from limit order
+    /// @notice Collect earned or decreased token from limit order
     /// @param recipient address to benefit
     /// @param orderIdx idx of limit order
     /// @param collectDec max amount of decreased selling token to collect
@@ -400,18 +399,8 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         }
     }
 
-    function getDeactiveSlot(address user) external view returns (uint256 slotIdx) {
-        slotIdx = addr2ActiveOrder[user].length;
-        for (uint256 i = 0; i < addr2ActiveOrder[user].length; i ++) {
-            if (!addr2ActiveOrder[user][i].active) {
-                return i;
-            }
-        }
-        return slotIdx;
-    }
-
-    /// @notice return active order for seller
-    /// @param user address of seller
+    /// @notice Returns active orders for the trader
+    /// @param user address of trader
     /// @return activeIdx list of active order idx
     /// @return activeLimitOrder list of active order
     function getActiveOrders(address user)
@@ -447,14 +436,10 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         return addr2ActiveOrder[user][idx];
     }
 
-    /// @notice return deactive order for seller
-    /// @param user address of seller
+    /// @notice Returns deactive order for the trader
+    /// @param user address of trader
     /// @return deactiveLimitOrder list of deactive order
-    function getDeactiveOrders(address user)
-        external
-        view
-        returns (LimOrder[] memory deactiveLimitOrder)
-    {
+    function getDeactiveOrders(address user) external view returns (LimOrder[] memory deactiveLimitOrder) {
         LimOrderCircularQueue.Queue storage queue = addr2DeactiveOrder[user];
         if (queue.limOrders.length == 0) {
             return deactiveLimitOrder;
@@ -471,5 +456,15 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         LimOrderCircularQueue.Queue storage queue = addr2DeactiveOrder[user];
         require(idx < queue.limOrders.length, 'Out Of Length');
         return queue.limOrders[(queue.start + idx) % queue.limOrders.length];
+    }
+
+    function getDeactiveSlot(address user) external view returns (uint256 slotIdx) {
+        slotIdx = addr2ActiveOrder[user].length;
+        for (uint256 i = 0; i < addr2ActiveOrder[user].length; i ++) {
+            if (!addr2ActiveOrder[user][i].active) {
+                return i;
+            }
+        }
+        return slotIdx;
     }
 }

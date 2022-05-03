@@ -26,6 +26,23 @@ contract Quoter is Base, IiZiSwapCallback {
     constructor(address _factory, address _weth) Base(_factory, _weth) {
     }
 
+    function parseRevertReason(bytes memory reason)
+        private
+        pure
+        returns (
+            uint256 amount,
+            int24 currPt
+        )
+    {
+        if (reason.length != 64) {
+            if (reason.length < 68) revert('Unexpected error');
+            assembly {
+                reason := add(reason, 0x04)
+            }
+            revert(abi.decode(reason, (string)));
+        }
+        return abi.decode(reason, (uint256, int24));
+    }
 
     /// @notice callback for swapY2X and swapY2XDesireX, in order to mark computed-amount of token and point after exchange
     /// @param x amount of tokenX trader acquired
@@ -226,25 +243,6 @@ contract Quoter is Base, IiZiSwapCallback {
                 break;
             }
         }
-    }
-
-   
-    function parseRevertReason(bytes memory reason)
-        private
-        pure
-        returns (
-            uint256 amount,
-            int24 currPt
-        )
-    {
-        if (reason.length != 64) {
-            if (reason.length < 68) revert('Unexpected error');
-            assembly {
-                reason := add(reason, 0x04)
-            }
-            revert(abi.decode(reason, (string)));
-        }
-        return abi.decode(reason, (uint256, int24));
     }
 
     /// @notice estimate amount of tokenX acquired when user wants to buy tokenX given max amount of tokenY user willing to pay 
