@@ -266,6 +266,7 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
 
         uint256 deadline;
     }
+
     function updateLiquidity(
         Liquidity storage liquid,
         address pool,

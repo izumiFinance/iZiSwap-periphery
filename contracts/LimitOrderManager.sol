@@ -395,8 +395,8 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         }
     }
 
-    /// @notice Returns active orders for the trader
-    /// @param user address of trader
+    /// @notice Returns active orders for the seller
+    /// @param user address of the seller
     /// @return activeIdx list of active order idx
     /// @return activeLimitOrder list of active order
     function getActiveOrders(address user)
@@ -427,14 +427,31 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         return (activeIdx, activeLimitOrder);
     }
 
+    /// @notice Returns a single active order for the seller
+    /// @param user address of the seller
+    /// @param idx index of the active order list
+    /// @return limOrder the target active order
     function getActiveOrder(address user, uint256 idx) external view returns (LimOrder memory limOrder) {
         require(idx < addr2ActiveOrder[user].length, 'Out Of Length');
         return addr2ActiveOrder[user][idx];
     }
 
-    /// @notice Returns deactive order for the trader
-    /// @param user address of trader
-    /// @return deactiveLimitOrder list of deactive order
+    /// @notice Returns a slot in the active order list, which can be replaced with a new order.
+    /// @param user address of the seller
+    /// @return slotIdx the first available slot index
+    function getDeactiveSlot(address user) external view returns (uint256 slotIdx) {
+        slotIdx = addr2ActiveOrder[user].length;
+        for (uint256 i = 0; i < addr2ActiveOrder[user].length; i ++) {
+            if (!addr2ActiveOrder[user][i].active) {
+                return i;
+            }
+        }
+        return slotIdx;
+    }
+
+    /// @notice Returns deactived orders for the seller
+    /// @param user address of the seller
+    /// @return deactiveLimitOrder list of deactived orders
     function getDeactiveOrders(address user) external view returns (LimOrder[] memory deactiveLimitOrder) {
         LimOrderCircularQueue.Queue storage queue = addr2DeactiveOrder[user];
         if (queue.limOrders.length == 0) {
@@ -448,19 +465,14 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         return deactiveLimitOrder;
     }
 
+    /// @notice Returns a single deactived order for the seller
+    /// @param user address of the seller
+    /// @param idx index of the deactived order list
+    /// @return limOrder the target deactived order
     function getDeactiveOrder(address user, uint256 idx) external view returns (LimOrder memory limOrder) {
         LimOrderCircularQueue.Queue storage queue = addr2DeactiveOrder[user];
         require(idx < queue.limOrders.length, 'Out Of Length');
         return queue.limOrders[(queue.start + idx) % queue.limOrders.length];
     }
 
-    function getDeactiveSlot(address user) external view returns (uint256 slotIdx) {
-        slotIdx = addr2ActiveOrder[user].length;
-        for (uint256 i = 0; i < addr2ActiveOrder[user].length; i ++) {
-            if (!addr2ActiveOrder[user][i].active) {
-                return i;
-            }
-        }
-        return slotIdx;
-    }
 }
