@@ -2,7 +2,6 @@
 pragma solidity ^0.8.4;
 
 import "./base/base.sol";
-
 import "./core/interfaces/IiZiSwapCallback.sol";
 import "./core/interfaces/IiZiSwapFactory.sol";
 import "./core/interfaces/IiZiSwapPool.sol";
@@ -13,6 +12,7 @@ import "./libraries/Path.sol";
 contract Quoter is Base, IiZiSwapCallback {
 
     using Path for bytes;
+
     struct SwapCallbackData {
         bytes path;
         address payer;
@@ -23,8 +23,7 @@ contract Quoter is Base, IiZiSwapCallback {
     /// @notice construct this contract
     /// @param _factory address iZiSwapFactory
     /// @param _weth address of weth token
-    constructor(address _factory, address _weth) Base(_factory, _weth) {
-    }
+    constructor(address _factory, address _weth) Base(_factory, _weth) {}
 
     function parseRevertReason(bytes memory reason)
         private

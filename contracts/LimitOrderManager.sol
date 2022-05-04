@@ -21,7 +21,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
     using LimOrderCircularQueue for LimOrderCircularQueue.Queue;
 
     // max-poolId in poolIds, poolId starts from 1
-    uint128 maxPoolId = 1;
+    uint128 private maxPoolId = 1;
 
     // owners of limit order
     mapping(uint256 =>address) public sellers;
@@ -64,6 +64,17 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         address payer;
     }
 
+    modifier checkActive(uint256 lIdx) {
+        require(addr2ActiveOrder[msg.sender].length > lIdx, 'Out Of Length!');
+        require(addr2ActiveOrder[msg.sender][lIdx].active, 'Not Active!');
+        _;
+    }
+
+    /// @notice constructor to create this contract
+    /// @param factory address of iZiSwapFactory
+    /// @param weth address of WETH token
+    constructor( address factory, address weth ) Base(factory, weth) {}
+
     /// @notice callback for add limit order, in order to deposit corresponding tokens
     /// @param x amount of tokenX need to pay from miner
     /// @param y amount of tokenY need to pay from miner
@@ -81,21 +92,6 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         if (y > 0) {
             pay(dt.tokenY, dt.payer, msg.sender, y);
         }
-    }
-
-    modifier checkActive(uint256 lIdx) {
-        require(addr2ActiveOrder[msg.sender].length > lIdx, 'Out Of Length!');
-        require(addr2ActiveOrder[msg.sender][lIdx].active, 'Not Active!');
-        _;
-    }
-
-    /// @notice constructor to create this contract
-    /// @param factory address of iZiSwapFactory
-    /// @param weth address of WETH token
-    constructor(
-        address factory,
-        address weth
-    ) Base(factory, weth) {
     }
 
     function limOrderKey(address miner, int24 pt) internal pure returns(bytes32) {

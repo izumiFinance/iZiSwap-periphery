@@ -2,7 +2,6 @@
 pragma solidity ^0.8.4;
 
 import "./base/base.sol";
-
 import "./core/interfaces/IiZiSwapCallback.sol";
 import "./core/interfaces/IiZiSwapFactory.sol";
 import "./core/interfaces/IiZiSwapPool.sol";
@@ -16,10 +15,16 @@ contract Swap is Base, IiZiSwapCallback {
     uint256 private payedCached = DEFAULT_PAYED_CACHED;
 
     using Path for bytes;
+
     struct SwapCallbackData {
         bytes path;
         address payer;
     }
+
+    /// @notice constructor to create this contract
+    /// @param _factory address of iZiSwapFactory
+    /// @param _weth address of weth token
+    constructor(address _factory, address _weth) Base(_factory, _weth) {}
 
     /// @notice callback for swapY2X and swapY2XDesireX, in order to pay tokenY from trader
     /// @param x amount of tokenX trader acquired
@@ -196,6 +201,7 @@ contract Swap is Base, IiZiSwapCallback {
 
         uint256 deadline;
     }
+
     function swapAmount(SwapAmountParams calldata params)
         external
         payable
@@ -209,11 +215,6 @@ contract Swap is Base, IiZiSwapCallback {
         );
         require(acquire >= params.minAcquired, 'Too much requested');
     }
-
-    /// @notice constructor to create this contract
-    /// @param _factory address of iZiSwapFactory
-    /// @param _weth address of weth token
-    constructor(address _factory, address _weth) Base(_factory, _weth) {}
 
     /// parameters when calling Swap.swap..., grouped together to avoid stake too deep
     struct SwapParams {

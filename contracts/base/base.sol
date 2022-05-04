@@ -15,7 +15,6 @@ interface IWETH9 is IERC20 {
 
 
 abstract contract Base {
-
     /// @notice address of iZiSwapFactory
     address public immutable factory;
 

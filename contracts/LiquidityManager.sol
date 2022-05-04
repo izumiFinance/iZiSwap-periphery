@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.4;
 
+import "./base/base.sol";
 import "./core/interfaces/IiZiSwapCallback.sol";
 import "./core/interfaces/IiZiSwapFactory.sol";
 import "./core/interfaces/IiZiSwapPool.sol";
-
 import "./libraries/MintMath.sol";
 import "./libraries/FixedPoint128.sol";
-import "./base/base.sol";
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol';
@@ -75,6 +74,20 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
     /// @notice mapping from address to poolId within this contract
     mapping(address =>uint128) public poolIds;
 
+    modifier checkAuth(uint256 lid) {
+        require(_isApprovedOrOwner(msg.sender, lid), 'Not approved');
+        _;
+    }
+
+    /// @notice constructor to create this contract
+    /// @param factory address of iZiSwapFactory
+    /// @param weth address of WETH token
+    constructor(
+        address factory,
+        address weth
+    ) ERC721("iZiSwap Liquidity NFT", "IZISWAP-LIQUIDITY-NFT") Base(factory, weth) {
+    }
+
     /// @notice callback for mining, in order to deposit tokens
     /// @param x amount of tokenX pay from miner
     /// @param y amount of tokenY pay from miner
@@ -92,20 +105,7 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
             pay(dt.tokenY, dt.payer, msg.sender, y);
         }
     }
-    modifier checkAuth(uint256 lid) {
-        require(_isApprovedOrOwner(msg.sender, lid), 'Not approved');
-        _;
-    }
-
-    /// @notice constructor to create this contract
-    /// @param factory address of iZiSwapFactory
-    /// @param weth address of WETH token
-    constructor(
-        address factory,
-        address weth
-    ) ERC721("iZiSwap Liquidity NFT", "IZISWAP-LIQUIDITY-NFT") Base(factory, weth) {
-    }
-
+ 
     /// @notice get or create a pool for (tokenX/tokenY/fee) if not exists
     /// @param tokenX tokenX of swap pool
     /// @param tokenY tokenY of swap pool
@@ -133,6 +133,7 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
             poolMetas[poolId] = meta;
         }
     }
+
     function getLastFeeScale(address pool, bytes32 key) private view returns(uint256, uint256) {
 
         (, uint256 lastFeeScaleX_128, uint256 lastFeeScaleY_128, , ) = IiZiSwapPool(pool).liquidity(
@@ -140,6 +141,7 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
         );
         return (lastFeeScaleX_128, lastFeeScaleY_128);
     }
+
     function getPoolPrice(address pool) private view returns (uint160, int24) {
         (
             uint160 sqrtPrice_96,
@@ -214,7 +216,7 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
         uint128 liquidity,
         uint256 amountX,
         uint256 amountY
-    ){
+    ) {
         require(mintParam.tokenX < mintParam.tokenY, "x<y");
         address pool;
         (liquidity, amountX, amountY, pool) = _addLiquidity(mintParam);
@@ -293,7 +295,7 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
     /// @return amountY amonut of tokenY deposited
     function addLiquidity(
         AddLiquidityParam calldata addLiquidityParam
-    ) external payable checkAuth(addLiquidityParam.lid) checkDeadline(addLiquidityParam.deadline) returns(
+    ) external payable checkAuth(addLiquidityParam.lid) checkDeadline(addLiquidityParam.deadline) returns (
         uint128 liquidityDelta,
         uint256 amountX,
         uint256 amountY
@@ -342,7 +344,7 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
         uint256 amountXMin,
         uint256 amountYMin,
         uint256 deadline
-    ) external checkAuth(lid) checkDeadline(deadline) returns(
+    ) external checkAuth(lid) checkDeadline(deadline) returns (
         uint256 amountX,
         uint256 amountY
     ) {
@@ -378,7 +380,7 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
         uint256 lid,
         uint128 amountXLim,
         uint128 amountYLim
-    ) external payable checkAuth(lid) returns(
+    ) external payable checkAuth(lid) returns (
         uint256 amountX,
         uint256 amountY
     ) {
