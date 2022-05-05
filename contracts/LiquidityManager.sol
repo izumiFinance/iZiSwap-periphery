@@ -29,7 +29,7 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
     }
 
     // max-poolId in poolIds, poolId starts from 1
-    uint128 maxPoolId = 1;
+    uint128 private maxPoolId = 1;
 
     // infomation of liquidity provided by miner
     struct Liquidity {
