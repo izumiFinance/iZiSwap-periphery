@@ -182,8 +182,8 @@ contract Swap is Base, IiZiSwapCallback {
             SwapCallbackData({path: params.path, payer: msg.sender})
         );
         cost = payedCached;
-        require(cost <= params.maxPayed, 'Too much payed');
-        require(acquire >= params.desire, 'Too much requested');
+        require(cost <= params.maxPayed, 'Too much payed in swapDesire');
+        require(acquire >= params.desire, 'Too much requested in swapDesire');
         payedCached = DEFAULT_PAYED_CACHED;
     }
 
@@ -207,7 +207,7 @@ contract Swap is Base, IiZiSwapCallback {
             params.recipient, 
             SwapCallbackData({path: params.path, payer: msg.sender})
         );
-        require(acquire >= params.minAcquired, 'Too much requested');
+        require(acquire >= params.minAcquired, 'Too much requested in swapAmount');
     }
 
     /// @notice constructor to create this contract
@@ -281,7 +281,7 @@ contract Swap is Base, IiZiSwapCallback {
             abi.encode(SwapCallbackData({path: abi.encodePacked(swapParams.tokenX, swapParams.fee, swapParams.tokenY), payer: payer}))
         );
         if (swapParams.boundaryPt == 800001) {
-            require(amount.amountX >= swapParams.amount, 'Too much requested');
+            require(amount.amountX >= swapParams.amount, 'Too much requested in swapY2XDesireX');
         }
         require(amount.amountY <= swapParams.maxPayed, "YMAX");
     }
@@ -318,7 +318,7 @@ contract Swap is Base, IiZiSwapCallback {
         );
         require(amount.amountX <= swapParams.maxPayed, "XMAX");
         if (swapParams.boundaryPt == -800001) {
-            require(amount.amountY >= swapParams.amount, 'Too much requested');
+            require(amount.amountY >= swapParams.amount, 'Too much requested in swapX2YDesireY');
         }
     }
 }
