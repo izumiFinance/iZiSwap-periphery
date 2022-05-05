@@ -2,7 +2,6 @@
 pragma solidity ^0.8.4;
 
 import "./base/base.sol";
-
 import "./core/interfaces/IiZiSwapCallback.sol";
 import "./core/interfaces/IiZiSwapFactory.sol";
 import "./core/interfaces/IiZiSwapPool.sol";
@@ -16,10 +15,16 @@ contract Swap is Base, IiZiSwapCallback {
     uint256 private payedCached = DEFAULT_PAYED_CACHED;
 
     using Path for bytes;
+
     struct SwapCallbackData {
         bytes path;
         address payer;
     }
+
+    /// @notice constructor to create this contract
+    /// @param _factory address of iZiSwapFactory
+    /// @param _weth address of weth token
+    constructor(address _factory, address _weth) Base(_factory, _weth) {}
 
     /// @notice callback for swapY2X and swapY2XDesireX, in order to pay tokenY from trader
     /// @param x amount of tokenX trader acquired
@@ -162,13 +167,14 @@ contract Swap is Base, IiZiSwapCallback {
     struct SwapDesireParams {
         bytes path;
         address recipient;
-        // uint256 deadline;
         uint128 desire;
         uint256 maxPayed;
 
         uint256 deadline;
     }
 
+
+    /// @notice Swap given amount of target token, usually used in multi-hop case.
     function swapDesire(SwapDesireParams calldata params)
         external
         payable
@@ -196,6 +202,8 @@ contract Swap is Base, IiZiSwapCallback {
 
         uint256 deadline;
     }
+
+    /// @notice Swap given amount of input token, usually used in multi-hop case.
     function swapAmount(SwapAmountParams calldata params)
         external
         payable
@@ -208,12 +216,6 @@ contract Swap is Base, IiZiSwapCallback {
             SwapCallbackData({path: params.path, payer: msg.sender})
         );
         require(acquire >= params.minAcquired, 'Too much requested in swapAmount');
-    }
-
-    /// @notice constructor to create this contract
-    /// @param _factory address of iZiSwapFactory
-    /// @param _weth address of weth token
-    constructor(address _factory, address _weth) Base(_factory, _weth) {
     }
 
     /// parameters when calling Swap.swap..., grouped together to avoid stake too deep
@@ -250,7 +252,7 @@ contract Swap is Base, IiZiSwapCallback {
         uint256 amountY;
     }
 
-    /// @notice Swap tokenY for tokenX， given max amount of tokenY user willing to pay
+    /// @notice Swap tokenY for tokenX, given max amount of tokenY user willing to pay
     /// @param swapParams params(for example: max amount in above line), see SwapParams for more
     function swapY2X(
         SwapParams calldata swapParams
@@ -266,7 +268,7 @@ contract Swap is Base, IiZiSwapCallback {
         require(amountX >= swapParams.minAcquired, "XMIN");
     }
 
-    /// @notice Swap tokenY for tokenX， given user's desired amount of tokenX
+    /// @notice Swap tokenY for tokenX, given user's desired amount of tokenX
     /// @param swapParams params(for example: desired amount in above line), see SwapParams for more
     function swapY2XDesireX(
         SwapParams calldata swapParams
@@ -286,7 +288,7 @@ contract Swap is Base, IiZiSwapCallback {
         require(amount.amountY <= swapParams.maxPayed, "YMAX");
     }
 
-    /// @notice Swap tokenX for tokenY， given max amount of tokenX user willing to pay
+    /// @notice Swap tokenX for tokenY, given max amount of tokenX user willing to pay
     /// @param swapParams params(for example: max amount in above line), see SwapParams for more
     function swapX2Y(
         SwapParams calldata swapParams
@@ -302,7 +304,7 @@ contract Swap is Base, IiZiSwapCallback {
         require(amountY >= swapParams.minAcquired, "YMIN");
     }
 
-    /// @notice Swap tokenX for tokenY， given amount of tokenY user desires
+    /// @notice Swap tokenX for tokenY, given amount of tokenY user desires
     /// @param swapParams params(for example: desired amount in above line), see SwapParams for more
     function swapX2YDesireY(
         SwapParams calldata swapParams
