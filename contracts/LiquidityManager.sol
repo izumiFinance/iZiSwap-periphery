@@ -11,9 +11,6 @@ import "./libraries/FixedPoint128.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol';
 
-import "hardhat/console.sol";
-
-
 contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
 
     // callback data passed through iZiSwapPool#mint to the callback

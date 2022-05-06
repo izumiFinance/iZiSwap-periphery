@@ -7,8 +7,6 @@ import "./core/interfaces/IiZiSwapFactory.sol";
 import "./core/interfaces/IiZiSwapPool.sol";
 import "./libraries/Path.sol";
 
-//import 'hardhat/console.sol';
-
 contract Quoter is Base, IiZiSwapCallback {
 
     using Path for bytes;

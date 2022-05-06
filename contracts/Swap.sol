@@ -7,8 +7,6 @@ import "./core/interfaces/IiZiSwapFactory.sol";
 import "./core/interfaces/IiZiSwapPool.sol";
 import "./libraries/Path.sol";
 
-// import 'hardhat/console.sol';
-
 contract Swap is Base, IiZiSwapCallback {
 
     uint256 private constant DEFAULT_PAYED_CACHED = type(uint256).max;
