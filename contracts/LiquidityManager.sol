@@ -10,8 +10,9 @@ import "./libraries/FixedPoint128.sol";
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol';
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
+contract LiquidityManager is Ownable, Base, ERC721Enumerable, IiZiSwapMintCallback {
 
     // callback data passed through iZiSwapPool#mint to the callback
     struct MintCallbackData {
@@ -74,6 +75,15 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
     modifier checkAuth(uint256 lid) {
         require(_isApprovedOrOwner(msg.sender, lid), 'Not approved');
         _;
+    }
+
+    string public baseURI;
+    function _baseURI() internal view override returns (string memory) {
+        return baseURI;
+    }
+
+    function setBaseURI(string calldata newBaseURI) external onlyOwner {
+        baseURI = newBaseURI;
     }
 
     /// @notice Constructor to create this contract
