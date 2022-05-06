@@ -8,8 +8,8 @@ import "./core/interfaces/IiZiSwapPool.sol";
 import "./libraries/MintMath.sol";
 import "./libraries/FixedPoint128.sol";
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol';
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract LiquidityManager is Ownable, Base, ERC721Enumerable, IiZiSwapMintCallback {
