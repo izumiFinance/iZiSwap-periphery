@@ -284,6 +284,10 @@ describe("limorder", function () {
             earnAssign: seller1EarnPhase1.plus(seller2EarnPhase1)
         });
         // check collect
+        await collectLimOrder(seller2, "0", recipient2.address, limorderManager, "1", "1");
+        await checkBalance(tokenX, recipient2, BigNumber('1'));
+        await checkBalance(tokenY, recipient2, BigNumber("1"));
+        // check collect
         await collectLimOrder(seller2, "0", recipient2.address, limorderManager, "100000000000000000", "100000000000000000");
 
         await checkBalance(tokenX, recipient2, seller2EarnPhase1);

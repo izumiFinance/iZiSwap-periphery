@@ -1,5 +1,6 @@
 const { ethers } = require("hardhat");
 const BigNumber = require('bignumber.js');
+const { createCipheriv } = require("crypto");
 
 function stringMinus(a, b) {
     return BigNumber(a).minus(b).toFixed(0);
@@ -217,6 +218,8 @@ function l2y(liquidity, sqrtPrice_96, up) {
 async function newLimOrderWithX(slotIdx, tokenX, tokenY, seller, limorderManager, amountX, point) {
     await tokenX.transfer(seller.address, amountX);
     await tokenX.connect(seller).approve(limorderManager.address, amountX);
+    let ok = true;
+    try {
     await limorderManager.connect(seller).newLimOrder(
         slotIdx,
         {
@@ -229,6 +232,10 @@ async function newLimOrderWithX(slotIdx, tokenX, tokenY, seller, limorderManager
             deadline: BigNumber("1000000000000").toFixed(0)
         }
     );
+    } catch(err) {
+        ok = false;
+    }
+    return ok;
 }
 
 async function decLimOrderWithX(seller, orderIdx, limorderManager, amountX) {
@@ -239,11 +246,27 @@ async function decLimOrderWithX(seller, orderIdx, limorderManager, amountX) {
     );
 }
 
+async function collectLimOrderWithX(seller, tokenX, tokenY, recipientAddress, orderIdx, limorderManager, collectDec, collectEarn) {
+    const amountXBefore = (await tokenX.balanceOf(recipientAddress)).toString();
+    const amountYBefore = (await tokenY.balanceOf(recipientAddress)).toString();
+    try {
+    await limorderManager.connect(seller).collectLimOrder(recipientAddress, orderIdx, collectDec, collectEarn)
+    } catch (err) {
 
+    }
+    const amountXAfter = (await tokenX.balanceOf(recipientAddress)).toString();
+    const amountYAfter = (await tokenY.balanceOf(recipientAddress)).toString();
+    return {
+        collectDec: stringMinus(amountXAfter, amountXBefore),
+        collectEarn: stringMinus(amountYAfter, amountYBefore)
+    }
+}
 
 async function newLimOrderWithY(slotIdx, tokenX, tokenY, seller, limorderManager, amountY, point) {
     await tokenY.transfer(seller.address, amountY);
     await tokenY.connect(seller).approve(limorderManager.address, amountY);
+    let ok = true;
+    try {
     await limorderManager.connect(seller).newLimOrder(
         slotIdx,
         {
@@ -256,6 +279,10 @@ async function newLimOrderWithY(slotIdx, tokenX, tokenY, seller, limorderManager
             deadline: BigNumber("1000000000000").toFixed(0)
         }
     );
+    } catch(err) {
+        ok = false;
+    }
+    return ok;
 }
 
 async function decLimOrderWithY(seller, sellId, limorderManager, amountY) {
@@ -264,6 +291,22 @@ async function decLimOrderWithY(seller, sellId, limorderManager, amountY) {
         amountY,
         BigNumber("10000000000").toFixed(0)
     );
+}
+
+async function collectLimOrderWithY(seller, tokenX, tokenY, recipientAddress, orderIdx, limorderManager, collectDec, collectEarn) {
+    const amountXBefore = (await tokenX.balanceOf(recipientAddress)).toString();
+    const amountYBefore = (await tokenY.balanceOf(recipientAddress)).toString();
+    try {
+    await limorderManager.connect(seller).collectLimOrder(recipientAddress, orderIdx, collectDec, collectEarn)
+    } catch(err) {
+        
+    }
+    const amountXAfter = (await tokenX.balanceOf(recipientAddress)).toString();
+    const amountYAfter = (await tokenY.balanceOf(recipientAddress)).toString();
+    return {
+        collectDec: stringMinus(amountYAfter, amountYBefore),
+        collectEarn: stringMinus(amountXAfter, amountXBefore)
+    }
 }
 
 async function addLiquidity(nflm, miner, tokenX, tokenY, fee, pl, pr, amountX, amountY) {
@@ -314,5 +357,7 @@ module.exports ={
     decLimOrderWithX,
     newLimOrderWithY,
     decLimOrderWithY,
-    addLiquidity
+    addLiquidity,
+    collectLimOrderWithX,
+    collectLimOrderWithY
 }
