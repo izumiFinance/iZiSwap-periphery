@@ -79,7 +79,7 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
         _;
     }
 
-    /// @notice constructor to create this contract
+    /// @notice Constructor to create this contract
     /// @param factory address of iZiSwapFactory
     /// @param weth address of WETH token
     constructor(
@@ -88,7 +88,7 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
     ) ERC721("iZiSwap Liquidity NFT", "IZISWAP-LIQUIDITY-NFT") Base(factory, weth) {
     }
 
-    /// @notice callback for mining, in order to deposit tokens
+    /// @notice Callback for mining, in order to deposit tokens
     /// @param x amount of tokenX pay from miner
     /// @param y amount of tokenY pay from miner
     /// @param data encoded MintCallbackData
@@ -106,7 +106,7 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
         }
     }
  
-    /// @notice get or create a pool for (tokenX/tokenY/fee) if not exists
+    /// @notice Get or create a pool for (tokenX/tokenY/fee) if not exists
     /// @param tokenX tokenX of swap pool
     /// @param tokenY tokenY of swap pool
     /// @param fee fee amount of swap pool
@@ -205,7 +205,7 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
             abi.encode(MintCallbackData({tokenX: mp.tokenX, tokenY: mp.tokenY, fee: mp.fee, payer: msg.sender})));
     }
 
-    /// @notice add a new liquidity and generate an nft
+    /// @notice Add a new liquidity and generate a nft
     /// @param mintParam params, see MintParam for more
     /// @return lid id of nft
     /// @return liquidity amount of liquidity added
@@ -240,7 +240,7 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
         _mint(mintParam.miner, lid);
     }
 
-    /// @notice burn a generated nft
+    /// @notice Burn a generated nft
     /// @param lid nft (liquidity) id
     /// @return success successfully burn or not
     function burn(uint256 lid) external checkAuth(lid) returns (bool success) {
@@ -289,7 +289,7 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
         liquid.liquidity = newLiquidity;
     }
     
-    /// @notice add liquidity to existing nft
+    /// @notice Add liquidity to a existing nft
     /// @param addLiquidityParam see AddLiquidityParam for more
     /// @return liquidityDelta amount of added liquidity
     /// @return amountX amount of tokenX deposited
@@ -331,7 +331,7 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
         updateLiquidity(liquid, pool, newLiquidity, 0, 0);
     }
 
-    /// @notice decrease liquidity from an nft
+    /// @notice Decrease liquidity from a nft
     /// @param lid id of nft
     /// @param liquidDelta amount of liqudity to decrease
     /// @param amountXMin min amount of tokenX user want to withdraw
@@ -369,7 +369,7 @@ contract LiquidityManager is Base, ERC721Enumerable, IiZiSwapMintCallback {
         updateLiquidity(liquidity, pool, newLiquidity, amountX, amountY);
     }
 
-    /// @notice collect fee gained of token withdrawed from an nft
+    /// @notice Collect fee gained of token withdrawed from  nft
     /// @param recipient address to receive token
     /// @param lid id of nft
     /// @param amountXLim amount limit of tokenX to collect

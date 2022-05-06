@@ -70,12 +70,12 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         _;
     }
 
-    /// @notice constructor to create this contract
+    /// @notice Constructor to create this contract
     /// @param factory address of iZiSwapFactory
     /// @param weth address of WETH token
     constructor( address factory, address weth ) Base(factory, weth) {}
 
-    /// @notice callback for add limit order, in order to deposit corresponding tokens
+    /// @notice Callback for add limit order, in order to deposit corresponding tokens
     /// @param x amount of tokenX need to pay from miner
     /// @param y amount of tokenY need to pay from miner
     /// @param data encoded LimCallbackData
@@ -167,7 +167,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         }
     }
 
-    /// @notice add a limit order for recipient
+    /// @notice Create a limit order for recipient
     /// @param idx slot in the addr2ActiveOrder[msg.sender]
     /// @param addLimitOrderParam describe params of added limit order, see AddLimOrderParam for more
     /// @return orderAmount actual amount of token added in limit order
@@ -216,7 +216,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         }
     }
 
-    /// @notice compute max amount of earned token the seller can claim
+    /// @notice Compute max amount of earned token the seller can claim
     /// @param lastAccEarn total amount of earned token of all users on this point before last update of this limit order
     /// @param accEarn total amount of earned token of all users on this point now
     /// @param earnRemain total amount of unclaimed earned token of all users on this point
@@ -230,8 +230,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         earnLim = uint128(earnLim256);
     }
 
-    /// @notice Compute amount of earned token and amount of sold token for a limit order
-    ///    we will make amount of earned token as max as possible
+    /// @notice Compute amount of earned token and amount of sold token for a limit order as much as possible
     /// @param sqrtPrice_96 a 96 bit fixpoint number to describe sqrt(price) of pool
     /// @param earnLim max amount of earned token computed by getEarnLim(...)
     /// @param sellingRemain amount of token before exchange in the limit order
@@ -349,7 +348,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         order.accSellingDec += actualDeltaRefund;
     }
 
-    /// @notice Collect earned or decreased token from limit order
+    /// @notice Collect earned or decreased token from a limit order
     /// @param recipient address to benefit
     /// @param orderIdx idx of limit order
     /// @param collectDec max amount of decreased selling token to collect
