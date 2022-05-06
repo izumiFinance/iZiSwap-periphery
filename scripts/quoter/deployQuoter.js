@@ -10,11 +10,12 @@ HARDHAT_NETWORK='izumiTest' node scripts/swap/deploySwap.js
 */
 
 const net = process.env.HARDHAT_NETWORK
+const v = process.argv
+const weth = v[2];
 
 async function main() {
 
     const factory = deployed[net].iZiSwapFactory;
-    const weth = deployed[net].WETH9;
     // deploy Quoter
     const Quoter = await ethers.getContractFactory("Quoter");
     const quoter = await Quoter.deploy(factory, weth);
