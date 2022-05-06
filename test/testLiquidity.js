@@ -39,11 +39,11 @@ function floor(b) {
 
 async function mint(nflm, miner, tokenX, tokenY, fee, pl, pr, amountX, amountY) {
     if (amountX.gt('0')) {
-        await tokenX.connect(miner).approve(nflm.address, amountX.toFixed(0));
+        await tokenX.connect(miner).approve(nflm.address, '1000000000000000000000000000000000');
         console.log("approve x: " + await tokenX.allowance(miner.address, nflm.address));
     }
     if (amountY.gt('0')) {
-        await tokenY.connect(miner).approve(nflm.address, amountY.toFixed(0));
+        await tokenY.connect(miner).approve(nflm.address, '1000000000000000000000000000000000');
         console.log("approve y: " + await tokenY.allowance(miner.address, nflm.address));
     }
 
@@ -61,7 +61,7 @@ async function mint(nflm, miner, tokenX, tokenY, fee, pl, pr, amountX, amountY) 
             yLim: amountY.toFixed(0),
             amountXMin: 0,
             amountYMin: 0,
-            deadline: BigNumber("1000000000000").toFixed(0)
+            deadline: '0xffffffff'
         }
     );
     console.log('after mint');
@@ -69,11 +69,11 @@ async function mint(nflm, miner, tokenX, tokenY, fee, pl, pr, amountX, amountY) 
 
 async function addLiquidity(nflm, miner, tokenX, tokenY, lid, amountX, amountY) {
     if (amountX.gt('0')) {
-        await tokenX.connect(miner).approve(nflm.address, amountX.toFixed(0));
+        await tokenX.connect(miner).approve(nflm.address, '10000000000000000000000000000000');
         console.log("approve x: " + await tokenX.allowance(miner.address, nflm.address));
     }
     if (amountY.gt('0')) {
-        await tokenY.connect(miner).approve(nflm.address, amountY.toFixed(0));
+        await tokenY.connect(miner).approve(nflm.address, '10000000000000000000000000000000');
         console.log("approve y: " + await tokenY.allowance(miner.address, nflm.address));
     }
     console.log("amountX: ", amountX.toFixed(0));
@@ -99,7 +99,42 @@ async function decLiquidity(nflm, miner, lid, liquidDelta) {
         BigNumber("1000000000000").toFixed(0)
     );
 }
-  
+
+async function tryDecLiquidity(nflm, miner, lid, liquidDelta) {
+    let ok = true;
+    try {
+    await nflm.connect(miner).decLiquidity(
+        lid, 
+        liquidDelta,
+        0,
+        0,
+        BigNumber("1000000000000").toFixed(0)
+    );
+    } catch (err) {
+        console.log(err);
+        ok = false;
+    }
+    return ok;
+}
+
+async function collect(nflm, tokenX, tokenY, miner, recipientAddr, lid, xlim, ylim) {
+
+    const amountXBefore = (await tokenX.balanceOf(recipientAddr)).toString();
+    const amountYBefore = (await tokenY.balanceOf(recipientAddr)).toString();
+    try {
+    await nflm.connect(miner).collect(recipientAddr, lid, xlim, ylim)
+    } catch (err){
+
+    }
+
+    const amountXAfter = (await tokenX.balanceOf(recipientAddr)).toString();
+    const amountYAfter = (await tokenY.balanceOf(recipientAddr)).toString();
+
+    return {
+        x: stringMinus(amountXAfter, amountXBefore),
+        y: stringMinus(amountYAfter, amountYBefore)
+    }
+}
   function getAmountYNoRound(l, r, rate, liquidity) {
     var amountY = BigNumber('0');
     var price = rate.pow(l);
@@ -191,6 +226,29 @@ async function decLiquidity(nflm, miner, lid, liquidDelta) {
       var amountXLim = ceil(amountX1.times(liquidity));
       var amountYLim = ceil(amountY1.times(liquidity));
       await addLiquidity(nflm, miner, tokenX, tokenY, lid, amountXLim, amountYLim);
+  }
+  async function tryAddByLiquid(nflm, tokenX, tokenY, miner, l, r, p, rate, lid, liquidity) {
+      var amountX1 = BigNumber("0");
+      var amountY1 = BigNumber("0");
+      if (l <= p && r > p) {
+          [amountX1, amountY1] = depositXY(l, r, p, rate, BigNumber("1"));
+      } else {
+          if (l <= p) {
+              amountY1 = getAmountYNoRound(l, r, rate, BigNumber("1"));
+          }
+          if (r > p) {
+              amountX1 = getAmountXNoRound(l, r, rate, BigNumber("1"));
+          }
+      }
+      var amountXLim = ceil(amountX1.times(liquidity));
+      var amountYLim = ceil(amountY1.times(liquidity));
+      let ok = true;
+      try{
+      await addLiquidity(nflm, miner, tokenX, tokenY, lid, amountXLim, amountYLim);
+      } catch(err) {
+          ok = false;
+      }
+      return ok;
   }
 async function addLimOrderWithY(tokenX, tokenY, seller, testAddLimOrder, amountY, point) {
     await tokenY.transfer(seller.address, amountY);
@@ -388,7 +446,7 @@ function stringMin(a, b) {
     }
 }
 describe("swap", function () {
-    var signer, miner1, miner2, miner3, trader1, trader2, trader3, trader4;
+    var signer, miner1, miner2, miner3, trader1, trader2, receiver1, receiver2;
     var poolPart, poolPartDesire;
     var izumiswapFactory;
     var weth9;
@@ -403,9 +461,9 @@ describe("swap", function () {
 
     var startTotalLiquidity;
     beforeEach(async function() {
-        [signer, miner1, miner2, miner3, miner4, trader1, trader2, receiver] = await ethers.getSigners();
+        [signer, miner1, miner2, miner3, miner4, trader1, receiver1, receiver2, trader2] = await ethers.getSigners();
         const {swapX2YModule, swapY2XModule, liquidityModule, limitOrderModule, flashModule} = await getPoolParts();
-        izumiswapFactory = await getIzumiswapFactory(receiver.address, swapX2YModule, swapY2XModule, liquidityModule, limitOrderModule, flashModule, signer);
+        izumiswapFactory = await getIzumiswapFactory(signer.address, swapX2YModule, swapY2XModule, liquidityModule, limitOrderModule, flashModule, signer);
         console.log("get izumiswapFactory");
         weth9 = await getWETH9(signer);
         console.log("get weth9");
@@ -417,14 +475,14 @@ describe("swap", function () {
         txAddr = tokenX.address.toLowerCase();
         tyAddr = tokenY.address.toLowerCase();
     
-        await tokenX.transfer(miner1.address, 10000000000);
-        await tokenY.transfer(miner1.address, 20000000000);
-        await tokenX.transfer(miner2.address, 30000000000);
-        await tokenY.transfer(miner2.address, 40000000000);
-        await tokenX.transfer(miner3.address, 50000000000);
-        await tokenY.transfer(miner3.address, 60000000000);
-        await tokenX.transfer(miner4.address, 70000000000);
-        await tokenY.transfer(miner4.address, 80000000000);
+        await tokenX.mint(miner1.address, '1000000000000000000000000000000000');
+        await tokenY.mint(miner1.address, '1000000000000000000000000000000000');
+        await tokenX.mint(miner2.address, '1000000000000000000000000000000000');
+        await tokenY.mint(miner2.address, '1000000000000000000000000000000000');
+        await tokenX.mint(miner3.address, '1000000000000000000000000000000000');
+        await tokenY.mint(miner3.address, '1000000000000000000000000000000000');
+        await tokenX.mint(miner4.address, '1000000000000000000000000000000000');
+        await tokenY.mint(miner4.address, '1000000000000000000000000000000000');
 
         poolAddr = await nflm.createPool(tokenX.address, tokenY.address, 3000, 5010);
         rate = BigNumber("1.0001");
@@ -464,7 +522,7 @@ describe("swap", function () {
                 boundaryPt: 5100,
                 minAcquired: 0,
                 maxPayed: amountY1.toFixed(0),
-                deadline: BigNumber("1000000000000").toFixed(0)
+                deadline: '0xffffffff'
             }
         );
         await checkBalance(tokenY, trader1, amountY1Origin.minus(amountY1));
@@ -476,6 +534,18 @@ describe("swap", function () {
         var miner2FeeY = BigNumber(stringDiv(stringMul(lastFeeScaleY_128.toFixed(0), liquid2), q128));
         var miner1FeeY = BigNumber(stringDiv(stringMul(lastFeeScaleY_128.toFixed(0), liquid1), q128));
 
+        // miner2 try to dec miner3 but fail
+        const ok_2_dec_2 = await tryDecLiquidity(nflm, miner2, '2', '100')
+        expect(ok_2_dec_2).to.equal(false);
+        await checkLiquidity(
+            nflm, "2", BigNumber(liquid3),
+            BigNumber("0"),
+            BigNumber("0"),
+            BigNumber("0"),
+            BigNumber('0')
+        );
+
+        // miner3 dec miner3 success
         await decLiquidity(nflm, miner3, "2", "10000", BigNumber("1000000000000").toFixed(0));
         console.log('1121313');
         await checkLiquidity(
@@ -487,6 +557,7 @@ describe("swap", function () {
         );
         console.log('1121313');
         liquid3 = BigNumber(liquid3).minus("10000").toFixed(0);
+        // miner2 add to miner2's nft and success
         await addByLiquid(nflm, tokenX, tokenY, miner2, 4900, 5100, 5100, rate, "1", BigNumber("10000"));
         await checkLiquidity(
             nflm, "1", BigNumber(liquid2).plus("9999"),
@@ -495,7 +566,17 @@ describe("swap", function () {
             BigNumber("0"),
             miner2FeeY
         );
-        console.log('1121313');
+        // miner1 add to miner2's nft but fail
+        const ok_1_add_1 = await tryAddByLiquid(nflm, tokenX, tokenY, miner1, 4900, 5100, 5100, rate, "1", BigNumber("10000"));
+        expect(ok_1_add_1).to.equal(false)
+        await checkLiquidity(
+            nflm, "1", BigNumber(liquid2).plus("9999"),
+            BigNumber("0"),
+            lastFeeScaleY_128,
+            BigNumber("0"),
+            miner2FeeY
+        );
+
         liquid2 = BigNumber(liquid2).plus("9999").toFixed(0);
         await mintByLiquid(nflm, tokenX, tokenY, miner4, 4900, 5100, 5100, rate, BigNumber("20000"));
         await checkLiquidity(
@@ -544,7 +625,7 @@ describe("swap", function () {
 
         console.log("miner2FeeX: ", miner2FeeX.toFixed(0));
 
-        await decLiquidity(nflm, miner1, "0", liquid1, BigNumber("1000000000000").toFixed(0));
+        await decLiquidity(nflm, miner1, "0", stringAdd(liquid1, '10000000000000'), BigNumber("1000000000000").toFixed(0));
         await checkLiquidity(
             nflm, "0", BigNumber("0"),
             lastFeeScaleX_128,
@@ -577,14 +658,71 @@ describe("swap", function () {
             getAmountY(4900, 5100, rate, BigNumber("10000"), false).plus(miner3FeeY)
         );
 
-        await decLiquidity(nflm, miner4, "3", "19999", BigNumber("1000000000000").toFixed(0));
+        const miner3OriginOwedX = getAmountX(
+            4900, 4901, rate, BigNumber(liquid3), false
+        ).plus(getAmountX(4901, 5100, rate, BigNumber(liquid3), false)).plus(miner3FeeX).toFixed();
+
+        const miner3OriginOwedY = getAmountY(4900, 5100, rate, BigNumber("10000"), false).plus(miner3FeeY);
+        // other miner collect but fail
+        const miner4CollectNft2 = await collect(nflm, tokenX, tokenY, miner4, miner4.address, '2', '1', '1')
+        expect(miner4CollectNft2.x).to.equal('0')
+        expect(miner4CollectNft2.y).to.equal('0')
         await checkLiquidity(
-            nflm, "3", BigNumber("0"),
+            nflm, "2", BigNumber("0"),
             lastFeeScaleX_128,
             lastFeeScaleY_128,
-            getAmountX(
-                4900, 4901, rate, BigNumber("19999"), false
-            ).plus(getAmountX(4901, 5100, rate, BigNumber("19999"), false)).plus(miner4FeeX),
+            BigNumber(miner3OriginOwedX),
+            BigNumber(miner3OriginOwedY)
+        );
+
+        // collect a little
+        const miner3CollectNft2 = await collect(nflm, tokenX, tokenY, miner3, receiver1.address, '2', '1', '1')
+        expect(miner3CollectNft2.x).to.equal('1')
+        expect(miner3CollectNft2.y).to.equal('1')
+        await checkLiquidity(
+            nflm, "2", BigNumber("0"),
+            lastFeeScaleX_128,
+            lastFeeScaleY_128,
+            BigNumber(stringMinus(miner3OriginOwedX, '1')),
+            BigNumber(stringMinus(miner3OriginOwedY, '1'))
+        );
+
+        // collect more than owed
+
+        const miner3CollectNft2_2 = await collect(
+            nflm, tokenX, tokenY, miner3, receiver1.address, '2', 
+            '100000000000000000000000000000', 
+            '200000000000000000000000000000')
+        expect(miner3CollectNft2_2.x).to.equal(stringMinus(miner3OriginOwedX, '1'))
+        expect(miner3CollectNft2_2.y).to.equal(stringMinus(miner3OriginOwedY, '1'))
+        await checkLiquidity(
+            nflm, "2", BigNumber("0"),
+            lastFeeScaleX_128,
+            lastFeeScaleY_128,
+            BigNumber('0'),
+            BigNumber('0')
+        );
+        // clear but try to collect
+        const miner3CollectNft2_3 = await collect(
+            nflm, tokenX, tokenY, miner3, receiver1.address, '2', 
+            '100000000000000000000000000000', 
+            '200000000000000000000000000000')
+        expect(miner3CollectNft2_3.x).to.equal('0')
+        expect(miner3CollectNft2_3.y).to.equal('0')
+        await checkLiquidity(
+            nflm, "2", BigNumber("0"),
+            lastFeeScaleX_128,
+            lastFeeScaleY_128,
+            BigNumber('0'),
+            BigNumber('0')
+        );
+
+        await decLiquidity(nflm, miner4, "3", "0", BigNumber("1000000000000").toFixed(0));
+        await checkLiquidity(
+            nflm, "3", BigNumber("19999"),
+            lastFeeScaleX_128,
+            lastFeeScaleY_128,
+            miner4FeeX,
             BigNumber(0)
         );
     });
