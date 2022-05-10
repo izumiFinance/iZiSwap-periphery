@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 interface IiZiSwapFactory {
 
-    /// @notice emit when successfuly create a new pool (calling iZiSwapFactory#newPool)
+    /// @notice Emit when successfuly create a new pool (calling iZiSwapFactory#newPool).
     /// @param tokenX address of erc-20 tokenX
     /// @param tokenY address of erc-20 tokenY
     /// @param fee fee amount of swap (3000 means 0.3%)
@@ -37,13 +37,13 @@ interface IiZiSwapFactory {
     /// @return flashModule address
     function flashModule() external returns (address);
 
-    /// @notice Enables a fee amount with the given pointDelta
+    /// @notice Enables a fee amount with the given pointDelta.
     /// @dev Fee amounts may never be removed once enabled
     /// @param fee fee amount (3000 means 0.3%)
     /// @param pointDelta The spacing between points to be enforced for all pools created with the given fee amount
     function enableFeeAmount(uint24 fee, uint24 pointDelta) external;
 
-    /// @notice create a new pool which not exists
+    /// @notice Create a new pool which not exists.
     /// @param tokenX address of tokenX
     /// @param tokenY address of tokenY
     /// @param fee fee amount
@@ -56,11 +56,11 @@ interface IiZiSwapFactory {
         int24 currentPoint
     ) external returns (address);
 
-    /// @notice charge receiver of all pools
+    /// @notice Charge receiver of all pools.
     /// @return address of charge receiver
     function chargeReceiver() external view returns(address);
 
-    /// @notice get pool of (tokenX, tokenY, fee), address(0) for not exists
+    /// @notice Get pool of (tokenX, tokenY, fee), address(0) for not exists.
     /// @param tokenX address of tokenX
     /// @param tokenY address of tokenY
     /// @param fee fee amount
@@ -71,12 +71,12 @@ interface IiZiSwapFactory {
         uint24 fee
     ) external view returns(address);
 
-    /// @notice get point delta of a given fee amount
+    /// @notice Get point delta of a given fee amount.
     /// @param fee fee amount
     /// @return pointDelta the point delta
     function fee2pointDelta(uint24 fee) external view returns (int24 pointDelta);
 
-    /// @notice change charge receiver, only owner of factory can call
+    /// @notice Change charge receiver, only owner of factory can call.
     /// @param _chargeReceiver address of new receiver
     function modifyChargeReceiver(address _chargeReceiver) external;
 }

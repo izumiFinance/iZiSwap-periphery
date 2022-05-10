@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.4;
 
-import './FixedPoint96.sol';
+import "./FixedPoint96.sol";
 import "./AmountMath.sol";
 
 library MintMath {

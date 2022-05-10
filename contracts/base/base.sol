@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '../core/interfaces/IiZiSwapFactory.sol';
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+import "../core/interfaces/IiZiSwapFactory.sol";
 
 /// @title Interface for WETH9
 interface IWETH9 is IERC20 {
@@ -13,13 +14,27 @@ interface IWETH9 is IERC20 {
     function withdraw(uint256) external;
 }
 
-
 abstract contract Base {
     /// @notice address of iZiSwapFactory
     address public immutable factory;
 
     /// @notice address of weth9 token
     address public immutable WETH9;
+
+    modifier checkDeadline(uint256 deadline) {
+        require(block.timestamp <= deadline, 'Out of time');
+        _;
+    }
+
+    receive() external payable {}
+
+    /// @notice Constructor of base.
+    /// @param _factory address of iZiSwapFactory
+    /// @param _WETH9 address of weth9 token
+    constructor(address _factory, address _WETH9) {
+        factory = _factory;
+        WETH9 = _WETH9;
+    }
 
     /// @notice Make multiple function calls in this contract in a single transaction
     ///     and return the data for each function call, revert if any function call fails
@@ -42,9 +57,7 @@ abstract contract Base {
         }
     }
 
-    receive() external payable {}
-
-    /// @notice Transfers tokens from the targeted address to the given destination
+    /// @notice Transfer tokens from the targeted address to the given destination
     /// @notice Errors with 'STF' if transfer fails
     /// @param token The contract address of the token to be transferred
     /// @param from The originating address from which the tokens will be transferred
@@ -61,7 +74,7 @@ abstract contract Base {
         require(success && (data.length == 0 || abi.decode(data, (bool))), 'STF');
     }
 
-    /// @notice Transfers tokens from msg.sender to a recipient
+    /// @notice Transfer tokens from msg.sender to a recipient
     /// @dev Errors with ST if transfer fails
     /// @param token The contract address of the token which will be transferred
     /// @param to The recipient of the transfer
@@ -75,7 +88,7 @@ abstract contract Base {
         require(success && (data.length == 0 || abi.decode(data, (bool))), 'ST');
     }
 
-    /// @notice Approves the stipulated contract to spend the given allowance in the given token
+    /// @notice Approve the stipulated contract to spend the given allowance in the given token
     /// @dev Errors with 'SA' if transfer fails
     /// @param token The contract address of the token to be approved
     /// @param to The target of the approval
@@ -89,7 +102,7 @@ abstract contract Base {
         require(success && (data.length == 0 || abi.decode(data, (bool))), 'SA');
     }
 
-    /// @notice Transfers ETH to the recipient address
+    /// @notice Transfer ETH to the recipient address
     /// @dev Fails with `STE`
     /// @param to The destination of the transfer
     /// @param value The value to be transferred
@@ -114,7 +127,7 @@ abstract contract Base {
         }
     }
 
-    /// @notice send all balance of specified token in this contract to recipient
+    /// @notice Send all balance of specified token in this contract to recipient
     ///    usually used in multicall when mint/swap/update limitorder with eth
     ///    normally this contract has no any erc20 token or eth after or before a transaction
     ///    we donot need to worry that some one can steal some token from this contract
@@ -134,7 +147,7 @@ abstract contract Base {
         }
     }
 
-    /// @notice send all balance of eth in this contract to msg.sender
+    /// @notice Send all balance of eth in this contract to msg.sender
     ///    usually used in multicall when mint/swap/update limitorder with eth
     ///    normally this contract has no any erc20 token or eth after or before a transaction
     ///    we donot need to worry that some one can steal some token from this contract
@@ -165,7 +178,7 @@ abstract contract Base {
         }
     }
 
-    /// @notice query pool address from factory by (tokenX, tokenY, fee)
+    /// @notice Query pool address from factory by (tokenX, tokenY, fee).
     /// @param tokenX tokenX of swap pool
     /// @param tokenY tokenY of swap pool
     /// @param fee fee amount of swap pool
@@ -174,19 +187,5 @@ abstract contract Base {
     }
     function verify(address tokenX, address tokenY, uint24 fee) internal view {
         require (msg.sender == pool(tokenX, tokenY, fee), "sp");
-    }
-
-
-    modifier checkDeadline(uint256 deadline) {
-        require(block.timestamp <= deadline, 'Out of time');
-        _;
-    }
-
-    /// @notice constructor of base
-    /// @param _factory address of iZiSwapFactory
-    /// @param _WETH9 address of weth9 token
-    constructor(address _factory, address _WETH9) {
-        factory = _factory;
-        WETH9 = _WETH9;
     }
 }
