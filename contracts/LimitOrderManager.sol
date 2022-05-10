@@ -5,9 +5,8 @@ import "./core/interfaces/IiZiSwapCallback.sol";
 import "./core/interfaces/IiZiSwapFactory.sol";
 import "./core/interfaces/IiZiSwapPool.sol";
 
-import "./libraries/FixedPoint128.sol";
 import './libraries/MulDivMath.sol';
-import './libraries/FixedPoint96.sol';
+import './libraries/TwoPower.sol';
 import "./base/base.sol";
 import "./libraries/LogPowMath.sol";
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
@@ -245,20 +244,20 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         earn = earnLim;
         uint256 sold256;
         if (isEarnY) {
-            uint256 l = MulDivMath.mulDivCeil(earn, FixedPoint96.Q96, sqrtPrice_96);
-            sold256 = MulDivMath.mulDivCeil(l, FixedPoint96.Q96, sqrtPrice_96);
+            uint256 l = MulDivMath.mulDivCeil(earn, TwoPower.pow96, sqrtPrice_96);
+            sold256 = MulDivMath.mulDivCeil(l, TwoPower.pow96, sqrtPrice_96);
         } else {
-            uint256 l = MulDivMath.mulDivCeil(earn, sqrtPrice_96, FixedPoint96.Q96);
-            sold256 = MulDivMath.mulDivCeil(l, sqrtPrice_96, FixedPoint96.Q96);
+            uint256 l = MulDivMath.mulDivCeil(earn, sqrtPrice_96, TwoPower.pow96);
+            sold256 = MulDivMath.mulDivCeil(l, sqrtPrice_96, TwoPower.pow96);
         }
         if (sold256 > sellingRemain) {
             sold256 = sellingRemain;
             if (isEarnY) {
-                uint256 l = MulDivMath.mulDivFloor(sold256, sqrtPrice_96, FixedPoint96.Q96);
-                earn = uint128(MulDivMath.mulDivFloor(l, sqrtPrice_96, FixedPoint96.Q96));
+                uint256 l = MulDivMath.mulDivFloor(sold256, sqrtPrice_96, TwoPower.pow96);
+                earn = uint128(MulDivMath.mulDivFloor(l, sqrtPrice_96, TwoPower.pow96));
             } else {
-                uint256 l = MulDivMath.mulDivFloor(sold256, FixedPoint96.Q96, sqrtPrice_96);
-                earn = uint128(MulDivMath.mulDivFloor(l, FixedPoint96.Q96, sqrtPrice_96));
+                uint256 l = MulDivMath.mulDivFloor(sold256, TwoPower.pow96, sqrtPrice_96);
+                earn = uint128(MulDivMath.mulDivFloor(l, TwoPower.pow96, sqrtPrice_96));
             }
         }
         sold = uint128(sold256);

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
   
 import './MulDivMath.sol';
-import './FixedPoint96.sol';
+import './TwoPower.sol';
 import './LogPowMath.sol';
 
 library AmountMath {
@@ -14,8 +14,8 @@ library AmountMath {
         uint160 sqrtRate_96
     ) internal pure returns (uint256 amount_96) {
         uint160 numerator = sqrtPriceR_96 - sqrtPriceL_96;
-        uint160 denominator = sqrtRate_96 - uint160(FixedPoint96.Q96);
-        amount_96 = MulDivMath.mulDivCeil(FixedPoint96.Q96, numerator, denominator);
+        uint160 denominator = sqrtRate_96 - uint160(TwoPower.pow96);
+        amount_96 = MulDivMath.mulDivCeil(TwoPower.pow96, numerator, denominator);
     }
 
     function getAmountXUnitLiquidity_96(
@@ -30,7 +30,7 @@ library AmountMath {
 
         uint160 numerator = sqrtPricePrPc_96 - sqrtRate_96;
         uint160 denominator = sqrtPricePrPd_96 - sqrtPriceR_96;
-        amount_96 = MulDivMath.mulDivCeil(FixedPoint96.Q96, numerator, denominator);
+        amount_96 = MulDivMath.mulDivCeil(TwoPower.pow96, numerator, denominator);
     }
 
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.4;
 
-import './FixedPoint96.sol';
+import './TwoPower.sol';
 import "./AmountMath.sol";
 
 library MintMath {
@@ -52,7 +52,7 @@ library MintMath {
         liquidity = type(uint128).max / 2;
         (uint256 x, uint256 y) = _computeDepositXYPerUnit(mp.pl, mp.pr, currPt, sqrtPrice_96, sqrtRate_96);
         if (x > 0) {
-            uint256 xl = uint256(mp.xLim) * FixedPoint96.Q96 / x;
+            uint256 xl = uint256(mp.xLim) * TwoPower.pow96 / x;
             if (liquidity > xl) {
                 liquidity = uint128(xl);
             }
@@ -60,7 +60,7 @@ library MintMath {
         if (y > 0) {
             // we take yLim - 1, because in the core, the amountY to deposit is
             // calculated by range [left, pc) and point at pc respectively
-            uint256 yl = uint256(mp.yLim - 1) * FixedPoint96.Q96 / y;
+            uint256 yl = uint256(mp.yLim - 1) * TwoPower.pow96 / y;
             if (liquidity > yl) {
                 liquidity = uint128(yl);
             }

@@ -6,7 +6,7 @@ import "./core/interfaces/IiZiSwapCallback.sol";
 import "./core/interfaces/IiZiSwapFactory.sol";
 import "./core/interfaces/IiZiSwapPool.sol";
 import "./libraries/MintMath.sol";
-import "./libraries/FixedPoint128.sol";
+import "./libraries/TwoPower.sol";
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol';
@@ -289,8 +289,8 @@ contract LiquidityManager is Ownable, Base, ERC721Enumerable, IiZiSwapMintCallba
             deltaScaleX := sub(lastFeeScaleX_128, deltaScaleX)
             deltaScaleY := sub(lastFeeScaleY_128, deltaScaleY)
         }
-        liquid.remainTokenX += amountX + MulDivMath.mulDivFloor(deltaScaleX, liquid.liquidity, FixedPoint128.Q128);
-        liquid.remainTokenY += amountY + MulDivMath.mulDivFloor(deltaScaleY, liquid.liquidity, FixedPoint128.Q128);
+        liquid.remainTokenX += amountX + MulDivMath.mulDivFloor(deltaScaleX, liquid.liquidity, TwoPower.pow128);
+        liquid.remainTokenY += amountY + MulDivMath.mulDivFloor(deltaScaleY, liquid.liquidity, TwoPower.pow128);
         liquid.lastFeeScaleX_128 = lastFeeScaleX_128;
         liquid.lastFeeScaleY_128 = lastFeeScaleY_128;
         liquid.liquidity = newLiquidity;
