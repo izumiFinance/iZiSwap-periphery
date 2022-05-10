@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.4;
 
-import './BytesLib.sol';
+import "./BytesLib.sol";
 
 /// @title Functions for manipulating path data for multihop swaps
 library Path {
+
     using BytesLib for bytes;
 
     /// @dev The length of the bytes encoded address
@@ -66,4 +67,5 @@ library Path {
     function skipToken(bytes memory path) internal pure returns (bytes memory) {
         return path.slice(NEXT_OFFSET, path.length - NEXT_OFFSET);
     }
+    
 }

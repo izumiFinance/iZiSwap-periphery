@@ -7,9 +7,8 @@ import "./core/interfaces/IiZiSwapCallback.sol";
 import "./core/interfaces/IiZiSwapFactory.sol";
 import "./core/interfaces/IiZiSwapPool.sol";
 
-import './libraries/MulDivMath.sol';
-import './libraries/TwoPower.sol';
-import "./base/base.sol";
+import "./libraries/MulDivMath.sol";
+import "./libraries/TwoPower.sol";
 import "./libraries/LogPowMath.sol";
 import "./libraries/LimOrder.sol";
 import "./libraries/LimOrderCircularQueue.sol";

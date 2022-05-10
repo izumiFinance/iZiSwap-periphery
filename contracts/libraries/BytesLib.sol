@@ -9,6 +9,7 @@
 pragma solidity ^0.8.4;
 
 library BytesLib {
+
     function slice(
         bytes memory _bytes,
         uint256 _start,
@@ -98,4 +99,5 @@ library BytesLib {
 
         return tempUint;
     }
+    
 }

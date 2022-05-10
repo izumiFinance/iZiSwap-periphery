@@ -471,4 +471,5 @@ interface IiZiSwapPool {
 
     /// @notice Collect charged fee, only factory's chargeReceiver can call
     function collectFeeCharged() external;
+    
 }

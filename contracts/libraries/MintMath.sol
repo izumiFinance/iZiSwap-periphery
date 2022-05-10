@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.4;
 
-import './TwoPower.sol';
+import "./TwoPower.sol";
 import "./AmountMath.sol";
 
 library MintMath {
+    
     struct MintMathParam {
         int24 pl;
         int24 pr;

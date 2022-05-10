@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 /// @title Minimal ERC20 interface for Uniswap
 /// @notice Contains a subset of the full ERC20 interface that is used in Uniswap V3
 interface IERC20Minimal {
+    
     /// @notice Returns the balance of a token
     /// @param account The account for which to look up the number of tokens it has, i.e. its balance
     /// @return The number of tokens held by the account
@@ -49,4 +50,5 @@ interface IERC20Minimal {
     /// @param spender The account for which the spending allowance was modified
     /// @param value The new allowance from the owner to the spender
     event Approval(address indexed owner, address indexed spender, uint256 value);
+
 }
