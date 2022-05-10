@@ -417,4 +417,5 @@ contract LiquidityManager is Ownable, Base, ERC721Enumerable, IiZiSwapMintCallba
         liquidity.remainTokenX -= amountXLim;
         liquidity.remainTokenY -= amountYLim;
     }
+    
 }
