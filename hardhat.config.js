@@ -3,6 +3,7 @@ require('hardhat-contract-sizer');
 
 const secret = require('./.secret.js');
 const sk = secret.sk;
+const apiKey = secret.apiKey;
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
@@ -11,20 +12,11 @@ module.exports = {
   solidity: {
     compilers: [
       {
-        version: "0.7.6",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 1000
-          }
-        }
-      },
-      {
         version: "0.8.4",
         settings: {
           optimizer: {
             enabled: true,
-            runs: 1000
+            runs: 100
           }
         }
       },
@@ -41,5 +33,20 @@ module.exports = {
       gas: 5000000,
       gasPrice: 100000000000,
     },
+    bscTest: {
+      url: 'https://data-seed-prebsc-1-s1.binance.org:8545/',
+      accounts: [sk],
+      // gas: 90000000,
+      gasPrice: 10000000000,
+    },
+    bsc: {
+      url: 'https://bsc-dataseed.binance.org/',
+      accounts: [sk],
+      // gas: 90000000,
+      gasPrice: 5000000000,
+    },
+  },
+  etherscan: {
+    apiKey: apiKey,
   }
 };
