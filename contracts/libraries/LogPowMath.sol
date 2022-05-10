@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-
 library LogPowMath {
 
     int24 internal constant MIN_POINT = -887272;

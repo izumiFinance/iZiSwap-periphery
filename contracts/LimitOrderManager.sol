@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.4;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import "./core/interfaces/IiZiSwapCallback.sol";
 import "./core/interfaces/IiZiSwapFactory.sol";
 import "./core/interfaces/IiZiSwapPool.sol";
@@ -9,10 +11,11 @@ import './libraries/MulDivMath.sol';
 import './libraries/TwoPower.sol';
 import "./base/base.sol";
 import "./libraries/LogPowMath.sol";
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import "./libraries/LimOrder.sol";
+import "./libraries/LimOrderCircularQueue.sol";
 
-import './libraries/LimOrder.sol';
-import './libraries/LimOrderCircularQueue.sol';
+import "./base/base.sol";
+
 
 contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
 
@@ -68,7 +71,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         _;
     }
 
-    /// @notice Constructor to create this contract
+    /// @notice Constructor to create this contract.
     /// @param factory address of iZiSwapFactory
     /// @param weth address of WETH token
     constructor( address factory, address weth ) Base(factory, weth) {}
@@ -165,7 +168,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         }
     }
 
-    /// @notice Create a limit order for recipient
+    /// @notice Create a limit order for recipient.
     /// @param idx slot in the addr2ActiveOrder[msg.sender]
     /// @param addLimitOrderParam describe params of added limit order, see AddLimOrderParam for more
     /// @return orderAmount actual amount of token added in limit order
@@ -214,7 +217,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         }
     }
 
-    /// @notice Compute max amount of earned token the seller can claim
+    /// @notice Compute max amount of earned token the seller can claim.
     /// @param lastAccEarn total amount of earned token of all users on this point before last update of this limit order
     /// @param accEarn total amount of earned token of all users on this point now
     /// @param earnRemain total amount of unclaimed earned token of all users on this point
@@ -228,7 +231,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         earnLim = uint128(earnLim256);
     }
 
-    /// @notice Compute amount of earned token and amount of sold token for a limit order as much as possible
+    /// @notice Compute amount of earned token and amount of sold token for a limit order as much as possible.
     /// @param sqrtPrice_96 a 96 bit fixpoint number to describe sqrt(price) of pool
     /// @param earnLim max amount of earned token computed by getEarnLim(...)
     /// @param sellingRemain amount of token before exchange in the limit order
@@ -273,7 +276,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         }
     }
 
-    /// @notice Update a limit order to claim earned tokens as much as posible
+    /// @notice Update a limit order to claim earned tokens as much as possible.
     /// @param order the order to update, see LimOrder for more
     /// @param pool address of swap pool
     /// @return earn amount of earned token this limit order can claim
@@ -308,7 +311,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         earn = _updateOrder(order, pool);
     }
 
-    /// @notice Decrease amount of selling-token of a limit order
+    /// @notice Decrease amount of selling-token of a limit order.
     /// @param orderIdx point of seller's limit order
     /// @param amount max amount of selling-token to decrease
     /// @param deadline deadline timestamp of transaction
@@ -346,7 +349,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         order.accSellingDec += actualDeltaRefund;
     }
 
-    /// @notice Collect earned or decreased token from a limit order
+    /// @notice Collect earned or decreased token from a limit order.
     /// @param recipient address to benefit
     /// @param orderIdx idx of limit order
     /// @param collectDec max amount of decreased selling token to collect
@@ -392,7 +395,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         }
     }
 
-    /// @notice Returns active orders for the seller
+    /// @notice Returns active orders for the seller.
     /// @param user address of the seller
     /// @return activeIdx list of active order idx
     /// @return activeLimitOrder list of active order
@@ -424,7 +427,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         return (activeIdx, activeLimitOrder);
     }
 
-    /// @notice Returns a single active order for the seller
+    /// @notice Returns a single active order for the seller.
     /// @param user address of the seller
     /// @param idx index of the active order list
     /// @return limOrder the target active order
@@ -446,7 +449,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         return slotIdx;
     }
 
-    /// @notice Returns deactived orders for the seller
+    /// @notice Returns deactived orders for the seller.
     /// @param user address of the seller
     /// @return deactiveLimitOrder list of deactived orders
     function getDeactiveOrders(address user) external view returns (LimOrder[] memory deactiveLimitOrder) {
@@ -462,7 +465,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         return deactiveLimitOrder;
     }
 
-    /// @notice Returns a single deactived order for the seller
+    /// @notice Returns a single deactived order for the seller.
     /// @param user address of the seller
     /// @param idx index of the deactived order list
     /// @return limOrder the target deactived order

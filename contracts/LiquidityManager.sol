@@ -1,16 +1,18 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.4;
 
-import "./base/base.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
 import "./core/interfaces/IiZiSwapCallback.sol";
 import "./core/interfaces/IiZiSwapFactory.sol";
 import "./core/interfaces/IiZiSwapPool.sol";
+
 import "./libraries/MintMath.sol";
 import "./libraries/TwoPower.sol";
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol';
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "./base/base.sol";
 
 contract LiquidityManager is Ownable, Base, ERC721Enumerable, IiZiSwapMintCallback {
 
@@ -86,7 +88,7 @@ contract LiquidityManager is Ownable, Base, ERC721Enumerable, IiZiSwapMintCallba
         baseURI = newBaseURI;
     }
 
-    /// @notice Constructor to create this contract
+    /// @notice Constructor to create this contract.
     /// @param factory address of iZiSwapFactory
     /// @param weth address of WETH token
     constructor(
@@ -95,7 +97,7 @@ contract LiquidityManager is Ownable, Base, ERC721Enumerable, IiZiSwapMintCallba
     ) ERC721("iZiSwap Liquidity NFT", "IZISWAP-LIQUIDITY-NFT") Base(factory, weth) {
     }
 
-    /// @notice Callback for mining, in order to deposit tokens
+    /// @notice Callback for mining, in order to deposit tokens.
     /// @param x amount of tokenX pay from miner
     /// @param y amount of tokenY pay from miner
     /// @param data encoded MintCallbackData
@@ -113,7 +115,7 @@ contract LiquidityManager is Ownable, Base, ERC721Enumerable, IiZiSwapMintCallba
         }
     }
  
-    /// @notice Get or create a pool for (tokenX/tokenY/fee) if not exists
+    /// @notice Get or create a pool for (tokenX/tokenY/fee) if not exists.
     /// @param tokenX tokenX of swap pool
     /// @param tokenY tokenY of swap pool
     /// @param fee fee amount of swap pool
@@ -212,7 +214,7 @@ contract LiquidityManager is Ownable, Base, ERC721Enumerable, IiZiSwapMintCallba
             abi.encode(MintCallbackData({tokenX: mp.tokenX, tokenY: mp.tokenY, fee: mp.fee, payer: msg.sender})));
     }
 
-    /// @notice Add a new liquidity and generate a nft
+    /// @notice Add a new liquidity and generate a nft.
     /// @param mintParam params, see MintParam for more
     /// @return lid id of nft
     /// @return liquidity amount of liquidity added
@@ -247,7 +249,7 @@ contract LiquidityManager is Ownable, Base, ERC721Enumerable, IiZiSwapMintCallba
         _mint(mintParam.miner, lid);
     }
 
-    /// @notice Burn a generated nft
+    /// @notice Burn a generated nft.
     /// @param lid nft (liquidity) id
     /// @return success successfully burn or not
     function burn(uint256 lid) external checkAuth(lid) returns (bool success) {
@@ -296,7 +298,7 @@ contract LiquidityManager is Ownable, Base, ERC721Enumerable, IiZiSwapMintCallba
         liquid.liquidity = newLiquidity;
     }
     
-    /// @notice Add liquidity to a existing nft
+    /// @notice Add liquidity to a existing nft.
     /// @param addLiquidityParam see AddLiquidityParam for more
     /// @return liquidityDelta amount of added liquidity
     /// @return amountX amount of tokenX deposited
@@ -338,7 +340,7 @@ contract LiquidityManager is Ownable, Base, ERC721Enumerable, IiZiSwapMintCallba
         updateLiquidity(liquid, pool, newLiquidity, 0, 0);
     }
 
-    /// @notice Decrease liquidity from a nft
+    /// @notice Decrease liquidity from a nft.
     /// @param lid id of nft
     /// @param liquidDelta amount of liqudity to decrease
     /// @param amountXMin min amount of tokenX user want to withdraw
@@ -376,7 +378,7 @@ contract LiquidityManager is Ownable, Base, ERC721Enumerable, IiZiSwapMintCallba
         updateLiquidity(liquidity, pool, newLiquidity, amountX, amountY);
     }
 
-    /// @notice Collect fee gained of token withdrawed from  nft
+    /// @notice Collect fee gained of token withdrawed from nft.
     /// @param recipient address to receive token
     /// @param lid id of nft
     /// @param amountXLim amount limit of tokenX to collect

@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.4;
 
-import "./base/base.sol";
 import "./core/interfaces/IiZiSwapCallback.sol";
 import "./core/interfaces/IiZiSwapFactory.sol";
 import "./core/interfaces/IiZiSwapPool.sol";
+
 import "./libraries/Path.sol";
+
+import "./base/base.sol";
 
 contract Swap is Base, IiZiSwapCallback {
 
@@ -24,7 +26,7 @@ contract Swap is Base, IiZiSwapCallback {
     /// @param _weth address of weth token
     constructor(address _factory, address _weth) Base(_factory, _weth) {}
 
-    /// @notice callback for swapY2X and swapY2XDesireX, in order to pay tokenY from trader
+    /// @notice Callback for swapY2X and swapY2XDesireX, in order to pay tokenY from trader.
     /// @param x amount of tokenX trader acquired
     /// @param y amount of tokenY need to pay from trader
     /// @param data encoded SwapCallbackData
@@ -54,7 +56,7 @@ contract Swap is Base, IiZiSwapCallback {
         }
     }
 
-    /// @notice callback for swapX2Y and swapX2YDesireY, in order to pay tokenX from trader
+    /// @notice Callback for swapX2Y and swapX2YDesireY, in order to pay tokenX from trader.
     /// @param x amount of tokenX need to pay from trader
     /// @param y amount of tokenY trader acquired
     /// @param data encoded SwapCallbackData
@@ -266,7 +268,7 @@ contract Swap is Base, IiZiSwapCallback {
         require(amountX >= swapParams.minAcquired, "XMIN");
     }
 
-    /// @notice Swap tokenY for tokenX, given user's desired amount of tokenX
+    /// @notice Swap tokenY for tokenX, given user's desired amount of tokenX.
     /// @param swapParams params(for example: desired amount in above line), see SwapParams for more
     function swapY2XDesireX(
         SwapParams calldata swapParams
@@ -286,7 +288,7 @@ contract Swap is Base, IiZiSwapCallback {
         require(amount.amountY <= swapParams.maxPayed, "YMAX");
     }
 
-    /// @notice Swap tokenX for tokenY, given max amount of tokenX user willing to pay
+    /// @notice Swap tokenX for tokenY, given max amount of tokenX user willing to pay.
     /// @param swapParams params(for example: max amount in above line), see SwapParams for more
     function swapX2Y(
         SwapParams calldata swapParams
@@ -302,7 +304,7 @@ contract Swap is Base, IiZiSwapCallback {
         require(amountY >= swapParams.minAcquired, "YMIN");
     }
 
-    /// @notice Swap tokenX for tokenY, given amount of tokenY user desires
+    /// @notice Swap tokenX for tokenY, given amount of tokenY user desires.
     /// @param swapParams params(for example: desired amount in above line), see SwapParams for more
     function swapX2YDesireY(
         SwapParams calldata swapParams
