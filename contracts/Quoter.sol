@@ -25,6 +25,23 @@ contract Quoter is Base, IiZiSwapCallback {
     /// @param _weth address of weth token
     constructor(address _factory, address _weth) Base(_factory, _weth) {}
 
+
+    /// @notice Make multiple function calls in this contract in a single transaction
+    ///     and return the data for each function call, donot revert if any function call fails
+    /// @param data The encoded function data for each function call
+    /// @return successes whether catch a revert in the function call of data[i]
+    /// @return results result of each function call
+    function multicallNoRevert(bytes[] calldata data) external payable returns (bool[]memory successes, bytes[] memory results) {
+        results = new bytes[](data.length);
+        successes = new bool[](data.length);
+        for (uint256 i = 0; i < data.length; i++) {
+            (bool success, bytes memory result) = address(this).delegatecall(data[i]);
+
+            successes[i] = success;
+            results[i] = result;
+        }
+    }
+
     function parseRevertReason(bytes memory reason)
         private
         pure
