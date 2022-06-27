@@ -9,6 +9,10 @@ const contracts = {
     bsc: {
         iZiSwapFactory: '0xd7de110Bd452AAB96608ac3750c3730A17993DE0',
         WBNB: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
+    },
+    aurora: {
+        iZiSwapFactory: '0xae0DA17f54DB102fE57931181B2d1D5D2146a5B0',
+        WETH: '0xc9bdeed33cd01541e1eed10f90519d2c06fe3feb',
     }
 }
 
