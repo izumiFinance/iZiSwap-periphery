@@ -48,6 +48,11 @@ module.exports = {
     aurora: {
       url: 'https://mainnet.aurora.dev',
       accounts: [sk],
+    },
+    goerli: {
+      url: 'https://goerli.prylabs.net',
+      accounts: [sk],
+      gasPrice: 10000000000,
     }
   },
   etherscan: {
