@@ -1,6 +1,6 @@
 require("@nomiclabs/hardhat-waffle");
 require('hardhat-contract-sizer');
-
+require('@nomiclabs/hardhat-etherscan');
 const secret = require('./.secret.js');
 const sk = secret.sk;
 const apiKey = secret.apiKey;
