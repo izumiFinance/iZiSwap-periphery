@@ -16,6 +16,50 @@ import "./base/base.sol";
 
 contract LiquidityManager is Ownable, Base, ERC721Enumerable, IiZiSwapMintCallback {
 
+    /// @notice Emitted when miner successfully create an liquidity-nft
+    /// @param nftId id of minted liquidity nft
+    /// @param pool address of swap pool
+    /// @param liquidity the amount of liquidity minted to the range [leftPoint, rightPoint)
+    /// @param amountX amount of tokenX deposit
+    /// @param amountY amount of tokenY deposit
+    event Mint(
+        uint256 indexed nftId,
+        address pool,
+        uint128 liquidity, 
+        uint256 amountX, 
+        uint256 amountY
+    );
+
+    /// @notice Emitted when miner successfully add liquidity on an existing liquidity-nft
+    /// @param nftId id of minted liquidity nft
+    /// @param pool address of swap pool
+    /// @param liquidityDelta the amount of liquidity added
+    /// @param amountX amount of tokenX deposit
+    /// @param amountY amount of tokenY deposit
+    event AddLiquidity(
+        uint256 indexed nftId,
+        address pool,
+        uint128 liquidityDelta, 
+        uint256 amountX, 
+        uint256 amountY
+    );
+    /// @notice Emitted when miner successfully add decrease liquidity on an existing liquidity-nft
+    /// @param nftId id of minted liquidity nft
+    /// @param pool address of swap pool
+    /// @param liquidityDelta the amount of liquidity decreased
+    /// @param amountX amount of tokenX withdrawed
+    /// @param amountY amount of tokenY withdrawed
+    event DecLiquidity(
+        uint256 indexed nftId,
+        address pool,
+        uint128 liquidityDelta, 
+        uint256 amountX, 
+        uint256 amountY
+    );
+    /// @notice Emitted when miner successfully burn an liquidity-nft
+    /// @param nftId id of minted liquidity nft
+    event Burn(uint256 indexed nftId);
+
     // callback data passed through iZiSwapPool#mint to the callback
     struct MintCallbackData {
         // tokenX of swap
@@ -247,6 +291,7 @@ contract LiquidityManager is Ownable, Base, ERC721Enumerable, IiZiSwapMintCallba
             poolId: poolId
         });
         _mint(mintParam.miner, lid);
+        emit Mint(lid, pool, liquidity, amountX, amountY);
     }
 
     /// @notice Burn a generated nft.
@@ -257,6 +302,7 @@ contract LiquidityManager is Ownable, Base, ERC721Enumerable, IiZiSwapMintCallba
         require(liquid.liquidity == 0 && liquid.remainTokenX == 0 && liquid.remainTokenY == 0, 'NC');
         delete liquidities[lid];
         _burn(lid);
+        emit Burn(lid);
         return true;
     }
 
@@ -338,6 +384,7 @@ contract LiquidityManager is Ownable, Base, ERC721Enumerable, IiZiSwapMintCallba
         require(amountX >= addLiquidityParam.amountXMin, "XMIN");
         require(amountY >= addLiquidityParam.amountYMin, "YMIN");
         updateLiquidity(liquid, pool, newLiquidity, 0, 0);
+        emit AddLiquidity(addLiquidityParam.lid, pool, liquidityDelta, amountX, amountY);
     }
 
     /// @notice Decrease liquidity from a nft.
@@ -376,6 +423,7 @@ contract LiquidityManager is Ownable, Base, ERC721Enumerable, IiZiSwapMintCallba
         require(amountX >= amountXMin, "XMIN");
         require(amountY >= amountYMin, "YMIN");
         updateLiquidity(liquidity, pool, newLiquidity, amountX, amountY);
+        emit DecLiquidity(lid, pool, liquidDelta, amountX, amountY);
     }
 
     /// @notice Collect fee gained of token withdrawed from nft.
