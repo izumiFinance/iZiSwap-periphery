@@ -53,6 +53,11 @@ module.exports = {
       url: 'https://goerli.prylabs.net',
       accounts: [sk],
       gasPrice: 10000000000,
+    },
+    auroraTest: {
+      url: 'https://testnet.aurora.dev',
+      accounts: [sk],
+      gasPrice: 5000000000,
     }
   },
   etherscan: {
