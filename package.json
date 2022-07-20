@@ -8,8 +8,9 @@
     "hardhat": "^2.6.6"
   },
   "dependencies": {
+    "@nomiclabs/hardhat-etherscan": "^3.0.3",
     "@openzeppelin/contracts": "^4.3.2",
-    "bignumber.js": "^9.0.1",
+    "bignumber.js": "^9.0.2",
     "hardhat-contract-sizer": "^2.1.1",
     "web3": "^1.6.0"
   }

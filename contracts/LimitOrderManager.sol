@@ -19,6 +19,38 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
 
     using LimOrderCircularQueue for LimOrderCircularQueue.Queue;
 
+    /// @notice Emitted when user successfully create an limit order
+    /// @param pool address of swap pool
+    /// @param point point (price) of this limit order
+    /// @param user address of user
+    /// @param amount amount of token ready to sell
+    /// @param sellingRemain amount of selling token remained after successfully create this limit order
+    /// @param earn amount of acquired token after successfully create this limit order
+    /// @param sellXEaryY true if this order sell tokenX, false if sell tokenY
+    event NewLimitOrder(
+        address pool,
+        int24 point,
+        address user,
+        uint128 amount,
+        uint128 sellingRemain,
+        uint128 earn,
+        bool sellXEaryY
+    );
+    /// @notice Emitted when user dec or update his limit order
+    /// @param pool address of swap pool
+    /// @param point point (price) of this limit order
+    /// @param user address of user
+    /// @param sold amount of token sold from last claim to now
+    /// @param earn amount of token earned from last claim to now
+    /// @param sellXEaryY true if sell tokenX, false if sell tokenY
+    event Claim(
+        address pool,
+        int24 point,
+        address user,
+        uint128 sold,
+        uint128 earn,
+        bool sellXEaryY
+    );
     // max-poolId in poolIds, poolId starts from 1
     uint128 private maxPoolId = 1;
 
@@ -213,6 +245,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
                 active: true
             }));
         }
+        emit NewLimitOrder(pool, addLimitOrderParam.pt, msg.sender, addLimitOrderParam.amount, orderAmount, acquire, addLimitOrderParam.sellXEarnY);
     }
 
     /// @notice Compute max amount of earned token the seller can claim.
@@ -296,6 +329,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         order.earn = order.earn + earn;
         order.sellingRemain = order.sellingRemain - sold;
         order.lastAccEarn = accEarn;
+        emit Claim(pool, order.pt, msg.sender, sold, earn, order.sellXEarnY);
     }
 
     /// @notice Update a limit order to claim earned tokens as much as possible.
