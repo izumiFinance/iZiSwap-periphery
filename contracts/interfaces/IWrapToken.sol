@@ -5,6 +5,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title Interface for WrapToken
 interface IWrapToken is IERC20 {
+
+    function originToken() external view returns(address);
     
     /**
      * @dev Returns the remaining number of tokens that `spender` will be
@@ -26,7 +28,7 @@ interface IWrapToken is IERC20 {
      * condition is to first reduce the spender's allowance to 0 and set the
      * desired value afterwards
      */
-    function depositApprove(address spender, uint256 amount) external returns (bool);
+    function depositApprove(address spender, uint256 amount) external;
     function depositFrom(address from, address to, uint256 amount) external returns(uint256 actualAmount);
     function withdraw(address to, uint256 amount) external returns(uint256 actualAmount);
 }
