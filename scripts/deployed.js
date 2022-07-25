@@ -25,6 +25,10 @@ const contracts = {
     aurora: {
         iZiSwapFactory: '0xae0DA17f54DB102fE57931181B2d1D5D2146a5B0',
         WETH: '0xc9bdeed33cd01541e1eed10f90519d2c06fe3feb',
+    },
+    auroraTest: {
+	iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
+	WETH: '0x67A1f4A939b477A6b7c5BF94D97E45dE87E608eF',
     }
 }
 
