@@ -50,7 +50,7 @@ contract WrapToken is IWrapToken, Ownable, ERC20 {
     function withdraw(address to, uint256 amount) external override returns(uint256 actualAmount) {
         _burn(msg.sender, amount);
         uint256 originBalanceBefore = IERC20(originToken).balanceOf(to);
-        IERC20(originToken).safeTransferFrom(address(this), to, amount);
+        IERC20(originToken).safeTransfer(to, amount);
         uint256 originBalanceAfter = IERC20(originToken).balanceOf(to);
         actualAmount = originBalanceAfter - originBalanceBefore;
     }
