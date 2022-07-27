@@ -37,9 +37,9 @@ contract WrapToken is IWrapToken, Ownable, ERC20 {
     }
     function depositFrom(address from, address to, uint256 amount) external override returns (uint256 actualAmount) {
         if (from != msg.sender) {
-            uint256 allow = depositAllowance[msg.sender][from];
+            uint256 allow = depositAllowance[from][msg.sender];
             require(allow >= amount, "deposit allowance not enough");
-            depositAllowance[msg.sender][from] = allow - amount;
+            depositAllowance[from][msg.sender] = allow - amount;
         }
         uint256 balanceBefore = IERC20(originToken).balanceOf(address(this));
         IERC20(originToken).safeTransferFrom(from, address(this), amount);
