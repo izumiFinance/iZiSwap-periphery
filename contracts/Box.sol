@@ -37,6 +37,8 @@ contract Box is Ownable, ReentrancyGuard {
     PeripheryAddr public peripheryAddr;
     // mapping(address=>address) public wrap2Token;
 
+    receive() external payable {}
+
     constructor(PeripheryAddr memory param) {
         peripheryAddr = param;
     }
@@ -268,6 +270,11 @@ contract Box is Ownable, ReentrancyGuard {
         (address firstToken, address lastToken) = decodeFirstLastToken(params.path);
 
         uint256 actualIn = _recvTokenFromUser(firstToken, firstIsWrap, params.amount);
+
+        if (firstToken != peripheryAddr.weth) {
+            IERC20(firstToken).safeApprove(peripheryAddr.swap, type(uint256).max);
+        }
+
         ISwap.SwapAmountParams memory newParam = params;
         newParam.amount = uint128(actualIn);
         (cost, acquire) = ISwap(peripheryAddr.swap).swapAmount(newParam);
