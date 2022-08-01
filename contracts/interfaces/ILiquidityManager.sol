@@ -76,6 +76,25 @@ interface ILiquidityManager {
         uint256 amountY
     );
 
+    /// @notice Decrease liquidity from a nft.
+    /// @param lid id of nft
+    /// @param liquidDelta amount of liqudity to decrease
+    /// @param amountXMin min amount of tokenX user want to withdraw
+    /// @param amountYMin min amount of tokenY user want to withdraw
+    /// @param deadline deadline timestamp of transaction
+    /// @return amountX amount of tokenX refund to user
+    /// @return amountY amount of tokenY refund to user
+    function decLiquidity(
+        uint256 lid,
+        uint128 liquidDelta,
+        uint256 amountXMin,
+        uint256 amountYMin,
+        uint256 deadline
+    ) external returns (
+        uint256 amountX,
+        uint256 amountY
+    );
+    
     function liquidities(uint256 lid) external view returns(
         int24 leftPt,
         // right point of liquidity-token, the range is [leftPt, rightPt)
