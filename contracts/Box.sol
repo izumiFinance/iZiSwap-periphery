@@ -75,8 +75,7 @@ contract Box is Ownable, ReentrancyGuard {
             if (token == address(peripheryAddr.weth)) {
                 IWETH9(token).withdraw(value);
                 _safeTransferETH(to, value);
-            }
-            if (isWrapToken) {
+            } else if (isWrapToken) {
                 return IWrapToken(token).withdraw(to, value);
             } else {
                 IERC20(token).safeTransfer(to, value);
