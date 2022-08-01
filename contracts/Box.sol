@@ -108,10 +108,10 @@ contract Box is Ownable, ReentrancyGuard {
             actualParam.miner = msg.sender;
         }
         if (actualParam.tokenX != peripheryAddr.weth) {
-            IERC20(actualParam.tokenX).safeApprove(peripheryAddr.liquidityManager, type(uint256).max);
+            IERC20(actualParam.tokenX).approve(peripheryAddr.liquidityManager, type(uint256).max);
         }
         if (actualParam.tokenY != peripheryAddr.weth) {
-            IERC20(actualParam.tokenY).safeApprove(peripheryAddr.liquidityManager, type(uint256).max);
+            IERC20(actualParam.tokenY).approve(peripheryAddr.liquidityManager, type(uint256).max);
         }
 
         (
@@ -168,10 +168,10 @@ contract Box is Ownable, ReentrancyGuard {
         actualParam.xLim = uint128(actualLimX);
         actualParam.yLim = uint128(actualLimY);
         if (tokenX != peripheryAddr.weth) {
-            IERC20(tokenX).safeApprove(peripheryAddr.liquidityManager, type(uint256).max);
+            IERC20(tokenX).approve(peripheryAddr.liquidityManager, type(uint256).max);
         }
         if (tokenY != peripheryAddr.weth) {
-            IERC20(tokenY).safeApprove(peripheryAddr.liquidityManager, type(uint256).max);
+            IERC20(tokenY).approve(peripheryAddr.liquidityManager, type(uint256).max);
         }
 
         (
@@ -272,7 +272,7 @@ contract Box is Ownable, ReentrancyGuard {
         uint256 actualIn = _recvTokenFromUser(firstToken, firstIsWrap, params.amount);
 
         if (firstToken != peripheryAddr.weth) {
-            IERC20(firstToken).safeApprove(peripheryAddr.swap, type(uint256).max);
+            IERC20(firstToken).approve(peripheryAddr.swap, type(uint256).max);
         }
 
         ISwap.SwapAmountParams memory newParam = params;
