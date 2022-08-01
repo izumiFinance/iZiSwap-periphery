@@ -320,8 +320,11 @@ contract Box is Ownable, ReentrancyGuard {
         }
 
         ISwap.SwapAmountParams memory newParam = params;
+        newParam.recipient = address(this);
         newParam.amount = uint128(actualIn);
-        (cost, acquire) = ISwap(peripheryAddr.swap).swapAmount(newParam);
+        (cost, acquire) = ISwap(peripheryAddr.swap).swapAmount{
+            value: msg.value
+        }(newParam);
 
         // refund eth to this contract, if firstToken is weth
         IBase(peripheryAddr.swap).refundETH();
@@ -336,7 +339,7 @@ contract Box is Ownable, ReentrancyGuard {
         }
 
         if (acquire > 0) {
-            _transferTokenToUser(lastToken, lastIsWrap, msg.sender, acquire);
+            _transferTokenToUser(lastToken, lastIsWrap, params.recipient, acquire);
         }
     }
 
