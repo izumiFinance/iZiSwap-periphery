@@ -206,6 +206,37 @@ contract Box is Ownable, ReentrancyGuard {
         }
     }
 
+    function _collect(
+        address recipient,
+        uint256 lid,
+        uint128 amountXLim,
+        uint128 amountYLim,
+        address tokenX,
+        address tokenY,
+        bool tokenXIsWrap, 
+        bool tokenYIsWrap
+    ) internal returns (
+        uint256 amountX,
+        uint256 amountY
+    ) {
+        (
+            amountX,
+            amountY
+        ) = ILiquidityManager(peripheryAddr.liquidityManager).collect(
+            address(this),
+            lid,
+            amountXLim,
+            amountYLim
+        );
+        if (amountX > 0) {
+            amountX = _transferTokenToUser(tokenX, tokenXIsWrap, recipient, amountX);
+        }
+        if (amountY > 0) {
+            amountY = _transferTokenToUser(tokenY, tokenYIsWrap, recipient, amountY);
+        }
+    }
+
+
     function collect(
         address recipient,
         uint256 lid,
@@ -223,21 +254,32 @@ contract Box is Ownable, ReentrancyGuard {
         // because core will revert unenough deposit
         // and this contract will not save any token(including eth) theorily
         // so we donot care that some one will steal token from this contract
-        (
-            amountX,
-            amountY
-        ) = ILiquidityManager(peripheryAddr.liquidityManager).collect(
-            address(this),
+        (amountX, amountY) = _collect(recipient, lid, amountXLim, amountYLim, tokenX, tokenY, tokenXIsWrap, tokenYIsWrap);
+    }
+
+    function decreaseLiquidity(
+        address recipient,
+        uint256 lid,
+        uint128 liquidDelta,
+        uint128 amountXMin,
+        uint128 amountYMin,
+        uint256 deadline,
+        address tokenX,
+        address tokenY,
+        bool tokenXIsWrap,
+        bool tokenYIsWrap
+    ) external checkNftOwner(lid) nonReentrant returns (
+        uint256 amountX,
+        uint256 amountY
+    ) {
+        ILiquidityManager(peripheryAddr.liquidityManager).decLiquidity(
             lid,
-            amountXLim,
-            amountYLim
+            liquidDelta,
+            amountXMin,
+            amountYMin,
+            deadline
         );
-        if (amountX > 0) {
-            amountX = _transferTokenToUser(tokenX, tokenXIsWrap, recipient, amountX);
-        }
-        if (amountY > 0) {
-            amountY = _transferTokenToUser(tokenY, tokenYIsWrap, recipient, amountY);
-        }
+        (amountX, amountY) = _collect(recipient, lid, type(uint128).max, type(uint128).max, tokenX, tokenY, tokenXIsWrap, tokenYIsWrap);
     }
 
     function toAddress(bytes memory _bytes, uint256 _start) internal pure returns (address) {
