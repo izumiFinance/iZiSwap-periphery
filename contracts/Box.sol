@@ -48,6 +48,9 @@ contract Box is Ownable, ReentrancyGuard {
     // }
 
     function _recvTokenFromUser(address token, bool isWrapToken, uint256 amount) internal returns(uint256 actualAmount) {
+        if (amount == 0) {
+            return 0;
+        }
         if (token == peripheryAddr.weth) {
             require(msg.value >= amount, '[recvTokenFromUser]: msg.value not enough');
             actualAmount = amount;
