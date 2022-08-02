@@ -73,7 +73,7 @@ describe("wrap token", function () {
 
     });
 
-    it("deposit from other and check transfer/withdraw balance", async function() {
+    it("deposit from other and check transfer/withdraw balance, deposit / withdraw 0", async function() {
         // balance not enough        
         await tokenX.connect(miner1).approve(wrapTokenX.address, '1000000000000000000000000000000')
         await tokenX.connect(miner3).approve(wrapTokenX.address, '1000000000000000000000000000000')
@@ -86,6 +86,10 @@ describe("wrap token", function () {
         } catch (err) {
             // console.log('err: ', err)
         }
+
+        await wrapTokenX.connect(miner1).depositFrom(miner1.address, miner1.address, '0')
+        await wrapTokenX.connect(miner2).depositFrom(miner2.address, miner2.address, '0')
+        await wrapTokenX.connect(miner3).depositFrom(miner3.address, miner3.address, '0')
 
         expect((await tokenX.balanceOf(miner1.address)).toString()).to.equals('30000000000000000000')
         expect((await tokenX.balanceOf(miner2.address)).toString()).to.equals('0')
@@ -228,6 +232,17 @@ describe("wrap token", function () {
 
         const miner2Withdraw0 = await withdraw(wrapTokenX, tokenX, miner2, miner2.address, '12800000000000010000')
         expect(miner2Withdraw0.ok).to.equals(false)
+        expect((await tokenX.balanceOf(miner1.address)).toString()).to.equals('34000000000000000000')
+        expect((await tokenX.balanceOf(miner2.address)).toString()).to.equals('0')
+        expect((await wrapTokenX.balanceOf(miner1.address)).toString()).to.equals('800000000000000000')
+        expect((await wrapTokenX.balanceOf(miner2.address)).toString()).to.equals('12800000000000000000')
+        expect((await tokenX.balanceOf(miner3.address)).toString()).to.equals('0')
+        expect((await wrapTokenX.balanceOf(miner3.address)).toString()).to.equals('0')
+        expect((await tokenX.balanceOf(wrapTokenX.address)).toString()).to.equals('13600000000000000000')
+
+
+        const miner2Withdraw1 = await withdraw(wrapTokenX, tokenX, miner2, miner2.address, '0')
+        expect(miner2Withdraw1.ok).to.equals(true)
         expect((await tokenX.balanceOf(miner1.address)).toString()).to.equals('34000000000000000000')
         expect((await tokenX.balanceOf(miner2.address)).toString()).to.equals('0')
         expect((await wrapTokenX.balanceOf(miner1.address)).toString()).to.equals('800000000000000000')
