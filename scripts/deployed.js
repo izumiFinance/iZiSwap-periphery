@@ -39,8 +39,8 @@ const contracts = {
     etc: {
         iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
         wrapChainToken: '0x1953cab0E5bFa6D4a9BaD6E05fD46C1CC6527a5a',
-        liquidityManager: '0x110dE362cc436D7f54210f96b8C7652C2617887D',
-        swap: '0x19b683A2F45012318d9B2aE1280d68d3eC54D663',
+        liquidityManager: '0x3EF68D3f7664b2805D4E88381b64868a56f88bC4',
+        swap: '0x34bc1b87f60e0a30c0e24FD7Abada70436c71406',
     }
 }
 
