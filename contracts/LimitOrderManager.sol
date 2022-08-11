@@ -15,7 +15,6 @@ import "./libraries/LimOrderCircularQueue.sol";
 
 import "./base/base.sol";
 
-
 contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
 
     using LimOrderCircularQueue for LimOrderCircularQueue.Queue;
