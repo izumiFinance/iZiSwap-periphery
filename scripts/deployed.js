@@ -4,6 +4,7 @@ const contracts = {
         WETH9: '0xa9754f0D9055d14EB0D2d196E4C51d8B2Ee6f4d3',
 	    liquidityManager: '0x6bEae78975e561fDF27AaC6f09F714E69191DcfD',
         swap: '0xbf3c71a3ce55815138504727AD0f1F3B7101bd70',
+	quoter: '0x11c745f3f8b0A5c50e21336FAe1b5996FEc2a601',
         wrapChainToken: '0xa9754f0D9055d14EB0D2d196E4C51d8B2Ee6f4d3',
 	    BIT: '0xac360dc0F8EF1C94Ab4034220E0A01567acbFdE4',
 	    WBNB: '0xa9754f0D9055d14EB0D2d196E4C51d8B2Ee6f4d3',
@@ -23,6 +24,9 @@ const contracts = {
     bsc: {
         iZiSwapFactory: '0xd7de110Bd452AAB96608ac3750c3730A17993DE0',
         WBNB: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
+	wrapChainToken: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
+	liquidityManager: '0x93C22Fbeff4448F2fb6e432579b0638838Ff9581',
+	swap: '0xBd3bd95529e0784aD973FD14928eEDF3678cfad8',
     },
     aurora: {
         iZiSwapFactory: '0xae0DA17f54DB102fE57931181B2d1D5D2146a5B0',
