@@ -5,7 +5,7 @@ import "./TwoPower.sol";
 import "./AmountMath.sol";
 
 library MintMath {
-    
+
     struct MintMathParam {
         int24 pl;
         int24 pr;
@@ -47,6 +47,7 @@ library MintMath {
             y += sqrtPrice_96;
         }
     }
+
     function computeLiquidity(
         MintMathParam memory mp, int24 currPt, uint160 sqrtPrice_96, uint160 sqrtRate_96
     ) internal pure returns(uint128 liquidity) {
