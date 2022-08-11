@@ -12,8 +12,8 @@ HARDHAT_NETWORK='izumiTest' node scripts/nfLimOrderManager/deployNfLimOrder.js
 const net = process.env.HARDHAT_NETWORK
 
 async function main() {
-    // deploy nft
-    const BoxManager = await ethers.getContractFactory("BoxManager");
+    // deploy box
+    const BoxManager = await ethers.getContractFactory("Box");
     const liquidityManager = deployed[net].liquidityManager;
     const swap = deployed[net].swap;
     const wrapChainToken = deployed[net].wrapChainToken;
