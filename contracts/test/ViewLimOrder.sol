@@ -17,24 +17,24 @@ contract ViewLimOrder  {
         return keccak256(abi.encodePacked(miner, pt));
     }
 
-    function getEarnX(address pool, bytes32 key) private view returns(uint256 lastAccEarn, uint128 sellingRemain, uint128 sellingDesc, uint128 earn, uint128 earnAssign) {
-        (lastAccEarn, sellingRemain, sellingDesc, earn, earnAssign) = IiZiSwapPool(pool).userEarnX(key);
+    function getEarnX(address pool, bytes32 key) private view returns(uint256 lastAccEarn, uint128 sellingRemain, uint128 sellingDesc, uint128 earn, uint128 legacyEarn, uint128 earnAssign) {
+        (lastAccEarn, sellingRemain, sellingDesc, earn, legacyEarn, earnAssign) = IiZiSwapPool(pool).userEarnX(key);
     }
-    function getEarnX(address pool, address miner, int24 pt) public view returns(uint256 lastAccEarn, uint128 sellingRemain, uint128 sellingDesc, uint128 earn, uint128 earnAssign) {
-        (lastAccEarn, sellingRemain, sellingDesc, earn, earnAssign) = getEarnX(pool, limOrderKey(miner, pt));
+    function getEarnX(address pool, address miner, int24 pt) public view returns(uint256 lastAccEarn, uint128 sellingRemain, uint128 sellingDesc, uint128 earn, uint128 legacyEarn, uint128 earnAssign) {
+        (lastAccEarn, sellingRemain, sellingDesc, earn, legacyEarn, earnAssign) = getEarnX(pool, limOrderKey(miner, pt));
     }
-    function getEarnY(address pool, bytes32 key) private view returns(uint256 lastAccEarn, uint128 sellingRemain, uint128 sellingDesc, uint128 earn, uint128 earnAssign) {
-        (lastAccEarn, sellingRemain, sellingDesc, earn, earnAssign) = IiZiSwapPool(pool).userEarnY(key);
+    function getEarnY(address pool, bytes32 key) private view returns(uint256 lastAccEarn, uint128 sellingRemain, uint128 sellingDesc, uint128 earn, uint128 legacyEarn, uint128 earnAssign) {
+        (lastAccEarn, sellingRemain, sellingDesc, earn, legacyEarn, earnAssign) = IiZiSwapPool(pool).userEarnY(key);
     }
-    function getEarnY(address pool, address miner, int24 pt) public view returns(uint256 lastAccEarn, uint128 sellingRemain, uint128 sellingDesc, uint128 earn, uint128 earnAssign) {
-        (lastAccEarn, sellingRemain, sellingDesc, earn, earnAssign) = getEarnY(pool, limOrderKey(miner, pt));
+    function getEarnY(address pool, address miner, int24 pt) public view returns(uint256 lastAccEarn, uint128 sellingRemain, uint128 sellingDesc, uint128 earn, uint128 legacyEarn, uint128 earnAssign) {
+        (lastAccEarn, sellingRemain, sellingDesc, earn, legacyEarn, earnAssign) = getEarnY(pool, limOrderKey(miner, pt));
     }
     
-    function getEarn(address pool, address miner, int24 pt, bool sellXEarnY) public view returns(uint256 lastAccEarn, uint128 sellingRemain, uint128 sellingDesc, uint128 earn, uint128 earnAssign) {
+    function getEarn(address pool, address miner, int24 pt, bool sellXEarnY) public view returns(uint256 lastAccEarn, uint128 sellingRemain, uint128 sellingDesc, uint128 earn, uint128 legacyEarn, uint128 earnAssign) {
         if (sellXEarnY) {
-            (lastAccEarn, sellingRemain, sellingDesc, earn, earnAssign) = getEarnY(pool, limOrderKey(miner, pt));
+            (lastAccEarn, sellingRemain, sellingDesc, earn, legacyEarn, earnAssign) = getEarnY(pool, limOrderKey(miner, pt));
         } else {
-            (lastAccEarn, sellingRemain, sellingDesc, earn, earnAssign) = getEarnX(pool, limOrderKey(miner, pt));
+            (lastAccEarn, sellingRemain, sellingDesc, earn, legacyEarn, earnAssign) = getEarnX(pool, limOrderKey(miner, pt));
         }
     }
 }
