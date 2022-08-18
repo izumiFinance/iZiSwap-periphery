@@ -166,14 +166,14 @@ async function checkBalance(token, miner, expectAmount) {
 }
 async function getCoreEarnX(viewLimorder, pool, miner, pt) {
     var lastAccEarn, sellingRemain, sellingDesc, earn, earnAssign;
-    [lastAccEarn, sellingRemain, sellingDesc, earn, earnAssign] = await viewLimorder.getEarn(
+    [lastAccEarn, sellingRemain, sellingDesc, earn, legacyEarn, earnAssign] = await viewLimorder.getEarn(
         pool, miner, pt, false
     );
     return {
         //lastAccEarn: lastAccEarn.toString(),
         //sellingRemain: sellingRemain.toString(),
         //sellingDesc: sellingDesc.toString(),
-        earn: earn.toString(),
+        earn: new BigNumber(earn.toString()).plus(legacyEarn.toString()).toFixed(0),
         earnAssign: earnAssign.toString()
     };
 }
