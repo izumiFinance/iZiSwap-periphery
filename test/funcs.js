@@ -246,6 +246,12 @@ async function decLimOrderWithX(seller, orderIdx, limorderManager, amountX) {
     );
 }
 
+async function updateOrder(seller, orderIdx, limorderManager) {
+    await limorderManager.connect(seller).updateOrder(
+        orderIdx
+    )
+}
+
 async function collectLimOrderWithX(seller, tokenX, tokenY, recipientAddress, orderIdx, limorderManager, collectDec, collectEarn) {
     const amountXBefore = (await tokenX.balanceOf(recipientAddress)).toString();
     const amountYBefore = (await tokenY.balanceOf(recipientAddress)).toString();
@@ -356,8 +362,14 @@ module.exports ={
     newLimOrderWithX,
     decLimOrderWithX,
     newLimOrderWithY,
+    updateOrder,
     decLimOrderWithY,
     addLiquidity,
     collectLimOrderWithX,
-    collectLimOrderWithY
+    collectLimOrderWithY,
+    stringAdd,
+    stringMinus,
+    stringMul,
+    stringDivCeil,
+    stringDiv
 }
