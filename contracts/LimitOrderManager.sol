@@ -297,6 +297,17 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         sold = uint128(sold256);
     }
 
+    /// @notice Compute amount of earned token for a legacy order
+    ///    an limit order we call it 'legacy' if it together with other limit order of same
+    ///    direction and same point on the pool is cleared during one time of exchanging.
+    ///    if an limit order is convinced to be 'legacy', we should mark it as 'sold out',
+    ///    etc, transform all its remained selling token to earned token.
+    /// @param sqrtPrice_96 a 96 bit fixpoint number to describe sqrt(price) of pool
+    /// @param earnLim remained amount of legacy part of earnings from corresponding limit order in core contract
+    ///    corresponding limit order is an aggregated limit order owned by this contract at same point
+    /// @param sellingRemain amount of token before exchange in the limit order
+    /// @param isEarnY direction of the limit order (sell Y or sell tokenY)
+    /// @return earn amount of earned token this limit order can claim
     function getLegacyEarn(
         uint160 sqrtPrice_96,
         uint128 earnLim,
@@ -316,6 +327,15 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         }
     }
 
+    /// @notice assign some amount of earned token from earnings of corresponding limit order in core contract
+    ///    to current user (msg.sender)
+    ///    corresponding limit order is an aggregated limit order owned by this contract at same point
+    /// @param pool swap pool address
+    /// @param pt point (price) of limit order
+    /// @param amount amount of legacy or unlegacy earned token to assgin from core's aggregated limit order
+    /// @param isEarnY direction of the limit order (sell Y or sell tokenY)
+    /// @param fromLegacy true for legacy order false for unlegacy
+    /// @return actualAssign actual earned token assgiend from core
     function assignLimOrderEarn(
         address pool, int24 pt, uint128 amount, bool isEarnY, bool fromLegacy
     ) private returns(uint128 actualAssign) {
