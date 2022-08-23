@@ -2,7 +2,15 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 const BigNumber = require('bignumber.js');
-const { getPoolParts, getIzumiswapFactory, newLimOrderWithX, decLimOrderWithX, collectLimOrderWithX } = require("./funcs.js")
+const { 
+    updateOrder, 
+    getPoolParts, 
+    getIzumiswapFactory, 
+    newLimOrderWithX, 
+    decLimOrderWithX, 
+    collectLimOrderWithX, 
+    newLimOrderWithY, 
+    stringAdd, stringDivCeil, stringMinus, stringMul,stringDiv } = require("./funcs.js")
 
 async function getToken(dx, dy) {
 
@@ -87,10 +95,10 @@ async function getLimorder(userAddress, orderIdx, limorderManager) {
 }
 async function checkLimOrder(userAddress, orderIdx, limorderManager, limorderExpect) {
     limorder = await getLimorder(userAddress, orderIdx, limorderManager);
-    expect(limorder.sellingRemain.toFixed(0)).to.equal(limorderExpect.sellingRemain.toFixed(0));
-    expect(limorder.sellingDec.toFixed(0)).to.equal(limorderExpect.sellingDec.toFixed(0));
-    expect(limorder.earn.toFixed(0)).to.equal(limorderExpect.earn.toFixed(0));
-    expect(limorder.lastAccEarn.toFixed(0)).to.equal(limorderExpect.lastAccEarn.toFixed(0));
+    expect(limorder.sellingRemain.toFixed(0)).to.equal(limorderExpect.sellingRemain);
+    expect(limorder.sellingDec.toFixed(0)).to.equal(limorderExpect.sellingDec);
+    expect(limorder.earn.toFixed(0)).to.equal(limorderExpect.earn);
+    expect(limorder.lastAccEarn.toFixed(0)).to.equal(limorderExpect.lastAccEarn);
     expect(limorder.sellXEarnY).to.equal(limorderExpect.sellXEarnY);
 }
 
@@ -203,8 +211,46 @@ async function checkpoolid(nflomAddr, userAddress, orderIdx) {
     }
 }
 
-function amountAddFee(amount) {
-    return ceil(amount.times(1000).div(997));
+function amountAddFee(amount, feeTier=3000) {
+    const fee = stringDivCeil(stringMul(amount, feeTier), stringMinus(1e6, feeTier));
+    return stringAdd(amount, fee);
+}
+
+
+function getCostYFromXAt(sqrtPrice_96, acquireX) {
+    const q96 = BigNumber(2).pow(96).toFixed(0);
+
+    const liquidity = stringDivCeil(stringMul(acquireX, sqrtPrice_96), q96);
+    const costY = stringDivCeil(stringMul(liquidity, sqrtPrice_96), q96);
+
+    return costY;
+}
+
+function getEarnYFromXAt(sqrtPrice_96, soldX) {
+    const q96 = BigNumber(2).pow(96).toFixed(0);
+
+    const liquidity = stringDiv(stringMul(soldX, sqrtPrice_96), q96);
+    const costY = stringDiv(stringMul(liquidity, sqrtPrice_96), q96);
+
+    return costY;
+}
+
+function getCostXFromYAt(sqrtPrice_96, acquireY) {
+    const q96 = BigNumber(2).pow(96).toFixed(0);
+
+    const liquidity = stringDivCeil(stringMul(acquireY, q96), sqrtPrice_96);
+    const costX = stringDivCeil(stringMul(liquidity, q96), sqrtPrice_96);
+
+    return costX;
+}
+
+function getEarnXFromYAt(sqrtPrice_96, costY) {
+    const q96 = BigNumber(2).pow(96).toFixed(0);
+
+    const liquidity = stringDiv(stringMul(costY, q96), sqrtPrice_96);
+    const costX = stringDiv(stringMul(liquidity, q96), sqrtPrice_96);
+
+    return costX;
 }
 describe("limorder", function () {
     var signer, seller1, seller2, seller3, trader, trader2;
@@ -217,6 +263,7 @@ describe("limorder", function () {
     var limorderManager;
     var tokenX, tokenY;
     var rate;
+    var logPowMath;
     beforeEach(async function() {
         [signer, seller1, seller2, seller3, trader, trader2, recipient1, recipient2, receiver] = await ethers.getSigners();
 
@@ -228,138 +275,176 @@ describe("limorder", function () {
         limorderManager = await getLimorderManager(izumiswapFactory, weth9);
         viewLimorder = await getViewLimorder(izumiswapFactory);
 
+        const LogPowMathTest = await ethers.getContractFactory('TestLogPowMath');
+        logPowMath = await LogPowMathTest.deploy();
+
         [tokenX, tokenY] = await getToken(18, 18);
         txAddr = tokenX.address.toLowerCase();
         tyAddr = tokenY.address.toLowerCase();
 
         poolAddr = await nflm.createPool(tokenX.address, tokenY.address, 3000, 5050);
         rate = BigNumber("1.0001");
-        await tokenY.transfer(trader.address, "100000000000000");
-        await tokenY.connect(trader).approve(swap.address, "100000000000000");
+        await tokenY.transfer(trader.address, "10000000000000000000000");
+        await tokenY.connect(trader).approve(swap.address, "10000000000000000000000");
+        await tokenX.transfer(trader.address, "10000000000000000000000");
+        await tokenX.connect(trader).approve(swap.address, "10000000000000000000000");
     });
 
     
     it("first claim first earn", async function() {
         sellX1 = BigNumber("1000000000");
         await newLimOrderWithX(0, tokenX, tokenY, seller1, limorderManager, sellX1.toFixed(0), 5050);
-        await checkpoolid(limorderManager.address, seller1.address, 0);
-        sellX2 = BigNumber("2000000000");
-        await newLimOrderWithX(0, tokenX, tokenY, seller2, limorderManager, sellX2.toFixed(0), 5050);
-        await checkpoolid(limorderManager.address, seller2.address, 0);
 
-        await checkBalance(tokenX, seller1, BigNumber(0));
-        await checkBalance(tokenY, seller1, BigNumber(0));
-        await checkBalance(tokenX, seller2, BigNumber(0));
-        await checkBalance(tokenY, seller2, BigNumber(0));
-
-        acquireXExpect = sellX1.plus(sellX2.div(3));
-        costY = getCostY(5050, rate, acquireXExpect);
-        acquireXExpect = getAcquireX(5050, rate, costY);
-        await swap.connect(trader).swapY2X(
+        const acquireX1 = '1000000000'
+        const costY1 = getCostYFromXAt((await logPowMath.getSqrtPrice(5050)).toString(), acquireX1)
+        const costY1WithFee = amountAddFee(costY1, 3000)
+        const swap1 = await swap.connect(trader).swapY2X(
             {
                 tokenX: tokenX.address, 
                 tokenY: tokenY.address, 
                 fee: 3000,
                 recipient: trader.address,
-                amount: amountAddFee(costY).toFixed(0),
+                amount: '100000000000000000',
                 boundaryPt: 5051,
-                maxPayed: costY.toFixed(0),
+                maxPayed: costY1WithFee,
                 minAcquired: 0,
                 deadline: BigNumber("1000000000000").toFixed(0)
             }
         );
 
-        await decLimOrderWithX(seller1, "0", limorderManager, "500000000");
-        seller1EarnPhase1 = getAcquireY(5050, rate, sellX1);
-        await checkLimOrder(seller1.address, "0", limorderManager, {
-            pt: 5050,
-            sellingRemain: BigNumber("0"),
-            sellingDec: BigNumber("0"),
-            earn: seller1EarnPhase1,
-            lastAccEarn: costY,
-            sellXEarnY: true
-        });
-        await checkCoreEarnY(tokenX, tokenY, viewLimorder, limorderManager, 5050, {
-            earn: costY.minus(seller1EarnPhase1),
-            earnAssign: seller1EarnPhase1
-        });
+        await newLimOrderWithY(1, tokenX, tokenY, seller1, limorderManager, '1000000000000', 5000)
+
+        await swap.connect(trader).swapX2Y(
+            {
+                tokenX: tokenX.address, 
+                tokenY: tokenY.address, 
+                fee: 3000,
+                recipient: trader.address,
+                amount: '100000000000000000',
+                boundaryPt: 4999,
+                maxPayed: '100000000000000000',
+                minAcquired: 0,
+                deadline: BigNumber("1000000000000").toFixed(0)
+            }
+        );
+
+        sellX2 = BigNumber("1000000000");
+        await newLimOrderWithX(0, tokenX, tokenY, seller2, limorderManager, sellX2.toFixed(0), 5050);
+
+        sellX3 = BigNumber('1000000000')
+        await newLimOrderWithX(0, tokenX, tokenY, seller3, limorderManager, sellX3.toFixed(0), 5050);
+
+
+        const acquireX2 = '1000000000'
+        const costY2 = getCostYFromXAt((await logPowMath.getSqrtPrice(5050)).toString(), acquireX2)
+        const costY2WithFee = amountAddFee(costY2, 3000)
+
+        const swap2 = await swap.connect(trader).swapY2X(
+            {
+                tokenX: tokenX.address, 
+                tokenY: tokenY.address, 
+                fee: 3000,
+                recipient: trader.address,
+                amount: costY2WithFee,
+                boundaryPt: 5051,
+                maxPayed: costY2WithFee,
+                minAcquired: 0,
+                deadline: BigNumber("1000000000000").toFixed(0)
+            }
+        );
+
+        await decLimOrderWithX(seller2, '0', limorderManager, '1000000000')
+        const earnY2 = getEarnYFromXAt((await logPowMath.getSqrtPrice(5050)).toString(), acquireX2)
         
-        await decLimOrderWithX(seller2, "0", limorderManager, "10000");
-        seller2EarnPhase1 = costY.minus(getAcquireY(5050, rate, sellX1));
-        seller2RemainPhase1 = sellX2.minus(getCostX(5050, rate, seller2EarnPhase1)).minus("10000");
         await checkLimOrder(seller2.address, "0", limorderManager, {
             pt: 5050,
-            sellingRemain: seller2RemainPhase1,
-            sellingDec: BigNumber("10000"),
-            earn: seller2EarnPhase1,
-            lastAccEarn: costY,
+            sellingRemain: "0",
+            sellingDec: "0",
+            earn: earnY2,
+            lastAccEarn: stringAdd(costY1, costY2),
             sellXEarnY: true
-        });
-        await checkCoreEarnY(tokenX, tokenY, viewLimorder, limorderManager, 5050, {
-            earn: costY.minus(seller1EarnPhase1).minus(seller2EarnPhase1),
-            earnAssign: seller1EarnPhase1.plus(seller2EarnPhase1)
-        });
+        }); 
 
-        const collect2_1 = await collectLimOrderWithX(
-            seller2, tokenX, tokenY, recipient1.address, 0, limorderManager, '1', '1')
-        console.log('collect2_1: ', collect2_1);
-        expect(collect2_1.collectDec).to.equal('1')
-        expect(collect2_1.collectEarn).to.equal('1')
+        await updateOrder(seller3, '0', limorderManager)
 
-        await checkLimOrder(seller2.address, "0", limorderManager, {
+        const earnY2ForS3 = stringMinus(costY2, earnY2)
+        const soldX2ForS3 = getCostXFromYAt((await logPowMath.getSqrtPrice(5050)).toString(), earnY2ForS3)
+        const remainX2ForS3 = stringMinus('1000000000', soldX2ForS3)
+
+        await checkLimOrder(seller3.address, "0", limorderManager, {
             pt: 5050,
-            sellingRemain: seller2RemainPhase1,
-            sellingDec: BigNumber("9999"),
-            earn: seller2EarnPhase1.minus('1'),
-            lastAccEarn: costY,
+            sellingRemain: remainX2ForS3,
+            sellingDec: '0',
+            earn: earnY2ForS3,
+            lastAccEarn: stringAdd(costY1, costY2),
             sellXEarnY: true
-        });
-        const collect2_2 = await collectLimOrderWithX(
-            seller2, tokenX, tokenY, recipient1.address, 0, limorderManager, '100000000000000000', '100000000000000000000')
+        }); 
 
-        expect(collect2_2.collectDec).to.equal('9999')
-        expect(collect2_2.collectEarn).to.equal(seller2EarnPhase1.minus('1').toFixed(0))
-
-        await checkLimOrder(seller2.address, "0", limorderManager, {
-            pt: 5050,
-            sellingRemain: seller2RemainPhase1,
-            sellingDec: BigNumber("0"),
-            earn: BigNumber('0'),
-            lastAccEarn: costY,
-            sellXEarnY: true
-        });
-        const collect2_3 = await collectLimOrderWithX(
-            seller2, tokenX, tokenY, recipient1.address, 0, limorderManager, '100000000000000000', '100000000000000000000')
-        expect(collect2_3.collectDec).to.equal('0')
-        expect(collect2_3.collectEarn).to.equal('0')
-        // order of seller1 not influenced
+        await decLimOrderWithX(seller1, '0', limorderManager, '1000000000')
+        const earnY1 = getEarnYFromXAt((await logPowMath.getSqrtPrice(5050)).toString(), acquireX1)
         await checkLimOrder(seller1.address, "0", limorderManager, {
             pt: 5050,
-            sellingRemain: BigNumber("0"),
-            sellingDec: BigNumber("0"),
-            earn: seller1EarnPhase1,
-            lastAccEarn: costY,
+            sellingRemain: "0",
+            sellingDec: "0",
+            earn: earnY1,
+            lastAccEarn: stringAdd(costY1, costY2),
             sellXEarnY: true
-        });
+        }); 
 
+        const acquireX3 = '500000000'
+        const costY3 = getCostYFromXAt((await logPowMath.getSqrtPrice(5050)).toString(), acquireX3)
+        const costY3WithFee = amountAddFee(costY3, 3000)
 
-        const collect1_1 = await collectLimOrderWithX(
-            seller1, tokenX, tokenY, recipient1.address, 1, limorderManager, '1', '1')
-        expect(collect1_1.collectDec).to.equal('0')
-        expect(collect1_1.collectEarn).to.equal('0')
+        const swap3 = await swap.connect(trader).swapY2X(
+            {
+                tokenX: tokenX.address, 
+                tokenY: tokenY.address, 
+                fee: 3000,
+                recipient: trader.address,
+                amount: costY3WithFee,
+                boundaryPt: 5051,
+                maxPayed: costY3WithFee,
+                minAcquired: 0,
+                deadline: BigNumber("1000000000000").toFixed(0)
+            }
+        );
 
-        const collect1_2 = await collectLimOrderWithX(
-            seller1, tokenX, tokenY, recipient1.address, 10000, limorderManager, '1', '1')
-        expect(collect1_2.collectDec).to.equal('0')
-        expect(collect1_2.collectEarn).to.equal('0')
+        await newLimOrderWithX(2, tokenX, tokenY, seller1, limorderManager, '100000000000000', 5050);
+
+        await decLimOrderWithX(seller1, '2', limorderManager, '1000000000')
+        
+        await checkLimOrder(seller1.address, "2", limorderManager, {
+            pt: 5050,
+            sellingRemain: stringMinus('100000000000000', '1000000000'),
+            sellingDec: "1000000000",
+            earn: '0',
+            lastAccEarn: stringAdd(stringAdd(costY1, costY2), costY3),
+            sellXEarnY: true
+        }); 
+
+        const soldX3ForS3 = getCostXFromYAt((await logPowMath.getSqrtPrice(5050)).toString(), costY3)
+        const remainX3ForS3 = stringMinus(remainX2ForS3, soldX3ForS3)
+
+        await decLimOrderWithX(seller3, '0', limorderManager, '1000000000')
+
+        await checkLimOrder(seller3.address, "0", limorderManager, {
+            pt: 5050,
+            sellingRemain: '0',
+            sellingDec: remainX3ForS3,
+            earn: stringAdd(earnY2ForS3, costY3),
+            lastAccEarn: stringAdd(stringAdd(costY1, costY2), costY3),
+            sellXEarnY: true
+        }); 
+
+        await decLimOrderWithX(seller1, '0', limorderManager, '1000000000')
 
         await checkLimOrder(seller1.address, "0", limorderManager, {
             pt: 5050,
-            sellingRemain: BigNumber("0"),
-            sellingDec: BigNumber("0"),
-            earn: seller1EarnPhase1,
-            lastAccEarn: costY,
+            sellingRemain: "0",
+            sellingDec: "0",
+            earn: earnY1,
+            lastAccEarn: stringAdd(stringAdd(costY1, costY2), costY3),
             sellXEarnY: true
-        });
+        }); 
     });
 });

@@ -138,29 +138,29 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         }
     }
 
-    function getEarnX(address pool, bytes32 key) private view returns(uint256, uint128) {
-        (uint256 lastAccEarn, , , uint128 earn, ) = IiZiSwapPool(pool).userEarnX(key);
-        return (lastAccEarn, earn);
+    function getEarnX(address pool, bytes32 key) private view returns(uint256, uint128, uint128) {
+        (uint256 lastAccEarn, , , uint128 earn, uint128 legacyEarn, ) = IiZiSwapPool(pool).userEarnX(key);
+        return (lastAccEarn, earn, legacyEarn);
     }
 
-    function getEarnX(address pool, address miner, int24 pt) private view returns(uint256 accEarn, uint256 earn) {
-        (accEarn, earn) = getEarnX(pool, limOrderKey(miner, pt));
+    function getEarnX(address pool, address miner, int24 pt) private view returns(uint256 accEarn, uint128 earn, uint128 legacyEarn) {
+        (accEarn, earn, legacyEarn) = getEarnX(pool, limOrderKey(miner, pt));
     }
 
-    function getEarnY(address pool, bytes32 key) private view returns(uint256, uint128) {
-        (uint256 lastAccEarn, , , uint128 earn, ) = IiZiSwapPool(pool).userEarnY(key);
-        return (lastAccEarn, earn);
+    function getEarnY(address pool, bytes32 key) private view returns(uint256, uint128, uint128) {
+        (uint256 lastAccEarn, , , uint128 earn, uint128 legacyEarn, ) = IiZiSwapPool(pool).userEarnY(key);
+        return (lastAccEarn, earn, legacyEarn);
     }
 
-    function getEarnY(address pool, address miner, int24 pt) private view returns(uint256 accEarn, uint128 earn) {
-        (accEarn, earn) = getEarnY(pool, limOrderKey(miner, pt));
+    function getEarnY(address pool, address miner, int24 pt) private view returns(uint256 accEarn, uint128 earn, uint128 legacyEarn) {
+        (accEarn, earn, legacyEarn) = getEarnY(pool, limOrderKey(miner, pt));
     }
 
-    function getEarn(address pool, address miner, int24 pt, bool sellXEarnY) private view returns(uint256 accEarn, uint128 earn) {
+    function getEarn(address pool, address miner, int24 pt, bool sellXEarnY) private view returns(uint256 accEarn, uint128 earn, uint128 legacyEarn) {
         if (sellXEarnY) {
-            (accEarn, earn) = getEarnY(pool, limOrderKey(miner, pt));
+            (accEarn, earn, legacyEarn) = getEarnY(pool, limOrderKey(miner, pt));
         } else {
-            (accEarn, earn) = getEarnX(pool, limOrderKey(miner, pt));
+            (accEarn, earn, legacyEarn) = getEarnX(pool, limOrderKey(miner, pt));
         }
     }
 
@@ -211,7 +211,7 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
 
         address pool = IiZiSwapFactory(factory).pool(addLimitOrderParam.tokenX, addLimitOrderParam.tokenY, addLimitOrderParam.fee);
         (orderAmount, acquire) = _addLimOrder(pool, addLimitOrderParam);
-        (uint256 accEarn, ) = getEarn(pool, address(this), addLimitOrderParam.pt, addLimitOrderParam.sellXEarnY);
+        (uint256 accEarn, , ) = getEarn(pool, address(this), addLimitOrderParam.pt, addLimitOrderParam.sellXEarnY);
         uint128 poolId = cachePoolKey(pool, PoolMeta({tokenX: addLimitOrderParam.tokenX, tokenY: addLimitOrderParam.tokenY, fee: addLimitOrderParam.fee}));
         LimOrder[] storage limOrders = addr2ActiveOrder[msg.sender];
         if (idx < limOrders.length) {
@@ -297,13 +297,32 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         sold = uint128(sold256);
     }
 
+    function getLegacyEarn(
+        uint160 sqrtPrice_96,
+        uint128 earnLim,
+        uint128 sellingRemain,
+        bool isEarnY
+    ) private pure returns (uint128 earn) {
+        uint256 sold256 = sellingRemain;
+        if (isEarnY) {
+            uint256 l = MulDivMath.mulDivFloor(sold256, sqrtPrice_96, TwoPower.pow96);
+            earn = uint128(MulDivMath.mulDivFloor(l, sqrtPrice_96, TwoPower.pow96));
+        } else {
+            uint256 l = MulDivMath.mulDivFloor(sold256, TwoPower.pow96, sqrtPrice_96);
+            earn = uint128(MulDivMath.mulDivFloor(l, TwoPower.pow96, sqrtPrice_96));
+        }
+        if (earn > earnLim) {
+            earn = earnLim;
+        }
+    }
+
     function assignLimOrderEarn(
-        address pool, int24 pt, uint128 amount, bool isEarnY
+        address pool, int24 pt, uint128 amount, bool isEarnY, bool fromLegacy
     ) private returns(uint128 actualAssign) {
         if (isEarnY) {
-            actualAssign = IiZiSwapPool(pool).assignLimOrderEarnY(pt, amount);
+            actualAssign = IiZiSwapPool(pool).assignLimOrderEarnY(pt, amount, fromLegacy);
         } else {
-            actualAssign = IiZiSwapPool(pool).assignLimOrderEarnX(pt, amount);
+            actualAssign = IiZiSwapPool(pool).assignLimOrderEarnX(pt, amount, fromLegacy);
         }
     }
 
@@ -315,19 +334,28 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         LimOrder storage order,
         address pool
     ) private returns (uint128 earn) {
+        uint256 legacyAccEarn;
         if (order.sellXEarnY) {
-            IiZiSwapPool(pool).decLimOrderWithX(order.pt, 0);
+            (, legacyAccEarn) = IiZiSwapPool(pool).decLimOrderWithX(order.pt, 0);
         } else {
-            IiZiSwapPool(pool).decLimOrderWithY(order.pt, 0);
+            (, legacyAccEarn) = IiZiSwapPool(pool).decLimOrderWithY(order.pt, 0);
         }
-        (uint256 accEarn, uint128 earnLim) = getEarn(pool, address(this), order.pt, order.sellXEarnY);
-        earnLim = getEarnLim(order.lastAccEarn, accEarn, earnLim);
-        uint160 sqrtPrice_96 = LogPowMath.getSqrtPrice(order.pt);
         uint128 sold;
-        (earn, sold) = getEarnSold(sqrtPrice_96, earnLim, order.sellingRemain, order.sellXEarnY);
-        earn = assignLimOrderEarn(pool, order.pt, earn, order.sellXEarnY);
-        order.earn = order.earn + earn;
-        order.sellingRemain = order.sellingRemain - sold;
+        uint160 sqrtPrice_96 = LogPowMath.getSqrtPrice(order.pt);
+        (uint256 accEarn, uint128 earnLim, uint128 legacyEarnLim) = getEarn(pool, address(this), order.pt, order.sellXEarnY);
+        if (order.lastAccEarn < legacyAccEarn) {
+            earn = getLegacyEarn(sqrtPrice_96, legacyEarnLim, order.sellingRemain, order.sellXEarnY);
+            earn = assignLimOrderEarn(pool, order.pt, earn, order.sellXEarnY, true);
+            sold = order.sellingRemain;
+            order.earn = order.earn + earn;
+            order.sellingRemain = 0;
+        } else {
+            earnLim = getEarnLim(order.lastAccEarn, accEarn, earnLim);
+            (earn, sold) = getEarnSold(sqrtPrice_96, earnLim, order.sellingRemain, order.sellXEarnY);
+            earn = assignLimOrderEarn(pool, order.pt, earn, order.sellXEarnY, false);
+            order.earn = order.earn + earn;
+            order.sellingRemain = order.sellingRemain - sold;
+        }
         order.lastAccEarn = accEarn;
         emit Claim(pool, order.pt, msg.sender, sold, earn, order.sellXEarnY);
     }
@@ -365,9 +393,9 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         }
         uint128 actualDeltaRefund;
         if (order.sellXEarnY) {
-            actualDeltaRefund = IiZiSwapPool(pool).decLimOrderWithX(order.pt, actualDelta);
+            (actualDeltaRefund, ) = IiZiSwapPool(pool).decLimOrderWithX(order.pt, actualDelta);
         } else {
-            actualDeltaRefund = IiZiSwapPool(pool).decLimOrderWithY(order.pt, actualDelta);
+            (actualDeltaRefund, ) = IiZiSwapPool(pool).decLimOrderWithY(order.pt, actualDelta);
         }
         // actualDeltaRefund may be less than actualDelta
         // but we still minus actualDelta in sellingRemain, and only add actualDeltaRefund to sellingDec
