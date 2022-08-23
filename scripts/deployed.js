@@ -37,10 +37,10 @@ const contracts = {
 	WETH: '0x67A1f4A939b477A6b7c5BF94D97E45dE87E608eF',
     },
     etc: {
-        iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
+        iZiSwapFactory: '0x25C030116Feb2E7BbA054b9de0915E5F51b03e31',
         wrapChainToken: '0x1953cab0E5bFa6D4a9BaD6E05fD46C1CC6527a5a',
-        liquidityManager: '0x3EF68D3f7664b2805D4E88381b64868a56f88bC4',
-        swap: '0x34bc1b87f60e0a30c0e24FD7Abada70436c71406',
+        liquidityManager: '0x1D377311b342633A970e71a787C50F83858BFC1B',
+        swap: '0xe6805638db944eA605e774e72c6F0D15Fb6a1347',
     }
 }
 
