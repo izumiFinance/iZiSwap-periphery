@@ -1,4 +1,4 @@
-# izumi-swap-periphery
+# iZiSwap-periphery
 
 <div align="center">
   <a href="https://izumi.finance"> 
