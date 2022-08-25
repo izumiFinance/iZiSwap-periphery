@@ -2,10 +2,14 @@
 
 <div align="center">
   <a href="https://izumi.finance"> 
-    <img width="450px" height="auto" 
+    <img width="900px" height="auto" 
     src="image/logo.png">
   </a>
 </div>
+
+
+Contracts for iZiSwap periphery.
+
 
 
 ## Set up Environment
