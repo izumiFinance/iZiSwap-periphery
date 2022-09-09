@@ -9,7 +9,7 @@ import "./libraries/Path.sol";
 
 import "./base/base.sol";
 
-contract Quoter is Base, IiZiSwapCallback {
+contract QuoterWithLim is Base, IiZiSwapCallback {
 
     using Path for bytes;
 
