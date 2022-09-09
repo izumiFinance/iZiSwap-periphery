@@ -1,6 +1,8 @@
 const contracts = {
     bscTest: {
         iZiSwapFactory: '0x90e2B715BE84EFC67e9d2E84619c4b230446FF3f',
+	liquidityManager: '0xC0b5CaC9Db0639732Fe5aCB7ee8d15e487c9957A',
+	swap: '0x2798973a7d9B7451530f18621eE8Bc69058391a8',
         WETH9: '0xae13d989dac2f0debff460ac112a837c89baa7cd',
         wrapChainToken: '0xae13d989dac2f0debff460ac112a837c89baa7cd',
 	    BIT: '0xac360dc0F8EF1C94Ab4034220E0A01567acbFdE4',
