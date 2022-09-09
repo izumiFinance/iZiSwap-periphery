@@ -60,6 +60,44 @@ contract Quoter is Base, IiZiSwapCallback {
         return abi.decode(reason, (uint256, int24));
     }
 
+    function getCurrentPoint(address pool) internal view returns (int24 currentPoint) {
+        (
+            ,
+            currentPoint,
+            ,
+            ,
+            ,
+            ,
+            ,
+        ) = IiZiSwapPool(pool).state();
+    }
+
+    function getUpperBoundaryPoint(uint24 fee, int24 currentPoint) internal pure returns (int24 boundaryPoint) {
+        int256 boundary = currentPoint;
+        if (fee <= 100) {
+            boundary += 10000;
+        } else {
+            boundary += 20000;
+        }
+        if (boundary > 799999) {
+            boundary = 799999;
+        }
+        boundaryPoint = int24(boundary);
+    }
+
+    function getLowerBoundaryPoint(uint24 fee, int24 currentPoint) internal pure returns (int24 boundaryPoint) {
+        int256 boundary = currentPoint;
+        if (fee <= 100) {
+            boundary -= 10000;
+        } else {
+            boundary -= 20000;
+        }
+        if (boundary < -799999) {
+            boundary = -799999;
+        }
+        boundaryPoint = int24(boundary);
+    }
+
     /// @notice Callback for swapY2X and swapY2XDesireX, in order to mark computed-amount of token and point after exchange.
     /// @param x amount of tokenX trader acquired
     /// @param y amount of tokenY need to pay from trader
@@ -157,8 +195,9 @@ contract Quoter is Base, IiZiSwapCallback {
         uint128 amount
     ) private returns (uint256 acquire, int24 currPt) {
         address poolAddr = pool(tokenOut, tokenIn, fee);
+        int24 currentPoint = getCurrentPoint(poolAddr);
         if (tokenIn < tokenOut) {
-            int24 boundaryPoint = -799999;
+            int24 boundaryPoint = getLowerBoundaryPoint(fee, currentPoint);
             try
                 IiZiSwapPool(poolAddr).swapX2Y(
                     address(this), amount, boundaryPoint,
@@ -168,7 +207,7 @@ contract Quoter is Base, IiZiSwapCallback {
                 return parseRevertReason(reason);
             }
         } else {
-            int24 boundaryPoint = 799999;
+            int24 boundaryPoint = getUpperBoundaryPoint(fee, currentPoint);
             try
                 IiZiSwapPool(poolAddr).swapY2X(
                     address(this), amount, boundaryPoint,
@@ -215,8 +254,9 @@ contract Quoter is Base, IiZiSwapCallback {
     ) private returns (uint256 cost, int24 currPt) {
         address poolAddr = pool(tokenOut, tokenIn, fee);
         amountDesireCached = desire;
+        int24 currentPoint = getCurrentPoint(poolAddr);
         if (tokenIn < tokenOut) {
-            int24 boundaryPoint = -799999;
+            int24 boundaryPoint = getLowerBoundaryPoint(fee, currentPoint);
             try
                 IiZiSwapPool(poolAddr).swapX2YDesireY(
                     address(this), desire + 1, boundaryPoint,
@@ -226,7 +266,7 @@ contract Quoter is Base, IiZiSwapCallback {
                 return parseRevertReason(reason);
             }
         } else {
-            int24 boundaryPoint = 799999;
+            int24 boundaryPoint = getUpperBoundaryPoint(fee, currentPoint);
             try
                 IiZiSwapPool(poolAddr).swapY2XDesireX(
                     address(this), desire + 1, boundaryPoint,
