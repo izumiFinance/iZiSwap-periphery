@@ -35,6 +35,14 @@ function stringAdd(a, b) {
     return BigNumber(a).plus(b).toFixed(0);
 }
 
+function getSum(a) {
+    let sum = '0'
+    for (const aa of a) {
+        sum = stringAdd(sum, aa)
+    }
+    return sum
+}
+
 function stringLess(a, b) {
     return BigNumber(a).lt(b);
 }
@@ -371,5 +379,6 @@ module.exports ={
     stringMinus,
     stringMul,
     stringDivCeil,
-    stringDiv
+    stringDiv,
+    getSum,
 }
