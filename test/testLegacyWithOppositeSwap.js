@@ -556,15 +556,25 @@ describe("limorder", function () {
 
         const earnY5_s3 = getEarnYFromXAt((await logPowMath.getSqrtPrice(5050)).toString(), sellX5_s3)
 
+        const collect5_s3 = await collectLimOrder(seller3, '1', seller3.address, limorderManager, '10000000000000', '10000', tokenX, tokenY)
+        expect(collect5_s3.ok).to.equal(true)
+        expect(collect5_s3.amountX, '0')
+        expect(collect5_s3.amountY, '10000')
 
-        await updateOrder(seller3, '1', limorderManager)
-        await updateOrder(seller4, '0', limorderManager)
+
+        // await updateOrder(seller3, '1', limorderManager)
+        // await updateOrder(seller4, '0', limorderManager)
+        const collect5_s4 = await collectLimOrder(seller4, '0', seller4.address, limorderManager, '2', '1', tokenX, tokenY)
+        expect(collect5_s4.ok).to.equal(true)
+        expect(collect5_s4.amountX, '0')
+        expect(collect5_s4.amountY, '1')
+
 
         await checkLimOrder(seller3.address, "1", limorderManager, {
             pt: 5050,
             sellingRemain: '0',
             sellingDec: '0',
-            earn: earnY5_s3,
+            earn: stringMinus(earnY5_s3, '10000'),
             lastAccEarn: stringAdd(costY4, costY5),
             sellXEarnY: true
         }); 
@@ -574,7 +584,7 @@ describe("limorder", function () {
             pt: 5050,
             sellingRemain: stringMinus(sellX5_s4, soldX5_s4),
             sellingDec: '0',
-            earn: earnY5_s4,
+            earn: stringMinus(earnY5_s4, '1'),
             lastAccEarn: stringAdd(costY4, costY5),
             sellXEarnY: true
         }); 
