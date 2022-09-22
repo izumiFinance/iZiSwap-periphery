@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 interface IiZiSwapFactory {
 
-    /// @notice Emit when successfuly create a new pool (calling iZiSwapFactory#newPool).
+    /// @notice emit when successfuly create a new pool (calling iZiSwapFactory#newPool)
     /// @param tokenX address of erc-20 tokenX
     /// @param tokenY address of erc-20 tokenY
     /// @param fee fee amount of swap (3000 means 0.3%)
@@ -37,7 +37,11 @@ interface IiZiSwapFactory {
     /// @return flashModule address
     function flashModule() external returns (address);
 
-    /// @notice Enables a fee amount with the given pointDelta.
+    /// @notice default fee rate from miner's fee gain
+    /// @return defaultFeeChargePercent default fee rate * 100
+    function defaultFeeChargePercent() external returns (uint24);
+
+    /// @notice Enables a fee amount with the given pointDelta
     /// @dev Fee amounts may never be removed once enabled
     /// @param fee fee amount (3000 means 0.3%)
     /// @param pointDelta The spacing between points to be enforced for all pools created with the given fee amount
@@ -79,5 +83,14 @@ interface IiZiSwapFactory {
     /// @notice Change charge receiver, only owner of factory can call.
     /// @param _chargeReceiver address of new receiver
     function modifyChargeReceiver(address _chargeReceiver) external;
+
+    function deployPoolParams() external view returns(
+        address tokenX,
+        address tokenY,
+        uint24 fee,
+        int24 currentPoint,
+        int24 pointDelta,
+        uint24 feeChargePercent
+    );
     
 }

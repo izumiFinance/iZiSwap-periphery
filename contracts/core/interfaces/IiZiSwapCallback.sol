@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 interface IiZiSwapMintCallback {
 
-    /// @notice Called to msg.sender in iZiSwapPool#mint call.
+    /// @notice Called to msg.sender in iZiSwapPool#mint call
     /// @param x Amount of tokenX need to pay from miner
     /// @param y Amount of tokenY need to pay from miner
     /// @param data Any data passed through by the msg.sender via the iZiSwapPool#mint call
@@ -17,7 +17,7 @@ interface IiZiSwapMintCallback {
 
 interface IiZiSwapCallback {
 
-    /// @notice Called to msg.sender in iZiSwapPool#swapY2X(DesireX) call.
+    /// @notice Called to msg.sender in iZiSwapPool#swapY2X(DesireX) call
     /// @param x Amount of tokenX trader will acquire
     /// @param y Amount of tokenY trader will pay
     /// @param data Any dadta passed though by the msg.sender via the iZiSwapPool#swapY2X(DesireX) call
@@ -27,7 +27,7 @@ interface IiZiSwapCallback {
         bytes calldata data
     ) external;
 
-    /// @notice Called to msg.sender in iZiSwapPool#swapX2Y(DesireY) call.
+    /// @notice Called to msg.sender in iZiSwapPool#swapX2Y(DesireY) call
     /// @param x Amount of tokenX trader will pay
     /// @param y Amount of tokenY trader will require
     /// @param data Any dadta passed though by the msg.sender via the iZiSwapPool#swapX2Y(DesireY) call
@@ -41,7 +41,7 @@ interface IiZiSwapCallback {
 
 interface IiZiSwapAddLimOrderCallback {
 
-    /// @notice Called to msg.sender in iZiSwapPool#addLimOrderWithX(Y) call.
+    /// @notice Called to msg.sender in iZiSwapPool#addLimOrderWithX(Y) call
     /// @param x Amount of tokenX seller will pay
     /// @param y Amount of tokenY seller will pay
     /// @param data Any dadta passed though by the msg.sender via the iZiSwapPool#addLimOrderWithX(Y) call

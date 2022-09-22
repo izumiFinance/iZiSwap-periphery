@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 
 interface IiZiSwapFlashCallback {
+
     /// @notice Call the msg.sender after sending tokens in IiZiSwapPool#flash.
     /// @dev Must repay the tokens to the pool within one call.
     /// @param feeX the fee amount in tokenX due to the pool by the end of the flash
