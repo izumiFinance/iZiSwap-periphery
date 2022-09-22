@@ -52,7 +52,7 @@ async function getIzumiswapFactory(receiverAddr, swapX2YModule, swapY2XModule, l
     
     const iZiSwapFactory = await ethers.getContractFactory(iZiSwapJson.abi, iZiSwapJson.bytecode, signer);
 
-    const factory = await iZiSwapFactory.deploy(receiverAddr, swapX2YModule, swapY2XModule, liquidityModule, limitOrderModule, flashModule);
+    const factory = await iZiSwapFactory.deploy(receiverAddr, swapX2YModule, swapY2XModule, liquidityModule, limitOrderModule, flashModule, 50);
     await factory.deployed();
 
     await factory.enableFeeAmount(3000, 50);
