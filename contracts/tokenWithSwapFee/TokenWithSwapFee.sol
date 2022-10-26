@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/utils/Context.sol";
 import "../core/interfaces/IiZiSwapFactory.sol";
 import "../WrapToken.sol";
 
-interface Box {
+interface IBox {
     function isMintOrAddLiquidity() external view returns(bool);
 }
 
@@ -166,7 +166,7 @@ contract TokenWithSwapFee is Context, IERC20, IERC20Metadata, Ownable {
         }
         uint256 feeAmount = 0;
         if (recipient == wrapToken) {
-            if (!Box(box).isMintOrAddLiquidity()) {
+            if (!IBox(box).isMintOrAddLiquidity()) {
                 feeAmount = amount * feePercent / 100;
             }
         } else {
