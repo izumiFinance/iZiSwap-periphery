@@ -14,7 +14,7 @@ interface IERC20WithDecimals {
     function decimals() external view returns (uint8);
 }
 
-contract WrapToken is IWrapToken, Ownable, ERC20 {
+contract WrapToken is IWrapToken, ERC20 {
     using SafeERC20 for IERC20;
     
     address public override originToken;

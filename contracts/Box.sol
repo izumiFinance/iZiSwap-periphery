@@ -23,11 +23,12 @@ interface IWETH9 is IERC20 {
     function withdraw(uint256) external;
 }
 
-contract Box is Ownable, ReentrancyGuard {
+contract Box is ReentrancyGuard {
 
     using SafeERC20 for IERC20;
 
     uint256 private constant ADDR_SIZE = 20;
+    bool public isMintOrAddLiquidity = false;
 
     struct PeripheryAddr {
         address weth;
@@ -101,8 +102,10 @@ contract Box is Ownable, ReentrancyGuard {
         uint256 amountX,
         uint256 amountY
     ) {
+        isMintOrAddLiquidity = true;
         uint256 actualLimX = _recvTokenFromUser(mintParam.tokenX, tokenXIsWrap, mintParam.xLim);
         uint256 actualLimY = _recvTokenFromUser(mintParam.tokenY, tokenYIsWrap, mintParam.yLim);
+        delete isMintOrAddLiquidity;
         ILiquidityManager.MintParam memory actualParam = mintParam;
         actualParam.xLim = uint128(actualLimX);
         actualParam.yLim = uint128(actualLimY);
@@ -160,12 +163,14 @@ contract Box is Ownable, ReentrancyGuard {
         uint256 amountX,
         uint256 amountY
     ) {
+        isMintOrAddLiquidity = true;
         // no need to check lid, wrapTokenX, wrapTokenY
         // because core will revert unenough deposit
         // and this contract will not save any token(including eth) theorily
         // so we donot care that some one will steal token from this contract
         uint256 actualLimX = _recvTokenFromUser(tokenX, tokenXIsWrap, addParam.xLim);
         uint256 actualLimY = _recvTokenFromUser(tokenY, tokenYIsWrap, addParam.yLim);
+        delete isMintOrAddLiquidity;
         ILiquidityManager.AddLiquidityParam memory actualParam = addParam;
         actualParam.xLim = uint128(actualLimX);
         actualParam.yLim = uint128(actualLimY);
