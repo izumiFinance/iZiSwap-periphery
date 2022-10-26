@@ -1,5 +1,6 @@
 {
   "devDependencies": {
+    "@cronos-labs/hardhat-cronoscan": "^0.0.4",
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "chai": "^4.3.4",
