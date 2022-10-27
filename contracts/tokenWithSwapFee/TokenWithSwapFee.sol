@@ -14,12 +14,17 @@ interface IBox {
     function isMintOrAddLiquidity() external view returns(bool);
 }
 
+interface IDynamicRange {
+    function isDeposit() external view returns(bool);
+}
+
 contract TokenWithSwapFee is Context, IERC20, IERC20Metadata, Ownable {
     uint8 public override decimals;
     uint8 public feePercent;
 
     address public wrapToken;
     address public box;
+    address public dynamicRange;
     address public feeReceiver;
 
     mapping(address => uint256) private _balances;
@@ -140,10 +145,26 @@ contract TokenWithSwapFee is Context, IERC20, IERC20Metadata, Ownable {
 
         box = _box;
 
-        bytes32 warpTokenSalt = keccak256(abi.encode(address(this), _name, _symbol));
+        // bytes32 warpTokenSalt = keccak256(abi.encode(address(this), _name, _symbol));
         
-        wrapToken = address(new WrapToken{salt: warpTokenSalt}(address(this), _name, _symbol));
+        // wrapToken = address(new WrapToken{salt: warpTokenSalt}(address(this), _name, _symbol));
         feeReceiver = _feeReceiver;
+        dynamicRange = address(0);
+        wrapToken = address(0);
+    }
+
+    function setDynamicRange(address _dynamicRange) external onlyOwner {
+        // restrict owner to set only once
+        if (dynamicRange == address(0)) {
+            dynamicRange = _dynamicRange;
+        }
+    }
+
+    function setWrapToken(address _wrapToken) external onlyOwner {
+        // restrict owner to set only once
+        if (wrapToken == address(0)) {
+            wrapToken = _wrapToken;
+        }
     }
 
     function mint(address account, uint256 amount) public onlyOwner {
@@ -166,7 +187,16 @@ contract TokenWithSwapFee is Context, IERC20, IERC20Metadata, Ownable {
         }
         uint256 feeAmount = 0;
         if (recipient == wrapToken) {
-            if (!IBox(box).isMintOrAddLiquidity()) {
+            bool hasFee = true;
+            if (IBox(box).isMintOrAddLiquidity()) {
+                hasFee = false;
+            }
+            if (dynamicRange != address(0)) {
+                if (IDynamicRange(dynamicRange).isDeposit()) {
+                    hasFee = false;
+                }
+            }
+            if (hasFee) {
                 feeAmount = amount * feePercent / 100;
             }
         } else {
