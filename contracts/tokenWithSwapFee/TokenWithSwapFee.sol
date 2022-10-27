@@ -14,7 +14,7 @@ interface IBox {
     function isMintOrAddLiquidity() external view returns(bool);
 }
 
-interface IDynamicRange {
+interface IFarmWithWrap {
     function isDeposit() external view returns(bool);
 }
 
@@ -24,7 +24,7 @@ contract TokenWithSwapFee is Context, IERC20, IERC20Metadata, Ownable {
 
     address public wrapToken;
     address public box;
-    address public dynamicRange;
+    address public farm;
     address public feeReceiver;
 
     mapping(address => uint256) private _balances;
@@ -149,14 +149,14 @@ contract TokenWithSwapFee is Context, IERC20, IERC20Metadata, Ownable {
         
         // wrapToken = address(new WrapToken{salt: warpTokenSalt}(address(this), _name, _symbol));
         feeReceiver = _feeReceiver;
-        dynamicRange = address(0);
+        farm = address(0);
         wrapToken = address(0);
     }
 
-    function setDynamicRange(address _dynamicRange) external onlyOwner {
+    function setFarm(address _farm) external onlyOwner {
         // restrict owner to set only once
-        if (dynamicRange == address(0)) {
-            dynamicRange = _dynamicRange;
+        if (farm == address(0)) {
+            farm = _farm;
         }
     }
 
@@ -191,8 +191,8 @@ contract TokenWithSwapFee is Context, IERC20, IERC20Metadata, Ownable {
             if (IBox(box).isMintOrAddLiquidity()) {
                 hasFee = false;
             }
-            if (dynamicRange != address(0)) {
-                if (IDynamicRange(dynamicRange).isDeposit()) {
+            if (farm != address(0)) {
+                if (IFarmWithWrap(farm).isDeposit()) {
                     hasFee = false;
                 }
             }
