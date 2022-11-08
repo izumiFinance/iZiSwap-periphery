@@ -238,12 +238,6 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
         }
     }
 
-    function _unwrapEthAndTransfer(address to, uint256 value) private {
-        IWETH9(WETH9).withdraw(value);
-        (bool success, ) = to.call{value: value}(new bytes(0));
-        require(success, "STE");
-    }
-
     function _swapBefore(
         address pool,
         AddLimOrderParam memory addLimitOrderParam
@@ -290,7 +284,7 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
                 }
                 if (addLimitOrderParam.tokenY == WETH9 && acquireY > 0) {
                     // refund eth
-                    _unwrapEthAndTransfer(msg.sender, acquireY);
+                    IWETH9(WETH9).withdraw(acquireY);
                 }
             }
         } else {
@@ -324,7 +318,7 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
             }
             if (addLimitOrderParam.tokenX == WETH9 && acquireX > 0) {
                 // refund eth
-                _unwrapEthAndTransfer(msg.sender, acquireX);
+                IWETH9(WETH9).withdraw(acquireX);
             }
         }
     }
