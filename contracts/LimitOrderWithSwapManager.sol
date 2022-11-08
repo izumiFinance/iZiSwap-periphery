@@ -288,37 +288,39 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
                 }
             }
         } else {
-            uint256 costY;
-            uint256 acquireX;
-            address recipient = (addLimitOrderParam.tokenX == WETH9) ? address(this) : msg.sender;
-            if (addLimitOrderParam.isDesireMode) {
-                (costY, acquireX) = IiZiSwapPool(pool).swapY2XDesireX(
-                    recipient, addLimitOrderParam.amount, addLimitOrderParam.pt,
-                    abi.encode(SwapCallbackData({
-                        tokenX: addLimitOrderParam.tokenX, 
-                        fee: addLimitOrderParam.fee, 
-                        tokenY: addLimitOrderParam.tokenY, 
-                        payer: msg.sender
-                    }))
-                );
-                remainAmount = acquireX < uint256(addLimitOrderParam.amount) ? addLimitOrderParam.amount - uint128(acquireX) : 0;
-                acquireBeforeSwap = uint128(acquireX);
-            } else {
-                (costY, acquireX) = IiZiSwapPool(pool).swapY2X(
-                    recipient, addLimitOrderParam.amount, addLimitOrderParam.pt,
-                    abi.encode(SwapCallbackData({
-                        tokenX: addLimitOrderParam.tokenX, 
-                        fee: addLimitOrderParam.fee, 
-                        tokenY: addLimitOrderParam.tokenY, 
-                        payer: msg.sender
-                    }))
-                );
-                remainAmount = costY < uint256(addLimitOrderParam.amount) ? addLimitOrderParam.amount - uint128(costY) : 0;
-                acquireBeforeSwap = uint128(acquireX);
-            }
-            if (addLimitOrderParam.tokenX == WETH9 && acquireX > 0) {
-                // refund eth
-                IWETH9(WETH9).withdraw(acquireX);
+            if (addLimitOrderParam.pt > currentPoint) {
+                uint256 costY;
+                uint256 acquireX;
+                address recipient = (addLimitOrderParam.tokenX == WETH9) ? address(this) : msg.sender;
+                if (addLimitOrderParam.isDesireMode) {
+                    (costY, acquireX) = IiZiSwapPool(pool).swapY2XDesireX(
+                        recipient, addLimitOrderParam.amount, addLimitOrderParam.pt,
+                        abi.encode(SwapCallbackData({
+                            tokenX: addLimitOrderParam.tokenX, 
+                            fee: addLimitOrderParam.fee, 
+                            tokenY: addLimitOrderParam.tokenY, 
+                            payer: msg.sender
+                        }))
+                    );
+                    remainAmount = acquireX < uint256(addLimitOrderParam.amount) ? addLimitOrderParam.amount - uint128(acquireX) : 0;
+                    acquireBeforeSwap = uint128(acquireX);
+                } else {
+                    (costY, acquireX) = IiZiSwapPool(pool).swapY2X(
+                        recipient, addLimitOrderParam.amount, addLimitOrderParam.pt,
+                        abi.encode(SwapCallbackData({
+                            tokenX: addLimitOrderParam.tokenX, 
+                            fee: addLimitOrderParam.fee, 
+                            tokenY: addLimitOrderParam.tokenY, 
+                            payer: msg.sender
+                        }))
+                    );
+                    remainAmount = costY < uint256(addLimitOrderParam.amount) ? addLimitOrderParam.amount - uint128(costY) : 0;
+                    acquireBeforeSwap = uint128(acquireX);
+                }
+                if (addLimitOrderParam.tokenX == WETH9 && acquireX > 0) {
+                    // refund eth
+                    IWETH9(WETH9).withdraw(acquireX);
+                }
             }
         }
     }
