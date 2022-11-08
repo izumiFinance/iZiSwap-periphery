@@ -397,6 +397,7 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
                 active: true
             }));
         }
+        if (address(this).balance > 0) safeTransferETH(msg.sender, address(this).balance);
         emit NewLimitOrder(pool, addLimitOrderParam.pt, msg.sender, addLimitOrderParam.amount, orderAmount, acquire, addLimitOrderParam.sellXEarnY);
     }
 
