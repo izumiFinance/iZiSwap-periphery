@@ -294,7 +294,7 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
                 address recipient = (addLimitOrderParam.tokenX == WETH9) ? address(this) : msg.sender;
                 if (addLimitOrderParam.isDesireMode) {
                     (costY, acquireX) = IiZiSwapPool(pool).swapY2XDesireX(
-                        recipient, addLimitOrderParam.amount, addLimitOrderParam.pt,
+                        recipient, addLimitOrderParam.amount, addLimitOrderParam.pt + 1,
                         abi.encode(SwapCallbackData({
                             tokenX: addLimitOrderParam.tokenX, 
                             fee: addLimitOrderParam.fee, 
@@ -306,7 +306,7 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
                     acquireBeforeSwap = uint128(acquireX);
                 } else {
                     (costY, acquireX) = IiZiSwapPool(pool).swapY2X(
-                        recipient, addLimitOrderParam.amount, addLimitOrderParam.pt,
+                        recipient, addLimitOrderParam.amount, addLimitOrderParam.pt + 1,
                         abi.encode(SwapCallbackData({
                             tokenX: addLimitOrderParam.tokenX, 
                             fee: addLimitOrderParam.fee, 
