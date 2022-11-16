@@ -241,7 +241,7 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
     function _swapBefore(
         address pool,
         AddLimOrderParam memory addLimitOrderParam
-    ) private returns (uint128 remainAmount, uint128 acquireBeforeSwap) {
+    ) private returns (uint128 remainAmount, uint128 acquireBeforeSwap, bool swapOut) {
         remainAmount = addLimitOrderParam.amount;
         (
             ,
@@ -323,6 +323,7 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
                 }
             }
         }
+        swapOut = (remainAmount <= addLimitOrderParam.amount / 10000);
     }
 
     /// @notice Create a limit order for recipient.
@@ -340,7 +341,13 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
         AddLimOrderParam memory addLimitOrderParam = originAddLimitOrderParam;
         
         address pool = IiZiSwapFactory(factory).pool(addLimitOrderParam.tokenX, addLimitOrderParam.tokenY, addLimitOrderParam.fee);
-        (addLimitOrderParam.amount, acquireBeforeSwap) = _swapBefore(pool, addLimitOrderParam);
+        bool swapOut;
+        (addLimitOrderParam.amount, acquireBeforeSwap, swapOut) = _swapBefore(pool, addLimitOrderParam);
+        if (swapOut) {
+            // swap out
+            if (address(this).balance > 0) safeTransferETH(msg.sender, address(this).balance);
+            return (0, acquireBeforeSwap, 0);
+        }
         if (addLimitOrderParam.isDesireMode) {
             // transform desire amount to sell amount
             uint160 sqrtPrice = LogPowMath.getSqrtPrice(addLimitOrderParam.pt);
@@ -353,10 +360,6 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
             }
             // no need to write following line
             addLimitOrderParam.isDesireMode = false;
-        }
-        if (addLimitOrderParam.amount == 0) {
-            // swap out
-            return (0, acquireBeforeSwap, 0);
         }
         (orderAmount, acquire) = _addLimOrder(pool, addLimitOrderParam);
         (uint256 accEarn, , ) = getEarn(pool, address(this), addLimitOrderParam.pt, addLimitOrderParam.sellXEarnY);
