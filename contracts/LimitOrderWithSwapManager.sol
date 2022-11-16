@@ -216,6 +216,7 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
         // if isDesireMode is true, acquire amount
         // otherwise, sell amount
         uint128 amount;
+        uint256 swapMinAcquired;
         // sell tokenX or sell tokenY
         bool sellXEarnY;
 
@@ -267,6 +268,7 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
                             payer: msg.sender
                         }))
                     );
+                    require(acquireY >= addLimitOrderParam.swapMinAcquired, "X2YDesireYAcquired");
                     remainAmount = acquireY < uint256(addLimitOrderParam.amount) ? addLimitOrderParam.amount - uint128(acquireY) : 0;
                     acquireBeforeSwap = uint128(acquireY);
                 } else {
@@ -279,6 +281,7 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
                             payer: msg.sender
                         }))
                     );
+                    require(acquireY >= addLimitOrderParam.swapMinAcquired, "X2YAcquired");
                     remainAmount = costX < uint256(addLimitOrderParam.amount) ? addLimitOrderParam.amount - uint128(costX) : 0;
                     acquireBeforeSwap = uint128(acquireY);
                 }
@@ -302,6 +305,7 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
                             payer: msg.sender
                         }))
                     );
+                    require(acquireX >= addLimitOrderParam.swapMinAcquired, "Y2XDesireXAcquired");
                     remainAmount = acquireX < uint256(addLimitOrderParam.amount) ? addLimitOrderParam.amount - uint128(acquireX) : 0;
                     acquireBeforeSwap = uint128(acquireX);
                 } else {
@@ -314,6 +318,7 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
                             payer: msg.sender
                         }))
                     );
+                    require(acquireX >= addLimitOrderParam.swapMinAcquired, "Y2XAcquired");
                     remainAmount = costY < uint256(addLimitOrderParam.amount) ? addLimitOrderParam.amount - uint128(costY) : 0;
                     acquireBeforeSwap = uint128(acquireX);
                 }
