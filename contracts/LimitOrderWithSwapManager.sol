@@ -220,6 +220,8 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
         // sell tokenX or sell tokenY
         bool sellXEarnY;
 
+        bool earnWrapETH;
+
         uint256 deadline;
     }
 
@@ -257,7 +259,8 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
             if (addLimitOrderParam.pt < currentPoint) {
                 uint256 costX;
                 uint256 acquireY;
-                address recipient = (addLimitOrderParam.tokenY == WETH9) ? address(this) : msg.sender;
+                bool earnETH = addLimitOrderParam.tokenY == WETH9 && !addLimitOrderParam.earnWrapETH;
+                address recipient = earnETH ? address(this) : msg.sender;
                 if (addLimitOrderParam.isDesireMode) {
                     (costX, acquireY) = IiZiSwapPool(pool).swapX2YDesireY(
                         recipient, addLimitOrderParam.amount, addLimitOrderParam.pt,
@@ -285,7 +288,7 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
                     remainAmount = costX < uint256(addLimitOrderParam.amount) ? addLimitOrderParam.amount - uint128(costX) : 0;
                     acquireBeforeSwap = uint128(acquireY);
                 }
-                if (addLimitOrderParam.tokenY == WETH9 && acquireY > 0) {
+                if (earnETH && acquireY > 0) {
                     // refund eth
                     IWETH9(WETH9).withdraw(acquireY);
                 }
@@ -294,7 +297,8 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
             if (addLimitOrderParam.pt > currentPoint) {
                 uint256 costY;
                 uint256 acquireX;
-                address recipient = (addLimitOrderParam.tokenX == WETH9) ? address(this) : msg.sender;
+                bool earnETH = addLimitOrderParam.tokenX == WETH9 && !addLimitOrderParam.earnWrapETH;
+                address recipient = earnETH ? address(this) : msg.sender;
                 if (addLimitOrderParam.isDesireMode) {
                     (acquireX, costY) = IiZiSwapPool(pool).swapY2XDesireX(
                         recipient, addLimitOrderParam.amount, addLimitOrderParam.pt + 1,
@@ -322,7 +326,7 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
                     remainAmount = costY < uint256(addLimitOrderParam.amount) ? addLimitOrderParam.amount - uint128(costY) : 0;
                     acquireBeforeSwap = uint128(acquireX);
                 }
-                if (addLimitOrderParam.tokenX == WETH9 && acquireX > 0) {
+                if (earnETH && acquireX > 0) {
                     // refund eth
                     IWETH9(WETH9).withdraw(acquireX);
                 }
