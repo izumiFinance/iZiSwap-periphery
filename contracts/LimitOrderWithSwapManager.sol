@@ -28,7 +28,7 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
     /// @param amount amount of token ready to sell
     /// @param sellingRemain amount of selling token remained after successfully create this limit order
     /// @param earn amount of acquired token after successfully create this limit order
-    /// @param sellXEaryY true if this order sell tokenX, false if sell tokenY
+    /// @param sellXEarnY true if this order sell tokenX, false if sell tokenY
     event NewLimitOrder(
         address pool,
         int24 point,
@@ -36,7 +36,22 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
         uint128 amount,
         uint128 sellingRemain,
         uint128 earn,
-        bool sellXEaryY
+        bool sellXEarnY
+    );
+    /// @notice Emitted when user preswap AND SWAP OUT before adding limit order
+    /// @param tokenX address of tokenX
+    /// @param tokenY address of tokenY
+    /// @param fee fee amount of swap pool
+    /// @param sellXEarnY true if this order sell tokenX, false if sell tokenY
+    /// @param amountX amount of tokenX during swap
+    /// @param amountY amount of tokenY during swap
+    event PreSwapOut(
+        address tokenX,
+        address tokenY,
+        uint24 fee,
+        bool sellXEarnY,
+        uint128 amountX,
+        uint128 amountY
     );
     /// @notice Emitted when user dec or update his limit order
     /// @param pool address of swap pool
@@ -242,11 +257,24 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
         }
     }
 
+    struct SwapBeforeResult {
+        uint128 remainAmount;
+        uint128 costBeforeSwap;
+        uint128 acquireBeforeSwap;
+        bool swapOut;
+    }
+
     function _swapBefore(
         address pool,
         AddLimOrderParam memory addLimitOrderParam
-    ) private returns (uint128 remainAmount, uint128 acquireBeforeSwap, bool swapOut) {
-        remainAmount = addLimitOrderParam.amount;
+    ) private returns (SwapBeforeResult memory) {
+        SwapBeforeResult memory result = SwapBeforeResult({
+            remainAmount: 0,
+            costBeforeSwap: 0,
+            acquireBeforeSwap: 0,
+            swapOut: false
+        });
+        result.remainAmount = addLimitOrderParam.amount;
         (
             ,
             int24 currentPoint,
@@ -273,8 +301,7 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
                         }))
                     );
                     require(acquireY >= addLimitOrderParam.swapMinAcquired, "X2YDesireYAcquired");
-                    remainAmount = acquireY < uint256(addLimitOrderParam.amount) ? addLimitOrderParam.amount - uint128(acquireY) : 0;
-                    acquireBeforeSwap = uint128(acquireY);
+                    result.remainAmount = acquireY < uint256(addLimitOrderParam.amount) ? addLimitOrderParam.amount - uint128(acquireY) : 0;
                 } else {
                     (costX, acquireY) = IiZiSwapPool(pool).swapX2Y(
                         recipient, addLimitOrderParam.amount, addLimitOrderParam.pt,
@@ -286,9 +313,10 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
                         }))
                     );
                     require(acquireY >= addLimitOrderParam.swapMinAcquired, "X2YAcquired");
-                    remainAmount = costX < uint256(addLimitOrderParam.amount) ? addLimitOrderParam.amount - uint128(costX) : 0;
-                    acquireBeforeSwap = uint128(acquireY);
+                    result.remainAmount = costX < uint256(addLimitOrderParam.amount) ? addLimitOrderParam.amount - uint128(costX) : 0;
                 }
+                result.acquireBeforeSwap = Converter.toUint128(acquireY);
+                result.costBeforeSwap = Converter.toUint128(costX);
                 if (earnETH && acquireY > 0) {
                     // refund eth
                     IWETH9(WETH9).withdraw(acquireY);
@@ -311,8 +339,7 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
                         }))
                     );
                     require(acquireX >= addLimitOrderParam.swapMinAcquired, "Y2XDesireXAcquired");
-                    remainAmount = acquireX < uint256(addLimitOrderParam.amount) ? addLimitOrderParam.amount - uint128(acquireX) : 0;
-                    acquireBeforeSwap = uint128(acquireX);
+                    result.remainAmount = acquireX < uint256(addLimitOrderParam.amount) ? addLimitOrderParam.amount - uint128(acquireX) : 0;
                 } else {
                     (acquireX, costY) = IiZiSwapPool(pool).swapY2X(
                         recipient, addLimitOrderParam.amount, addLimitOrderParam.pt + 1,
@@ -324,39 +351,51 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
                         }))
                     );
                     require(acquireX >= addLimitOrderParam.swapMinAcquired, "Y2XAcquired");
-                    remainAmount = costY < uint256(addLimitOrderParam.amount) ? addLimitOrderParam.amount - uint128(costY) : 0;
-                    acquireBeforeSwap = uint128(acquireX);
+                    result.remainAmount = costY < uint256(addLimitOrderParam.amount) ? addLimitOrderParam.amount - uint128(costY) : 0;
                 }
+                result.acquireBeforeSwap = Converter.toUint128(acquireX);
+                result.costBeforeSwap = Converter.toUint128(costY);
                 if (earnETH && acquireX > 0) {
                     // refund eth
                     IWETH9(WETH9).withdraw(acquireX);
                 }
             }
         }
-        swapOut = (remainAmount <= addLimitOrderParam.amount / 10000);
+        result.swapOut = (result.remainAmount <= addLimitOrderParam.amount / 10000);
+        return result;
     }
 
     /// @notice Create a limit order for recipient.
     /// @param idx slot in the addr2ActiveOrder[msg.sender]
     /// @param originAddLimitOrderParam describe params of added limit order, see AddLimOrderParam for more
     /// @return orderAmount actual amount of token added in limit order
+    /// @return costBeforeSwap amount of token cost if we need to swap before add limit order
     /// @return acquireBeforeSwap amount of token acquired if we need to swap before add limit order
     /// @return acquire amount of token acquired if there is a limit order to sell the other token before adding
     function newLimOrder(
         uint256 idx,
         AddLimOrderParam calldata originAddLimitOrderParam
-    ) external payable notPause checkDeadline(originAddLimitOrderParam.deadline) returns (uint128 orderAmount, uint128 acquireBeforeSwap, uint128 acquire) {
+    ) external payable notPause checkDeadline(originAddLimitOrderParam.deadline) returns (uint128 orderAmount, uint128 costBeforeSwap, uint128 acquireBeforeSwap, uint128 acquire) {
         require(originAddLimitOrderParam.tokenX < originAddLimitOrderParam.tokenY, 'x<y');
 
         AddLimOrderParam memory addLimitOrderParam = originAddLimitOrderParam;
         
         address pool = IiZiSwapFactory(factory).pool(addLimitOrderParam.tokenX, addLimitOrderParam.tokenY, addLimitOrderParam.fee);
-        bool swapOut;
-        (addLimitOrderParam.amount, acquireBeforeSwap, swapOut) = _swapBefore(pool, addLimitOrderParam);
-        if (swapOut) {
+
+        SwapBeforeResult memory swapBeforeResult = _swapBefore(pool, addLimitOrderParam);
+        addLimitOrderParam.amount = swapBeforeResult.remainAmount;
+        if (swapBeforeResult.swapOut) {
             // swap out
             if (address(this).balance > 0) safeTransferETH(msg.sender, address(this).balance);
-            return (0, acquireBeforeSwap, 0);
+            emit PreSwapOut(
+                originAddLimitOrderParam.tokenX,
+                originAddLimitOrderParam.tokenY,
+                originAddLimitOrderParam.fee,
+                originAddLimitOrderParam.sellXEarnY,
+                originAddLimitOrderParam.sellXEarnY ? costBeforeSwap : acquireBeforeSwap,
+                originAddLimitOrderParam.sellXEarnY ? acquireBeforeSwap : costBeforeSwap
+            );
+            return (0, swapBeforeResult.costBeforeSwap, swapBeforeResult.acquireBeforeSwap, 0);
         }
         if (addLimitOrderParam.isDesireMode) {
             // transform desire amount to sell amount
@@ -380,10 +419,11 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
             require(limOrders[idx].active == false, 'active conflict!');
             limOrders[idx] = LimOrder({
                 pt: addLimitOrderParam.pt,
-                amount: addLimitOrderParam.amount,
+                amount: addLimitOrderParam.amount + swapBeforeResult.costBeforeSwap,
                 sellingRemain: orderAmount,
                 accSellingDec: 0,
                 sellingDec: 0,
+                // donot add acquireBeforeSwap, because we have collected them
                 earn: acquire,
                 lastAccEarn: accEarn,
                 poolId: poolId,
@@ -394,10 +434,11 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
         } else {
             limOrders.push(LimOrder({
                 pt: addLimitOrderParam.pt,
-                amount: addLimitOrderParam.amount,
+                amount: addLimitOrderParam.amount + swapBeforeResult.costBeforeSwap,
                 sellingRemain: orderAmount,
                 accSellingDec: 0,
                 sellingDec: 0,
+                // donot add acquireBeforeSwap, because we have collected them
                 earn: acquire,
                 lastAccEarn: accEarn,
                 poolId: poolId,
