@@ -263,14 +263,19 @@ async function updateOrder(seller, orderIdx, limorderManager) {
 async function collectLimOrderWithX(seller, tokenX, tokenY, recipientAddress, orderIdx, limorderManager, collectDec, collectEarn) {
     const amountXBefore = (await tokenX.balanceOf(recipientAddress)).toString();
     const amountYBefore = (await tokenY.balanceOf(recipientAddress)).toString();
+    let ok = true
+    let error = undefined
     try {
     await limorderManager.connect(seller).collectLimOrder(recipientAddress, orderIdx, collectDec, collectEarn)
     } catch (err) {
-
+        ok = false
+        error = err
     }
     const amountXAfter = (await tokenX.balanceOf(recipientAddress)).toString();
     const amountYAfter = (await tokenY.balanceOf(recipientAddress)).toString();
     return {
+        ok,
+        error,
         collectDec: stringMinus(amountXAfter, amountXBefore),
         collectEarn: stringMinus(amountYAfter, amountYBefore)
     }
@@ -350,6 +355,13 @@ async function addLiquidity(nflm, miner, tokenX, tokenY, fee, pl, pr, amountX, a
     );
 }
 
+function getRevertString(originStr) {
+    const substr = 'reverted with reason string '
+    const start = originStr.indexOf(substr) + substr.length + 1
+    const end = originStr.indexOf("'", start)
+    return originStr.slice(start, end)
+}
+
 
 module.exports ={
     getPoolParts,
@@ -381,4 +393,5 @@ module.exports ={
     stringDivCeil,
     stringDiv,
     getSum,
+    getRevertString
 }
