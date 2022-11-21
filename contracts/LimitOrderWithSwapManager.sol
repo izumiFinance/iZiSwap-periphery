@@ -15,8 +15,9 @@ import "./libraries/LimOrderCircularQueue.sol";
 import "./libraries/Converter.sol";
 
 import "./base/base.sol";
+import "./base/Switch.sol";
 
-contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwapCallback {
+contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback, IiZiSwapCallback {
 
     using LimOrderCircularQueue for LimOrderCircularQueue.Queue;
 
@@ -115,7 +116,7 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
         uint256 x,
         uint256 y,
         bytes calldata data
-    ) external override {
+    ) external override notPause {
         LimCallbackData memory dt = abi.decode(data, (LimCallbackData));
         verify(dt.tokenX, dt.tokenY, dt.fee);
         if (x > 0) {
@@ -141,7 +142,7 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
         uint256 x,
         uint256 y,
         bytes calldata data
-    ) external override {
+    ) external override notPause {
         SwapCallbackData memory dt = abi.decode(data, (SwapCallbackData));
         verify(dt.tokenX, dt.tokenY, dt.fee);
         pay(dt.tokenY, dt.payer, msg.sender, y);
@@ -155,7 +156,7 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
         uint256 x,
         uint256 y,
         bytes calldata data
-    ) external override {
+    ) external override notPause {
         SwapCallbackData memory dt = abi.decode(data, (SwapCallbackData));
         verify(dt.tokenX, dt.tokenY, dt.fee);
         pay(dt.tokenX, dt.payer, msg.sender, x);
@@ -344,7 +345,7 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
     function newLimOrder(
         uint256 idx,
         AddLimOrderParam calldata originAddLimitOrderParam
-    ) external payable checkDeadline(originAddLimitOrderParam.deadline) returns (uint128 orderAmount, uint128 acquireBeforeSwap, uint128 acquire) {
+    ) external payable notPause checkDeadline(originAddLimitOrderParam.deadline) returns (uint128 orderAmount, uint128 acquireBeforeSwap, uint128 acquire) {
         require(originAddLimitOrderParam.tokenX < originAddLimitOrderParam.tokenY, 'x<y');
 
         AddLimOrderParam memory addLimitOrderParam = originAddLimitOrderParam;
@@ -546,7 +547,7 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
     /// @return earn amount of earned token this limit order can claim
     function updateOrder(
         uint256 orderIdx
-    ) external checkActive(orderIdx) returns (uint256 earn) {
+    ) external notPause checkActive(orderIdx) returns (uint256 earn) {
         LimOrder storage order = addr2ActiveOrder[msg.sender][orderIdx];
         address pool = poolAddrs[order.poolId];
         earn = _updateOrder(order, pool);
@@ -561,7 +562,7 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
         uint256 orderIdx,
         uint128 amount,
         uint256 deadline
-    ) external checkActive(orderIdx) checkDeadline(deadline) returns (uint128 actualDelta) {
+    ) external notPause checkActive(orderIdx) checkDeadline(deadline) returns (uint128 actualDelta) {
         require(amount > 0, "A0");
         LimOrder storage order = addr2ActiveOrder[msg.sender][orderIdx];
         address pool = poolAddrs[order.poolId];
@@ -602,7 +603,7 @@ contract LimitOrderWithSwapManager is Base, IiZiSwapAddLimOrderCallback, IiZiSwa
         uint256 orderIdx,
         uint128 collectDec,
         uint128 collectEarn
-    ) external checkActive(orderIdx) returns (uint128 actualCollectDec, uint128 actualCollectEarn) {
+    ) external notPause checkActive(orderIdx) returns (uint128 actualCollectDec, uint128 actualCollectEarn) {
         LimOrder storage order = addr2ActiveOrder[msg.sender][orderIdx];
         address pool = poolAddrs[order.poolId];
         // update order first
