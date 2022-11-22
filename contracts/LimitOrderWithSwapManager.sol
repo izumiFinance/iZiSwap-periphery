@@ -38,20 +38,18 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
         uint128 earn,
         bool sellXEarnY
     );
-    /// @notice Emitted when user preswap AND SWAP OUT before adding limit order
-    /// @param tokenX address of tokenX
-    /// @param tokenY address of tokenY
+    /// @notice Emitted when user preswap AND SWAP OUT or do market swap before adding limit order
+    /// @param tokenIn address of tokenIn (user payed to swap pool)
+    /// @param tokenOut address of tokenOut (user acquired from swap pool)
     /// @param fee fee amount of swap pool
-    /// @param sellXEarnY true if this order sell tokenX, false if sell tokenY
-    /// @param amountX amount of tokenX during swap
-    /// @param amountY amount of tokenY during swap
-    event PreSwapOut(
-        address tokenX,
-        address tokenY,
+    /// @param amountIn amount of tokenIn during swap
+    /// @param amountOut amount of tokenOut during swap
+    event MarketSwap(
+        address tokenIn,
+        address tokenOut,
         uint24 fee,
-        bool sellXEarnY,
-        uint128 amountX,
-        uint128 amountY
+        uint128 amountIn,
+        uint128 amountOut
     );
     /// @notice Emitted when user dec or update his limit order
     /// @param pool address of swap pool
@@ -387,13 +385,12 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
         if (swapBeforeResult.swapOut) {
             // swap out
             if (address(this).balance > 0) safeTransferETH(msg.sender, address(this).balance);
-            emit PreSwapOut(
-                originAddLimitOrderParam.tokenX,
-                originAddLimitOrderParam.tokenY,
+            emit MarketSwap(
+                originAddLimitOrderParam.sellXEarnY ? originAddLimitOrderParam.tokenX : originAddLimitOrderParam.tokenY,
+                originAddLimitOrderParam.sellXEarnY ? originAddLimitOrderParam.tokenY : originAddLimitOrderParam.tokenX,
                 originAddLimitOrderParam.fee,
-                originAddLimitOrderParam.sellXEarnY,
-                originAddLimitOrderParam.sellXEarnY ? costBeforeSwap : acquireBeforeSwap,
-                originAddLimitOrderParam.sellXEarnY ? acquireBeforeSwap : costBeforeSwap
+                costBeforeSwap,
+                acquireBeforeSwap
             );
             return (0, swapBeforeResult.costBeforeSwap, swapBeforeResult.acquireBeforeSwap, 0);
         }
