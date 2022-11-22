@@ -21,20 +21,6 @@ contract Swap is Base, IiZiSwapCallback {
         address payer;
     }
 
-    /// @notice Emitted when user swap successfully by calling x2y/y2x/x2yDesire/y2xDesire
-    /// @param tokenIn address of payed token
-    /// @param tokenOut address of acquired token
-    /// @param fee fee amount of swap pool
-    /// @param amountIn amount of tokenIn during swap
-    /// @param amountOut amount of tokenOut during swap
-    event SwapSinglePool(
-        address tokenIn,
-        address tokenOut,
-        uint24 fee,
-        uint256 amountIn,
-        uint256 amountOut
-    );
-
     /// @notice constructor to create this contract
     /// @param _factory address of iZiSwapFactory
     /// @param _weth address of weth token
@@ -275,13 +261,11 @@ contract Swap is Base, IiZiSwapCallback {
         address poolAddr = pool(swapParams.tokenX, swapParams.tokenY, swapParams.fee);
         address payer = msg.sender;
         address recipient = (swapParams.recipient == address(0)) ? address(this): swapParams.recipient;
-        ExchangeAmount memory amount;
-        (amount.amountX, amount.amountY) = IiZiSwapPool(poolAddr).swapY2X(
+        (uint256 amountX, ) = IiZiSwapPool(poolAddr).swapY2X(
             recipient, swapParams.amount, swapParams.boundaryPt,
             abi.encode(SwapCallbackData({path: abi.encodePacked(swapParams.tokenY, swapParams.fee, swapParams.tokenX), payer: payer}))
         );
-        require(amount.amountX >= swapParams.minAcquired, "XMIN");
-        emit SwapSinglePool(swapParams.tokenY, swapParams.tokenX, swapParams.fee, amount.amountY, amount.amountX);
+        require(amountX >= swapParams.minAcquired, "XMIN");
     }
 
     /// @notice Swap tokenY for tokenX, given user's desired amount of tokenX.
@@ -302,7 +286,6 @@ contract Swap is Base, IiZiSwapCallback {
             require(amount.amountX >= swapParams.amount, 'Too much requested in swapY2XDesireX');
         }
         require(amount.amountY <= swapParams.maxPayed, "YMAX");
-        emit SwapSinglePool(swapParams.tokenY, swapParams.tokenX, swapParams.fee, amount.amountY, amount.amountX);
     }
 
     /// @notice Swap tokenX for tokenY, given max amount of tokenX user willing to pay.
@@ -314,13 +297,11 @@ contract Swap is Base, IiZiSwapCallback {
         address poolAddr = pool(swapParams.tokenX, swapParams.tokenY, swapParams.fee);
         address payer = msg.sender;
         address recipient = (swapParams.recipient == address(0)) ? address(this): swapParams.recipient;
-        ExchangeAmount memory amount;
-        (amount.amountX, amount.amountY) = IiZiSwapPool(poolAddr).swapX2Y(
+        (, uint256 amountY) = IiZiSwapPool(poolAddr).swapX2Y(
             recipient, swapParams.amount, swapParams.boundaryPt,
             abi.encode(SwapCallbackData({path: abi.encodePacked(swapParams.tokenX, swapParams.fee, swapParams.tokenY), payer: payer}))
         );
-        require(amount.amountY >= swapParams.minAcquired, "YMIN");
-        emit SwapSinglePool(swapParams.tokenX, swapParams.tokenY, swapParams.fee, amount.amountX, amount.amountY);
+        require(amountY >= swapParams.minAcquired, "YMIN");
     }
 
     /// @notice Swap tokenX for tokenY, given amount of tokenY user desires.
@@ -341,7 +322,6 @@ contract Swap is Base, IiZiSwapCallback {
         if (swapParams.boundaryPt == -800001) {
             require(amount.amountY >= swapParams.amount, 'Too much requested in swapX2YDesireY');
         }
-        emit SwapSinglePool(swapParams.tokenX, swapParams.tokenY, swapParams.fee, amount.amountX, amount.amountY);
     }
     
 }
