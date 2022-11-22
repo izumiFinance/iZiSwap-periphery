@@ -77,7 +77,7 @@ contract SwapSingle is Switch, Base, IiZiSwapCallback {
     
     function swapDesireSingle(
         SwapParams calldata params
-    ) external notPause checkDeadline(params.deadline) {
+    ) external payable notPause checkDeadline(params.deadline) {
         // allow swapping to the router address with address 0
         address recipient = params.recipient == address(0) ? address(this) : params.recipient;
         address poolAddr = pool(params.tokenOut, params.tokenIn, params.fee);
@@ -115,7 +115,7 @@ contract SwapSingle is Switch, Base, IiZiSwapCallback {
 
     function swapAmountSingle(
         SwapParams calldata params
-    ) external notPause checkDeadline(params.deadline) {
+    ) external payable notPause checkDeadline(params.deadline) {
         // allow swapping to the router address with address 0
         address recipient = params.recipient == address(0) ? address(this) : params.recipient;
         address poolAddr = pool(params.tokenOut, params.tokenIn, params.fee);
