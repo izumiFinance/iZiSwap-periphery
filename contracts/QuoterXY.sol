@@ -66,8 +66,7 @@ contract QuoterXY is Base, IiZiSwapCallback {
         pure
         returns (
             uint256 amountX,
-            uint256 amountY,
-            int24 currPt
+            uint256 amountY
         )
     {
         if (reason.length != 64) {
@@ -77,7 +76,7 @@ contract QuoterXY is Base, IiZiSwapCallback {
             }
             revert(abi.decode(reason, (string)));
         }
-        return abi.decode(reason, (uint256, uint256, int24));
+        return abi.decode(reason, (uint256, uint256));
     }
 
     /// @notice Callback for swapY2X and swapY2XDesireX, in order to mark computed-amount of token and point after exchange.
@@ -108,7 +107,6 @@ contract QuoterXY is Base, IiZiSwapCallback {
                 let ptr := mload(0x40)
                 mstore(ptr, x)
                 mstore(add(ptr, 0x20), y)
-                mstore(add(ptr, 0x40), currPt)
                 revert(ptr, 64)
             }
         } else {
@@ -163,7 +161,6 @@ contract QuoterXY is Base, IiZiSwapCallback {
                 let ptr := mload(0x40)
                 mstore(ptr, x)
                 mstore(add(ptr, 0x20), y)
-                mstore(add(ptr, 0x40), currPt)
                 revert(ptr, 64)
             }
         } else {
@@ -320,14 +317,13 @@ contract QuoterXY is Base, IiZiSwapCallback {
     /// @param highPt highest point during exchange
     /// @return amountX estimated amount of tokenX user would acquire
     /// @return amountY estimated amount of tokenX user would cost
-    /// @return finalPoint estimated point of pool after swap
     function swapY2X(
         address tokenX,
         address tokenY,
         uint24 fee,
         uint128 amount,
         int24 highPt
-    ) public returns (uint256 amountX, uint256 amountY, int24 finalPoint) {
+    ) public returns (uint256 amountX, uint256 amountY) {
         require(tokenX < tokenY, "x<y");
         address poolAddr = pool(tokenX, tokenY, fee);
         try
@@ -336,7 +332,7 @@ contract QuoterXY is Base, IiZiSwapCallback {
                 abi.encodePacked(tokenY, fee, tokenX)
             )
         {} catch (bytes memory reason) {
-            (amountX, amountY, finalPoint) = parseRevertXY(reason);
+            (amountX, amountY) = parseRevertXY(reason);
         }
     }
 
@@ -349,14 +345,13 @@ contract QuoterXY is Base, IiZiSwapCallback {
     /// @param highPt highest point during exchange
     /// @return amountX estimated amount of tokenX user would acquire
     /// @return amountY estimated amount of tokenY user need to pay
-    /// @return finalPoint estimated point of pool after swap
     function swapY2XDesireX(
         address tokenX,
         address tokenY,
         uint24 fee,
         uint128 desireX,
         int24 highPt
-    ) public returns (uint256 amountX, uint256 amountY, int24 finalPoint) {
+    ) public returns (uint256 amountX, uint256 amountY) {
         require(tokenX < tokenY, "x<y");
         address poolAddr = pool(tokenX, tokenY, fee);
         try
@@ -365,7 +360,7 @@ contract QuoterXY is Base, IiZiSwapCallback {
                 abi.encodePacked(tokenX, fee, tokenY)
             )
         {} catch (bytes memory reason) {
-            (amountX, amountY, finalPoint) = parseRevertXY(reason);
+            (amountX, amountY) = parseRevertXY(reason);
         }
     }
 
@@ -378,14 +373,13 @@ contract QuoterXY is Base, IiZiSwapCallback {
     /// @param lowPt lowest point during exchange
     /// @return amountX amount of tokenX need to pay
     /// @return amountY estimated amount of tokenY user would acquire
-    /// @return finalPoint estimated point of pool after swap
     function swapX2Y(
         address tokenX,
         address tokenY,
         uint24 fee,
         uint128 amount,
         int24 lowPt
-    ) public returns (uint256 amountX, uint256 amountY, int24 finalPoint) {
+    ) public returns (uint256 amountX, uint256 amountY) {
         require(tokenX < tokenY, "x<y");
         address poolAddr = pool(tokenX, tokenY, fee);
         try
@@ -394,7 +388,7 @@ contract QuoterXY is Base, IiZiSwapCallback {
                 abi.encodePacked(tokenX, fee, tokenY)
             )
         {} catch (bytes memory reason) {
-            (amountX, amountY, finalPoint) = parseRevertXY(reason);
+            (amountX, amountY) = parseRevertXY(reason);
         }
     }
 
@@ -407,14 +401,13 @@ contract QuoterXY is Base, IiZiSwapCallback {
     /// @param lowPt highest point during exchange
     /// @return amountX estimated amount of tokenX user need to pay
     /// @return amountY estimated amount of tokenY user would acquire
-    /// @return finalPoint estimated point of pool after swap
     function swapX2YDesireY(
         address tokenX,
         address tokenY,
         uint24 fee,
         uint128 desireY,
         int24 lowPt
-    ) public returns (uint256 amountX, uint256 amountY, int24 finalPoint) {
+    ) public returns (uint256 amountX, uint256 amountY) {
         require(tokenX < tokenY, "x<y");
         address poolAddr = pool(tokenX, tokenY, fee);
         try 
@@ -423,7 +416,7 @@ contract QuoterXY is Base, IiZiSwapCallback {
                 abi.encodePacked(tokenY, fee, tokenX)
             )
         {} catch (bytes memory reason) {
-            (amountX, amountY, finalPoint) = parseRevertXY(reason);
+            (amountX, amountY) = parseRevertXY(reason);
         }
     }
     
