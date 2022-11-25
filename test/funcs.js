@@ -393,5 +393,7 @@ module.exports ={
     stringDivCeil,
     stringDiv,
     getSum,
-    getRevertString
+    getRevertString,
+    ceil,
+    floor
 }
