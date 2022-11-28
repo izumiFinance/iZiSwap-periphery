@@ -20,6 +20,8 @@ const {
     floor,
     getCostXFromYAt,
     getEarnYFromXAt,
+    getCostYFromXAt,
+    getEarnXFromYAt
 } = require("./funcs.js")
 
 async function getToken(dx, dy) {
@@ -313,7 +315,7 @@ function translateLimOrder(limOrder) {
     }
 }
 
-describe("limorderWithSwapSwitch X2Y undesire", function () {
+describe("limorderWithSwapSwitch Y2X undesire", function () {
     var signer, seller1, seller2, seller3, trader, fakeOwner;
     var poolPart, poolPartDesire;
     var izumiswapFactory;
@@ -349,7 +351,7 @@ describe("limorderWithSwapSwitch X2Y undesire", function () {
         txAddr = tokenX.address.toLowerCase();
         tyAddr = tokenY.address.toLowerCase();
 
-        poolAddr = await nflm.createPool(tokenX.address, tokenY.address, 3000, 5050);
+        poolAddr = await nflm.createPool(tokenX.address, tokenY.address, 3000, 5020);
         rate = BigNumber("1.0001");
         aBigAmount = '10000000000000000000000'
 
@@ -366,36 +368,36 @@ describe("limorderWithSwapSwitch X2Y undesire", function () {
     });
 
     
-    it("add limorder x2y undesire no offset not enough", async function() {
+    it("add limorder y2x undesire no offset not enough", async function() {
         const nft = await nflm.liquidities('0')
         const liquidity = nft.liquidity.toString()
         console.log('liquidity: ', liquidity)
 
         const tailLiquidity = stringDiv(liquidity, 10)
 
-        const costX4999_5051 = xInRange(liquidity, 4999, 5051, rate, true)
-        const sqrtPrice_96_at_4998 = (await logPowMath.getSqrtPrice(4998)).toString()
-        const costX4998 = l2x(tailLiquidity, sqrtPrice_96_at_4998, true)
+        const costY5021_5030 = yInRange(liquidity, 5021, 5030, rate, true)
+        const sqrtPrice_96_at_5030 = (await logPowMath.getSqrtPrice(5030)).toString()
+        const costYAt5030 = l2y(tailLiquidity, sqrtPrice_96_at_5030, true)
 
-        const totCostXWithFee = amountAddFee(
-            new BigNumber(costX4999_5051).plus(costX4998)
+        const totCostYWithFee = amountAddFee(
+            new BigNumber(costY5021_5030).plus(costYAt5030)
         )
-        console.log(totCostXWithFee)
+        console.log(totCostYWithFee)
 
 
-        const acquireY4999_5051 = yInRange(liquidity, 4999, 5051, rate, false)
-        const acquireY4998 = l2y(tailLiquidity, sqrtPrice_96_at_4998, false)
-        const totAcquireY = getSum([acquireY4999_5051, acquireY4998])
+        const acquireX5021_5030 = xInRange(liquidity, 5021, 5030, rate, false)
+        const acquireXAt5030 = l2x(tailLiquidity, sqrtPrice_96_at_5030, false)
+        const totAcquireX = getSum([acquireX5021_5030, acquireXAt5030])
 
         const addLimOrderParam = {
             tokenX: tokenX.address,
             tokenY: tokenY.address,
             fee: 3000,
-            pt: 4950,
+            pt: 5050,
             isDesireMode: false,
-            amount: totCostXWithFee,
+            amount: totCostYWithFee,
             swapMinAcquired: '0',
-            sellXEarnY: true,
+            sellXEarnY: false,
             earnWrapETH: false,
             deadline: '0xffffffff'
         }
@@ -406,12 +408,12 @@ describe("limorderWithSwapSwitch X2Y undesire", function () {
         await tokenY.connect(seller1).approve(limorderWithSwapManager.address, aBigAmount)
         const limOrder1 = await newLimOrder(
             limorderWithSwapManager, seller1, 0, addLimOrderParam,
-            tokenX, tokenY
+            tokenY, tokenX
         )
 
         expect(limOrder1.ok).to.equal(true)
-        expect(limOrder1.amountIn).to.equal(totCostXWithFee)
-        expect(limOrder1.amountOut).to.equal(totAcquireY)
+        expect(limOrder1.amountIn).to.equal(totCostYWithFee)
+        expect(limOrder1.amountOut).to.equal(totAcquireX)
 
         let {activeIdx, activeLimitOrder} = await limorderWithSwapManager.getActiveOrders(seller1.address); //.map((e)=>translateLimOrder(e));
         activeIdx = activeIdx.map((e)=>e.toString());
@@ -419,31 +421,37 @@ describe("limorderWithSwapSwitch X2Y undesire", function () {
         expect(activeLimitOrder.length).to.equal(0)
     });
 
-    it("add limorder x2y undesire no offset enough", async function() {
+    it("add limorder y2x undesire no offset enough", async function() {
         const nft = await nflm.liquidities('0')
         const liquidity = nft.liquidity.toString()
         console.log('liquidity: ', liquidity)
 
-        const costX5000_5051 = xInRange(liquidity, 5000, 5051, rate, true)
 
-        const costX5000_5051_WithFee = amountAddFee(
-            new BigNumber(costX5000_5051)
+        const costY5021_5051 = yInRange(liquidity, 5021, 5051, rate, true)
+
+        const remainYAt5050 = '1000000000000000'
+
+        const totCostYWithFee = getSum(
+            [
+            amountAddFee(new BigNumber(costY5021_5051)),
+            remainYAt5050
+            ]
         )
+        console.log(totCostYWithFee)
 
-        const remainXAt_5000 = '10000000000'
-        const totAmountX = stringAdd(costX5000_5051_WithFee, remainXAt_5000)
 
-        const acquireY5000_5051 = yInRange(liquidity, 5000, 5051, rate, false)
+        const acquireX5021_5051 = xInRange(liquidity, 5021, 5051, rate, false)
+        const totAcquireX = acquireX5021_5051
 
         const addLimOrderParam = {
             tokenX: tokenX.address,
             tokenY: tokenY.address,
             fee: 3000,
-            pt: 5000,
+            pt: 5050,
             isDesireMode: false,
-            amount: totAmountX,
+            amount: totCostYWithFee,
             swapMinAcquired: '0',
-            sellXEarnY: true,
+            sellXEarnY: false,
             earnWrapETH: false,
             deadline: '0xffffffff'
         }
@@ -454,61 +462,66 @@ describe("limorderWithSwapSwitch X2Y undesire", function () {
         await tokenY.connect(seller1).approve(limorderWithSwapManager.address, aBigAmount)
         const limOrder1 = await newLimOrder(
             limorderWithSwapManager, seller1, 0, addLimOrderParam,
-            tokenX, tokenY
+            tokenY, tokenX
         )
 
         expect(limOrder1.ok).to.equal(true)
-        expect(limOrder1.amountIn).to.equal(totAmountX)
-        expect(limOrder1.amountOut).to.equal(acquireY5000_5051)
+        expect(limOrder1.amountIn).to.equal(totCostYWithFee)
+        expect(limOrder1.amountOut).to.equal(totAcquireX)
 
         let {activeIdx, activeLimitOrder} = await limorderWithSwapManager.getActiveOrders(seller1.address); //.map((e)=>translateLimOrder(e));
         activeIdx = activeIdx.map((e)=>e.toString());
         expect(activeIdx.length).to.equal(1)
         activeLimitOrder = activeLimitOrder.map((e)=>translateLimOrder(e));
         const limOrder = activeLimitOrder[0]
-        expect(limOrder.amount).to.equal(totAmountX)
-        expect(limOrder.sellingRemain).to.equal(remainXAt_5000)
+        expect(limOrder.amount).to.equal(totCostYWithFee)
+        expect(limOrder.sellingRemain).to.equal(remainYAt5050)
         expect(limOrder.earn).to.equal('0')
     });
 
-    it("add limorder x2y undesire offset not enough", async function() {
+    it("add limorder y2x undesire offset not enough", async function() {
         const nft = await nflm.liquidities('0')
         const liquidity = nft.liquidity.toString()
         console.log('liquidity: ', liquidity)
 
-        const costX5000_5051 = xInRange(liquidity, 5000, 5051, rate, true)
+        const costY5021_5050 = yInRange(liquidity, 5021, 5050, rate, true)
 
-        const costX5000_5051_WithFee = amountAddFee(
-            new BigNumber(costX5000_5051)
+        const costY5021_5050_WithFee = amountAddFee(
+            new BigNumber(costY5021_5050)
         )
 
-        const amountYAt5000 = "10000000000000000"
+        const amountXAt5050 = "10000000000000000"
 
-        const preAddLimOrderY2X = {
+        const preAddLimOrderX2Y = {
             tokenX: tokenX.address,
             tokenY: tokenY.address,
             fee: 3000,
-            pt: 5000,
-            amount: amountYAt5000,
-            sellXEarnY: false,
+            pt: 5050,
+            amount: amountXAt5050,
+            sellXEarnY: true,
             deadline: '0xffffffff'
         }
 
-        await tokenY.transfer(seller2.address, aBigAmount)
-        await tokenY.connect(seller2).approve(limorderManager.address, aBigAmount)
-        const preLimorderY2X = await newLimOrder(
-            limorderManager, seller2, 0, preAddLimOrderY2X,
-            tokenX, tokenY
+        await tokenX.transfer(seller2.address, aBigAmount)
+        await tokenX.connect(seller2).approve(limorderManager.address, aBigAmount)
+        const preLimOrderX2Y = await newLimOrder(
+            limorderManager, seller2, 0, preAddLimOrderX2Y,
+            tokenY, tokenX
         )
+        expect(preLimOrderX2Y.ok).to.equal(true)
 
-        const costXForAllAt5000 = getCostXFromYAt((await logPowMath.getSqrtPrice(5000)).toString(), amountYAt5000)
+        const costYForAllAt5050 = getCostYFromXAt((await logPowMath.getSqrtPrice(5050)).toString(), amountXAt5050)
 
-        const costXAt5000 = stringDiv(costXForAllAt5000, '3')
-        const acquireYAt5000 = getEarnYFromXAt((await logPowMath.getSqrtPrice(5000)).toString(), costXAt5000)
+        const costYAt5050 = stringDiv(costYForAllAt5050, '3')
+        const acquireXAt5050 = getEarnXFromYAt((await logPowMath.getSqrtPrice(5050)).toString(), costYAt5050)
 
-        const totAmountX = stringAdd(costX5000_5051_WithFee, costXAt5000)
+        const costYAt5050_WithFee = amountAddFee(new BigNumber(costYAt5050))
 
-        const acquireY5000_5051 = yInRange(liquidity, 5000, 5051, rate, false)
+        const totAmountY = stringAdd(costY5021_5050_WithFee, costYAt5050_WithFee)
+
+        const acquireX5021_5050 = xInRange(liquidity, 5021, 5050, rate, false)
+
+        const totAmountX = stringAdd(acquireXAt5050, acquireX5021_5050)
 
         // const totAcquireY = stringAdd(acquireYAt5000, acquireY5000_5051)
 
@@ -516,11 +529,11 @@ describe("limorderWithSwapSwitch X2Y undesire", function () {
             tokenX: tokenX.address,
             tokenY: tokenY.address,
             fee: 3000,
-            pt: 5000,
+            pt: 5050,
             isDesireMode: false,
-            amount: totAmountX,
+            amount: totAmountY,
             swapMinAcquired: '0',
-            sellXEarnY: true,
+            sellXEarnY: false,
             earnWrapETH: false,
             deadline: '0xffffffff'
         }
@@ -531,60 +544,70 @@ describe("limorderWithSwapSwitch X2Y undesire", function () {
         await tokenY.connect(seller1).approve(limorderWithSwapManager.address, aBigAmount)
         const limOrder1 = await newLimOrder(
             limorderWithSwapManager, seller1, 0, addLimOrderParam,
-            tokenX, tokenY
+            tokenY, tokenX
         )
 
         expect(limOrder1.ok).to.equal(true)
-        expect(limOrder1.amountIn).to.equal(totAmountX)
-        expect(limOrder1.amountOut).to.equal(acquireY5000_5051)
+        expect(limOrder1.amountIn).to.equal(totAmountY)
+        expect(limOrder1.amountOut).to.equal(totAmountX)
 
         let {activeIdx, activeLimitOrder} = await limorderWithSwapManager.getActiveOrders(seller1.address); //.map((e)=>translateLimOrder(e));
         activeIdx = activeIdx.map((e)=>e.toString());
-        expect(activeIdx.length).to.equal(1)
-        activeLimitOrder = activeLimitOrder.map((e)=>translateLimOrder(e));
-        const limOrder = activeLimitOrder[0]
-        expect(limOrder.amount).to.equal(totAmountX)
-        expect(limOrder.sellingRemain).to.equal('0')
-        expect(limOrder.earn).to.equal(acquireYAt5000)
+        expect(activeIdx.length).to.equal(0)
+        expect(activeLimitOrder.length).to.equal(0)
     });
 
-    it("add limorder x2y undesire offset enough", async function() {
+    it("add limorder y2x undesire offset enough", async function() {
         const nft = await nflm.liquidities('0')
         const liquidity = nft.liquidity.toString()
         console.log('liquidity: ', liquidity)
 
-        const costX5000_5051 = xInRange(liquidity, 5000, 5051, rate, true)
-
-        const costX5000_5051_WithFee = amountAddFee(
-            new BigNumber(costX5000_5051)
+        const costY5021_5050 = yInRange(liquidity, 5021, 5050, rate, true)
+        const costY5021_5050_WithFee = amountAddFee(
+            new BigNumber(costY5021_5050)
         )
+        const acquireX5021_5050 = xInRange(liquidity, 5021, 5050, rate, false)
 
-        const amountYAt5000 = "10000000000000000"
+        const amountXAt5050 = "10000000000000000"
+        const costYAt5050 = getCostYFromXAt((await logPowMath.getSqrtPrice(5050)).toString(), amountXAt5050)
+        const costYAt5050_WithFee = amountAddFee(new BigNumber(costYAt5050))
 
-        const preAddLimOrderY2X = {
+        const acquireX5050_5051 = l2x(liquidity, (await logPowMath.getSqrtPrice(5050)).toString(), false)
+        const costY5050_5051 = l2y(liquidity, (await logPowMath.getSqrtPrice(5050)).toString(), true)
+        const costY5050_5051_WithFee = amountAddFee(new BigNumber(costY5050_5051))
+
+        const remainAmountYAt5050 = '20000000000000000'
+
+        const preAddLimOrderX2Y = {
             tokenX: tokenX.address,
             tokenY: tokenY.address,
             fee: 3000,
-            pt: 5000,
-            amount: amountYAt5000,
-            sellXEarnY: false,
+            pt: 5050,
+            amount: amountXAt5050,
+            sellXEarnY: true,
             deadline: '0xffffffff'
         }
 
-        await tokenY.transfer(seller2.address, aBigAmount)
-        await tokenY.connect(seller2).approve(limorderManager.address, aBigAmount)
-        const preLimorderY2X = await newLimOrder(
-            limorderManager, seller2, 0, preAddLimOrderY2X,
+        await tokenX.transfer(seller2.address, aBigAmount)
+        await tokenX.connect(seller2).approve(limorderManager.address, aBigAmount)
+        const preLimOrderX2Y = await newLimOrder(
+            limorderManager, seller2, 0, preAddLimOrderX2Y,
             tokenX, tokenY
         )
+        expect(preLimOrderX2Y.ok).to.equal(true)
 
-        const costXForAllAt5000 = getCostXFromYAt((await logPowMath.getSqrtPrice(5000)).toString(), amountYAt5000)
+        const totAmountX = getSum([
+            acquireX5021_5050,
+            amountXAt5050,
+            acquireX5050_5051
+        ])
 
-        const remainXAt5000 = '100000000000000000'
-        const costXAt5000 = stringAdd(costXForAllAt5000, remainXAt5000)
-        const totAmountX = stringAdd(costX5000_5051_WithFee, costXAt5000)
-
-        const acquireY5000_5051 = yInRange(liquidity, 5000, 5051, rate, false)
+        const totAmountY = getSum([
+            costY5021_5050_WithFee,
+            costYAt5050_WithFee,
+            costY5050_5051_WithFee,
+            remainAmountYAt5050
+        ])
 
         // const totAcquireY = stringAdd(acquireYAt5000, acquireY5000_5051)
 
@@ -592,11 +615,11 @@ describe("limorderWithSwapSwitch X2Y undesire", function () {
             tokenX: tokenX.address,
             tokenY: tokenY.address,
             fee: 3000,
-            pt: 5000,
+            pt: 5050,
             isDesireMode: false,
-            amount: totAmountX,
+            amount: totAmountY,
             swapMinAcquired: '0',
-            sellXEarnY: true,
+            sellXEarnY: false,
             earnWrapETH: false,
             deadline: '0xffffffff'
         }
@@ -607,20 +630,20 @@ describe("limorderWithSwapSwitch X2Y undesire", function () {
         await tokenY.connect(seller1).approve(limorderWithSwapManager.address, aBigAmount)
         const limOrder1 = await newLimOrder(
             limorderWithSwapManager, seller1, 0, addLimOrderParam,
-            tokenX, tokenY
+            tokenY, tokenX
         )
 
         expect(limOrder1.ok).to.equal(true)
-        expect(limOrder1.amountIn).to.equal(totAmountX)
-        expect(limOrder1.amountOut).to.equal(acquireY5000_5051)
+        expect(limOrder1.amountIn).to.equal(totAmountY)
+        expect(limOrder1.amountOut).to.equal(totAmountX)
 
         let {activeIdx, activeLimitOrder} = await limorderWithSwapManager.getActiveOrders(seller1.address); //.map((e)=>translateLimOrder(e));
         activeIdx = activeIdx.map((e)=>e.toString());
         expect(activeIdx.length).to.equal(1)
         activeLimitOrder = activeLimitOrder.map((e)=>translateLimOrder(e));
         const limOrder = activeLimitOrder[0]
-        expect(limOrder.amount).to.equal(totAmountX)
-        expect(limOrder.sellingRemain).to.equal(remainXAt5000)
-        expect(limOrder.earn).to.equal(amountYAt5000)
+        expect(limOrder.amount).to.equal(totAmountY)
+        expect(limOrder.sellingRemain).to.equal(remainAmountYAt5050)
+        expect(limOrder.earn).to.equal('0')
     });
 });
