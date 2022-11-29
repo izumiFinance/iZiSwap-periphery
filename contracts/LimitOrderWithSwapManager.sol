@@ -396,6 +396,12 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
                 uint256 l = MulDivMath.mulDivCeil(addLimitOrderParam.amount, sqrtPrice, TwoPower.pow96);
                 addLimitOrderParam.amount = Converter.toUint128(MulDivMath.mulDivCeil(l, sqrtPrice, TwoPower.pow96));
             }
+            if (msg.value > 0) {
+                uint256 ethBalance = address(this).balance;
+                if (addLimitOrderParam.amount > ethBalance) {
+                    addLimitOrderParam.amount = uint128(ethBalance);
+                }
+            }
             // no need to write following line
             addLimitOrderParam.isDesireMode = false;
         }
