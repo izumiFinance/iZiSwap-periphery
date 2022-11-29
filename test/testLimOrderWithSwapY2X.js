@@ -390,6 +390,7 @@ describe("limorderWithSwapSwitch Y2X undesire", function () {
         const totAcquireX = getSum([acquireX5021_5030, acquireXAt5030])
 
         const addLimOrderParam = {
+            recipient: seller1.address,
             tokenX: tokenX.address,
             tokenY: tokenY.address,
             fee: 3000,
@@ -398,7 +399,6 @@ describe("limorderWithSwapSwitch Y2X undesire", function () {
             amount: totCostYWithFee,
             swapMinAcquired: '0',
             sellXEarnY: false,
-            earnWrapETH: false,
             deadline: '0xffffffff'
         }
 
@@ -444,6 +444,7 @@ describe("limorderWithSwapSwitch Y2X undesire", function () {
         const totAcquireX = acquireX5021_5051
 
         const addLimOrderParam = {
+            recipient: seller1.address,
             tokenX: tokenX.address,
             tokenY: tokenY.address,
             fee: 3000,
@@ -452,7 +453,6 @@ describe("limorderWithSwapSwitch Y2X undesire", function () {
             amount: totCostYWithFee,
             swapMinAcquired: '0',
             sellXEarnY: false,
-            earnWrapETH: false,
             deadline: '0xffffffff'
         }
 
@@ -526,6 +526,7 @@ describe("limorderWithSwapSwitch Y2X undesire", function () {
         // const totAcquireY = stringAdd(acquireYAt5000, acquireY5000_5051)
 
         const addLimOrderParam = {
+            recipient: seller1.address,
             tokenX: tokenX.address,
             tokenY: tokenY.address,
             fee: 3000,
@@ -534,7 +535,6 @@ describe("limorderWithSwapSwitch Y2X undesire", function () {
             amount: totAmountY,
             swapMinAcquired: '0',
             sellXEarnY: false,
-            earnWrapETH: false,
             deadline: '0xffffffff'
         }
 
@@ -612,6 +612,7 @@ describe("limorderWithSwapSwitch Y2X undesire", function () {
         // const totAcquireY = stringAdd(acquireYAt5000, acquireY5000_5051)
 
         const addLimOrderParam = {
+            recipient: seller1.address,
             tokenX: tokenX.address,
             tokenY: tokenY.address,
             fee: 3000,
@@ -620,7 +621,6 @@ describe("limorderWithSwapSwitch Y2X undesire", function () {
             amount: totAmountY,
             swapMinAcquired: '0',
             sellXEarnY: false,
-            earnWrapETH: false,
             deadline: '0xffffffff'
         }
 

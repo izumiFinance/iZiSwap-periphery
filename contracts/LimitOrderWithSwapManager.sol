@@ -216,6 +216,11 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
 
     /// parameters when calling newLimOrder, grouped together to avoid stake too deep
     struct AddLimOrderParam {
+        // recipient to acquire token during pre-swap
+        // if and only if user acquire chain token token (like eth/bnb, and not in wrapped form),
+        //     address should be 0, and user should append a unwrapWETH9(...) calling immediately 
+        //     (via multicall)
+        address recipient;
         // tokenX of swap pool
         address tokenX;
         // tokenY of swap pool
@@ -233,8 +238,6 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
         uint256 swapMinAcquired;
         // sell tokenX or sell tokenY
         bool sellXEarnY;
-
-        bool earnWrapETH;
 
         uint256 deadline;
     }
@@ -266,6 +269,7 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
         address pool,
         AddLimOrderParam memory addLimitOrderParam
     ) private returns (SwapBeforeResult memory) {
+        address recipient = addLimitOrderParam.recipient == address(0) ? address(this) : addLimitOrderParam.recipient;
         SwapBeforeResult memory result = SwapBeforeResult({
             remainAmount: 0,
             costBeforeSwap: 0,
@@ -286,8 +290,6 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
             if (addLimitOrderParam.pt < currentPoint) {
                 uint256 costX;
                 uint256 acquireY;
-                bool earnETH = addLimitOrderParam.tokenY == WETH9 && !addLimitOrderParam.earnWrapETH;
-                address recipient = earnETH ? address(this) : msg.sender;
                 if (addLimitOrderParam.isDesireMode) {
                     (costX, acquireY) = IiZiSwapPool(pool).swapX2YDesireY(
                         recipient, addLimitOrderParam.amount, addLimitOrderParam.pt,
@@ -315,17 +317,11 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
                 }
                 result.acquireBeforeSwap = Converter.toUint128(acquireY);
                 result.costBeforeSwap = Converter.toUint128(costX);
-                if (earnETH && acquireY > 0) {
-                    // refund eth
-                    IWETH9(WETH9).withdraw(acquireY);
-                }
             }
         } else {
             if (addLimitOrderParam.pt > currentPoint) {
                 uint256 costY;
                 uint256 acquireX;
-                bool earnETH = addLimitOrderParam.tokenX == WETH9 && !addLimitOrderParam.earnWrapETH;
-                address recipient = earnETH ? address(this) : msg.sender;
                 if (addLimitOrderParam.isDesireMode) {
                     (acquireX, costY) = IiZiSwapPool(pool).swapY2XDesireX(
                         recipient, addLimitOrderParam.amount, addLimitOrderParam.pt + 1,
@@ -353,10 +349,6 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
                 }
                 result.acquireBeforeSwap = Converter.toUint128(acquireX);
                 result.costBeforeSwap = Converter.toUint128(costY);
-                if (earnETH && acquireX > 0) {
-                    // refund eth
-                    IWETH9(WETH9).withdraw(acquireX);
-                }
             }
         }
         result.swapOut = (result.remainAmount <= addLimitOrderParam.amount / 10000);
@@ -444,7 +436,6 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
                 active: true
             }));
         }
-        if (address(this).balance > 0) safeTransferETH(msg.sender, address(this).balance);
         emit NewLimitOrder(pool, addLimitOrderParam.pt, msg.sender, addLimitOrderParam.amount, orderAmount, acquire, addLimitOrderParam.sellXEarnY);
     }
 

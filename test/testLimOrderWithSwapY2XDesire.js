@@ -389,6 +389,7 @@ describe("limorderWithSwapSwitch Y2X undesire", function () {
         const totAcquireX = getSum([acquireX5021_5030, acquireXAt5030])
 
         const addLimOrderParam = {
+            recipient: seller1.address,
             tokenX: tokenX.address,
             tokenY: tokenY.address,
             fee: 3000,
@@ -397,7 +398,6 @@ describe("limorderWithSwapSwitch Y2X undesire", function () {
             amount: totAcquireX,
             swapMinAcquired: '0',
             sellXEarnY: false,
-            earnWrapETH: false,
             deadline: '0xffffffff'
         }
 
@@ -446,6 +446,7 @@ describe("limorderWithSwapSwitch Y2X undesire", function () {
         const totDesireX = getSum([acquireX5021_5051, desireXAt5050])
 
         const addLimOrderParam = {
+            recipient: seller1.address,
             tokenX: tokenX.address,
             tokenY: tokenY.address,
             fee: 3000,
@@ -454,7 +455,6 @@ describe("limorderWithSwapSwitch Y2X undesire", function () {
             amount: totDesireX,
             swapMinAcquired: '0',
             sellXEarnY: false,
-            earnWrapETH: false,
             deadline: '0xffffffff'
         }
 
