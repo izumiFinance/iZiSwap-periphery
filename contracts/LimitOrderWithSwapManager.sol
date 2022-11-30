@@ -271,8 +271,9 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
                 abi.encode(LimCallbackData({tokenX: addLimitOrderParam.tokenX, tokenY: addLimitOrderParam.tokenY, fee: addLimitOrderParam.fee, payer: msg.sender}))
             );
         }
-
-        IiZiSwapPool(pool).collectLimOrder(addLimitOrderParam.recipient, addLimitOrderParam.pt, 0, acquire, addLimitOrderParam.sellXEarnY);
+        if (acquire > 0) {
+            IiZiSwapPool(pool).collectLimOrder(addLimitOrderParam.recipient, addLimitOrderParam.pt, 0, acquire, addLimitOrderParam.sellXEarnY);
+        }
     }
 
     struct SwapBeforeResult {
@@ -397,7 +398,6 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
         acquireBeforeSwap = swapBeforeResult.acquireBeforeSwap;
         if (swapBeforeResult.swapOut) {
             // swap out
-            if (address(this).balance > 0) safeTransferETH(msg.sender, address(this).balance);
             emit MarketSwap(
                 originAddLimitOrderParam.sellXEarnY ? originAddLimitOrderParam.tokenX : originAddLimitOrderParam.tokenY,
                 originAddLimitOrderParam.sellXEarnY ? originAddLimitOrderParam.tokenY : originAddLimitOrderParam.tokenX,
@@ -604,18 +604,22 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
             recipient = address(this);
         }
         LimOrder storage order = addr2ActiveOrder[msg.sender][orderIdx];
-        require(order.sellingRemain > 0, 'Remain0');
+
         address pool = poolAddrs[order.poolId];
         // update order first
         uint128 earn = _updateOrder(order, pool);
         uint128 actualDecrease = order.sellingRemain;
         bool sellXEarnY = order.sellXEarnY;
-        if (sellXEarnY) {
-            IiZiSwapPool(pool).decLimOrderWithX(order.pt, actualDecrease);
-        } else {
-            IiZiSwapPool(pool).decLimOrderWithY(order.pt, actualDecrease);
+        if (actualDecrease > 0) {
+            if (sellXEarnY) {
+                IiZiSwapPool(pool).decLimOrderWithX(order.pt, actualDecrease);
+            } else {
+                IiZiSwapPool(pool).decLimOrderWithY(order.pt, actualDecrease);
+            }
         }
-        IiZiSwapPool(pool).collectLimOrder(recipient, order.pt, actualDecrease, earn, sellXEarnY);
+        if (actualDecrease > 0 || earn > 0) {
+            IiZiSwapPool(pool).collectLimOrder(recipient, order.pt, actualDecrease, earn, sellXEarnY);
+        }
 
         PoolMeta memory poolMeta = poolMetas[order.poolId];
 
@@ -628,8 +632,7 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
             order.sellingRemain,
             order.earn
         );
-
-        delete addr2ActiveOrder[msg.sender][orderIdx];
+        order.active = false;
     }
 
     /// @notice Collect earned token from an limit order
@@ -656,7 +659,9 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
 
         bool sellXEarnY = order.sellXEarnY;
 
-        IiZiSwapPool(pool).collectLimOrder(recipient, order.pt, sellingDec, earn, sellXEarnY);
+        if (sellingDec > 0 || earn > 0) {
+            IiZiSwapPool(pool).collectLimOrder(recipient, order.pt, sellingDec, earn, sellXEarnY);
+        }
         
         if (noRemain) {
             PoolMeta memory poolMeta = poolMetas[order.poolId];
@@ -668,7 +673,7 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
                 order.initSellingAmount,
                 order.earn
             );
-            delete addr2ActiveOrder[msg.sender][orderIdx];
+            order.active = false;
         }
     }
 
