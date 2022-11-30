@@ -10,8 +10,6 @@ import "./core/interfaces/IiZiSwapPool.sol";
 import "./libraries/MulDivMath.sol";
 import "./libraries/TwoPower.sol";
 import "./libraries/LogPowMath.sol";
-import "./libraries/LimOrder.sol";
-import "./libraries/LimOrderCircularQueue.sol";
 import "./libraries/Converter.sol";
 
 import "./base/base.sol";
@@ -19,25 +17,6 @@ import "./base/Switch.sol";
 
 contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback, IiZiSwapCallback {
 
-    using LimOrderCircularQueue for LimOrderCircularQueue.Queue;
-
-    /// @notice Emitted when user successfully create an limit order
-    /// @param pool address of swap pool
-    /// @param point point (price) of this limit order
-    /// @param user address of user
-    /// @param amount amount of token ready to sell
-    /// @param sellingRemain amount of selling token remained after successfully create this limit order
-    /// @param earn amount of acquired token after successfully create this limit order
-    /// @param sellXEarnY true if this order sell tokenX, false if sell tokenY
-    event NewLimitOrder(
-        address pool,
-        int24 point,
-        address user,
-        uint128 amount,
-        uint128 sellingRemain,
-        uint128 earn,
-        bool sellXEarnY
-    );
     /// @notice Emitted when user preswap AND SWAP OUT or do market swap before adding limit order
     /// @param tokenIn address of tokenIn (user payed to swap pool)
     /// @param tokenOut address of tokenOut (user acquired from swap pool)
@@ -51,21 +30,42 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
         uint128 amountIn,
         uint128 amountOut
     );
-    /// @notice Emitted when user dec or update his limit order
-    /// @param pool address of swap pool
-    /// @param point point (price) of this limit order
-    /// @param user address of user
-    /// @param sold amount of token sold from last claim to now
-    /// @param earn amount of token earned from last claim to now
-    /// @param sellXEaryY true if sell tokenX, false if sell tokenY
-    event Claim(
-        address pool,
-        int24 point,
-        address user,
-        uint128 sold,
-        uint128 earn,
-        bool sellXEaryY
+
+    /// @notice Emitted when user cancel a limit order
+    /// @param tokenIn address of tokenIn (sell token)
+    /// @param tokenOut address of tokenOut (earn token)
+    /// @param fee fee amount of swap pool
+    /// @param pt point(price) of limit order
+    /// @param initAmountIn amount of tokenIn(sell token) at begining
+    /// @param remainAmountIn remain amount of tokenIn(sell token) 
+    /// @param amountOut amount of tokenOut(earn token) of this limit order
+    event Cancel(
+        address tokenIn,
+        address tokenOut,
+        uint24 fee,
+        int24 pt,
+        uint128 initAmountIn,
+        uint128 remainAmountIn,
+        uint128 amountOut
     );
+
+    /// @notice Emitted when user collect and finish a limit order
+    /// @param tokenIn address of tokenIn (sell token)
+    /// @param tokenOut address of tokenOut (earn token)
+    /// @param fee fee amount of swap pool
+    /// @param pt point(price) of limit order
+    /// @param initAmountIn amount of tokenIn(sell token) at begining
+    /// @param amountOut amount of tokenOut(earn token) of this limit order
+    event Finish(
+        address tokenIn,
+        address tokenOut,
+        uint24 fee,
+        int24 pt,
+        uint128 initAmountIn,
+        uint128 amountOut
+    );
+
+
     // max-poolId in poolIds, poolId starts from 1
     uint128 private maxPoolId = 1;
 
@@ -89,14 +89,6 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
 
     // seller's active order id
     mapping(address => LimOrder[]) private addr2ActiveOrder;
-    // seller's canceled or finished order id
-    mapping(address => LimOrderCircularQueue.Queue) private addr2DeactiveOrder;
-
-    // maximum number of active order per user
-    // TODO: 
-    //   currently we used a fixed number of storage space. A better way is to allow user to expand it.
-    //   Otherwise, the first 300 orders need more gas for storage.
-    uint256 public immutable DEACTIVE_ORDER_LIM = 300;
 
     // callback data passed through iZiSwapPool#addLimOrderWithX(Y) to the callback
     struct LimCallbackData {
@@ -108,6 +100,29 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
         uint24 fee;
         // the address who provides token to sell
         address payer;
+    }
+
+    // infomation of a limit order
+    struct LimOrder {
+        // total amount of earned token by all users at this point 
+        // with same direction (sell x or sell y) as of the last update(add/dec)
+        uint256 lastAccEarn;
+        // initial amount of token on sale
+        uint128 initSellingAmount;
+        // remaing amount of token on sale
+        uint128 sellingRemain;
+        // total earned amount
+        uint128 earn;
+        // id of pool in which this liquidity is added
+        uint128 poolId;
+        // block.timestamp when add a limit order
+        uint128 timestamp;
+        // point (price) of limit order
+        int24 pt;
+        // direction of limit order (sellx or sell y)
+        bool sellXEarnY;
+        // active or not
+        bool active;
     }
 
     modifier checkActive(uint256 lIdx) {
@@ -256,6 +271,8 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
                 abi.encode(LimCallbackData({tokenX: addLimitOrderParam.tokenX, tokenY: addLimitOrderParam.tokenY, fee: addLimitOrderParam.fee, payer: msg.sender}))
             );
         }
+
+        IiZiSwapPool(pool).collectLimOrder(addLimitOrderParam.recipient, addLimitOrderParam.pt, 0, acquire, addLimitOrderParam.sellXEarnY);
     }
 
     struct SwapBeforeResult {
@@ -269,7 +286,7 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
         address pool,
         AddLimOrderParam memory addLimitOrderParam
     ) private returns (SwapBeforeResult memory) {
-        address recipient = addLimitOrderParam.recipient == address(0) ? address(this) : addLimitOrderParam.recipient;
+        address recipient = addLimitOrderParam.recipient;
         SwapBeforeResult memory result = SwapBeforeResult({
             remainAmount: 0,
             costBeforeSwap: 0,
@@ -369,11 +386,15 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
         require(originAddLimitOrderParam.tokenX < originAddLimitOrderParam.tokenY, 'x<y');
 
         AddLimOrderParam memory addLimitOrderParam = originAddLimitOrderParam;
+
+        addLimitOrderParam.recipient = addLimitOrderParam.recipient == address(0) ? address(this) : addLimitOrderParam.recipient;
         
         address pool = IiZiSwapFactory(factory).pool(addLimitOrderParam.tokenX, addLimitOrderParam.tokenY, addLimitOrderParam.fee);
 
         SwapBeforeResult memory swapBeforeResult = _swapBefore(pool, addLimitOrderParam);
         addLimitOrderParam.amount = swapBeforeResult.remainAmount;
+        costBeforeSwap = swapBeforeResult.costBeforeSwap;
+        acquireBeforeSwap = swapBeforeResult.acquireBeforeSwap;
         if (swapBeforeResult.swapOut) {
             // swap out
             if (address(this).balance > 0) safeTransferETH(msg.sender, address(this).balance);
@@ -384,7 +405,7 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
                 costBeforeSwap,
                 acquireBeforeSwap
             );
-            return (0, swapBeforeResult.costBeforeSwap, swapBeforeResult.acquireBeforeSwap, 0);
+            return (0, costBeforeSwap, acquireBeforeSwap, 0);
         }
         if (addLimitOrderParam.isDesireMode) {
             // transform desire amount to sell amount
@@ -414,12 +435,9 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
             require(limOrders[idx].active == false, 'active conflict!');
             limOrders[idx] = LimOrder({
                 pt: addLimitOrderParam.pt,
-                amount: addLimitOrderParam.amount + swapBeforeResult.costBeforeSwap,
+                initSellingAmount: addLimitOrderParam.amount + costBeforeSwap,
                 sellingRemain: orderAmount,
-                accSellingDec: 0,
-                sellingDec: 0,
-                // donot add acquireBeforeSwap, because we have collected them
-                earn: acquire,
+                earn: acquire + acquireBeforeSwap,
                 lastAccEarn: accEarn,
                 poolId: poolId,
                 sellXEarnY: addLimitOrderParam.sellXEarnY,
@@ -429,12 +447,9 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
         } else {
             limOrders.push(LimOrder({
                 pt: addLimitOrderParam.pt,
-                amount: addLimitOrderParam.amount + swapBeforeResult.costBeforeSwap,
+                initSellingAmount: addLimitOrderParam.amount + costBeforeSwap,
                 sellingRemain: orderAmount,
-                accSellingDec: 0,
-                sellingDec: 0,
-                // donot add acquireBeforeSwap, because we have collected them
-                earn: acquire,
+                earn: acquire + acquireBeforeSwap,
                 lastAccEarn: accEarn,
                 poolId: poolId,
                 sellXEarnY: addLimitOrderParam.sellXEarnY,
@@ -442,7 +457,7 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
                 active: true
             }));
         }
-        emit NewLimitOrder(pool, addLimitOrderParam.pt, msg.sender, addLimitOrderParam.amount, orderAmount, acquire, addLimitOrderParam.sellXEarnY);
+
     }
 
     /// @notice Compute max amount of earned token the seller can claim.
@@ -574,101 +589,86 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
             order.sellingRemain = order.sellingRemain - sold;
         }
         order.lastAccEarn = accEarn;
-        emit Claim(pool, order.pt, msg.sender, sold, earn, order.sellXEarnY);
     }
 
-    /// @notice Update a limit order to claim earned tokens as much as possible.
-    /// @param orderIdx idx of order to update
-    /// @return earn amount of earned token this limit order can claim
-    function updateOrder(
-        uint256 orderIdx
-    ) external notPause checkActive(orderIdx) returns (uint256 earn) {
-        LimOrder storage order = addr2ActiveOrder[msg.sender][orderIdx];
-        address pool = poolAddrs[order.poolId];
-        earn = _updateOrder(order, pool);
-    }
-
-    /// @notice Decrease amount of selling-token of a limit order.
+    /// @notice cancel a limit order
+    /// @param recipient address to acquire canceled selling token and to acquire earned token
     /// @param orderIdx point of seller's limit order
-    /// @param amount max amount of selling-token to decrease
     /// @param deadline deadline timestamp of transaction
-    /// @return actualDelta actual amount of selling-token decreased
-    function decLimOrder(
-        uint256 orderIdx,
-        uint128 amount,
-        uint256 deadline
-    ) external notPause checkActive(orderIdx) checkDeadline(deadline) returns (uint128 actualDelta) {
-        require(amount > 0, "A0");
-        LimOrder storage order = addr2ActiveOrder[msg.sender][orderIdx];
-        address pool = poolAddrs[order.poolId];
-        // update order first
-        _updateOrder(order, pool);
-        // now dec
-        actualDelta = amount;
-        if (actualDelta > order.sellingRemain) {
-            actualDelta = uint128(order.sellingRemain);
-        }
-        uint128 actualDeltaRefund;
-        if (order.sellXEarnY) {
-            (actualDeltaRefund, ) = IiZiSwapPool(pool).decLimOrderWithX(order.pt, actualDelta);
-        } else {
-            (actualDeltaRefund, ) = IiZiSwapPool(pool).decLimOrderWithY(order.pt, actualDelta);
-        }
-        // actualDeltaRefund may be less than actualDelta
-        // but we still minus actualDelta in sellingRemain, and only add actualDeltaRefund to sellingDec
-        // because if actualDeltaRefund < actualDelta
-        // then other users cannot buy from this limit order any more
-        // and also, the seller cannot fetch back more than actualDeltaRefund from swap pool >_<
-        // but fortunately, actualDeltaRefund < actualDelta only happens after swap on this limit order
-        // and also, actualDelta - actualDeltaRefund is a very small deviation
-        order.sellingRemain -= actualDelta;
-        order.sellingDec += actualDeltaRefund;
-        order.accSellingDec += actualDeltaRefund;
-    }
-
-    /// @notice Collect earned or decreased token from a limit order.
-    /// @param recipient address to benefit
-    /// @param orderIdx idx of limit order
-    /// @param collectDec max amount of decreased selling token to collect
-    /// @param collectEarn max amount of earned token to collect
-    /// @return actualCollectDec actual amount of decresed selling token collected
-    /// @return actualCollectEarn actual amount of earned token collected
-    function collectLimOrder(
+    function cancel(
         address recipient,
         uint256 orderIdx,
-        uint128 collectDec,
-        uint128 collectEarn
-    ) external notPause checkActive(orderIdx) returns (uint128 actualCollectDec, uint128 actualCollectEarn) {
-        LimOrder storage order = addr2ActiveOrder[msg.sender][orderIdx];
-        address pool = poolAddrs[order.poolId];
-        // update order first
-        _updateOrder(order, pool);
-        // now collect
-        actualCollectDec = collectDec;
-        if (actualCollectDec > order.sellingDec) {
-            actualCollectDec = order.sellingDec;
-        }
-        actualCollectEarn = collectEarn;
-        if (actualCollectEarn > order.earn) {
-            actualCollectEarn = order.earn;
-        }
+        uint256 deadline
+    ) external notPause checkActive(orderIdx) checkDeadline(deadline) {
         if (recipient == address(0)) {
             recipient = address(this);
         }
-        IiZiSwapPool(pool).collectLimOrder(recipient, order.pt, actualCollectDec, actualCollectEarn, order.sellXEarnY);
-        // collect from core may be less, but we still do not modify actualCollectEarn(Dec)
-        order.sellingDec -= actualCollectDec;
-        order.earn -= actualCollectEarn;
+        LimOrder storage order = addr2ActiveOrder[msg.sender][orderIdx];
+        require(order.sellingRemain > 0, 'Remain0');
+        address pool = poolAddrs[order.poolId];
+        // update order first
+        uint128 earn = _updateOrder(order, pool);
+        uint128 actualDecrease = order.sellingRemain;
+        bool sellXEarnY = order.sellXEarnY;
+        if (sellXEarnY) {
+            IiZiSwapPool(pool).decLimOrderWithX(order.pt, actualDecrease);
+        } else {
+            IiZiSwapPool(pool).decLimOrderWithY(order.pt, actualDecrease);
+        }
+        IiZiSwapPool(pool).collectLimOrder(recipient, order.pt, actualDecrease, earn, sellXEarnY);
+
+        PoolMeta memory poolMeta = poolMetas[order.poolId];
+
+        emit Cancel(
+            sellXEarnY? poolMeta.tokenX : poolMeta.tokenY,
+            sellXEarnY? poolMeta.tokenY : poolMeta.tokenX,
+            poolMeta.fee,
+            order.pt,
+            order.initSellingAmount,
+            order.sellingRemain,
+            order.earn
+        );
+
+        delete addr2ActiveOrder[msg.sender][orderIdx];
+    }
+
+    /// @notice Collect earned token from an limit order
+    /// @param recipient address to benefit
+    /// @param orderIdx idx of limit order
+    /// @return earn amount of token collected during this calling (not all earned token of this order)
+    function collect(
+        address recipient,
+        uint256 orderIdx
+    ) external notPause checkActive(orderIdx) returns (uint128 earn) {
+        if (recipient == address(0)) {
+            recipient = address(this);
+        }
+        LimOrder storage order = addr2ActiveOrder[msg.sender][orderIdx];
+        address pool = poolAddrs[order.poolId];
+        // update order first
+        earn = _updateOrder(order, pool);
 
         bool noRemain = (order.sellingRemain == 0);
         if (order.sellingRemain > 0) {
-            noRemain = (order.amount / order.sellingRemain > 100000);
+            noRemain = (order.initSellingAmount / order.sellingRemain > 100000);
         }
+        uint128 sellingDec = noRemain ? order.sellingRemain : 0;
 
-        if (order.sellingDec == 0 && noRemain && order.earn == 0) {
-            order.active = false;
-            // addr2DeactiveOrderID[msg.sender].add(orderId);
-            addr2DeactiveOrder[msg.sender].add(order, DEACTIVE_ORDER_LIM);
+        bool sellXEarnY = order.sellXEarnY;
+
+        IiZiSwapPool(pool).collectLimOrder(recipient, order.pt, sellingDec, earn, sellXEarnY);
+        
+        if (noRemain) {
+            PoolMeta memory poolMeta = poolMetas[order.poolId];
+            emit Finish(
+                sellXEarnY? poolMeta.tokenX : poolMeta.tokenY,
+                sellXEarnY? poolMeta.tokenY : poolMeta.tokenX,
+                poolMeta.fee,
+                order.pt,
+                order.initSellingAmount,
+                order.earn
+            );
+            delete addr2ActiveOrder[msg.sender][orderIdx];
         }
     }
 
@@ -724,32 +724,6 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
             }
         }
         return slotIdx;
-    }
-
-    /// @notice Returns deactived orders for the seller.
-    /// @param user address of the seller
-    /// @return deactiveLimitOrder list of deactived orders
-    function getDeactiveOrders(address user) external view returns (LimOrder[] memory deactiveLimitOrder) {
-        LimOrderCircularQueue.Queue storage queue = addr2DeactiveOrder[user];
-        if (queue.limOrders.length == 0) {
-            return deactiveLimitOrder;
-        }
-        deactiveLimitOrder = new LimOrder[](queue.limOrders.length);
-        uint256 start = queue.start;
-        for (uint256 i = 0; i < queue.limOrders.length; i ++) {
-            deactiveLimitOrder[i] = queue.limOrders[(start + i) % queue.limOrders.length];
-        }
-        return deactiveLimitOrder;
-    }
-
-    /// @notice Returns a single deactived order for the seller.
-    /// @param user address of the seller
-    /// @param idx index of the deactived order list
-    /// @return limOrder the target deactived order
-    function getDeactiveOrder(address user, uint256 idx) external view returns (LimOrder memory limOrder) {
-        LimOrderCircularQueue.Queue storage queue = addr2DeactiveOrder[user];
-        require(idx < queue.limOrders.length, 'Out Of Length');
-        return queue.limOrders[(queue.start + idx) % queue.limOrders.length];
     }
 
 }
