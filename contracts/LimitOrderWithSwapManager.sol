@@ -427,6 +427,17 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
             addLimitOrderParam.isDesireMode = false;
         }
         (orderAmount, acquire) = _addLimOrder(pool, addLimitOrderParam);
+        if (orderAmount == 0) {
+            // swap out
+            emit MarketSwap(
+                originAddLimitOrderParam.sellXEarnY ? originAddLimitOrderParam.tokenX : originAddLimitOrderParam.tokenY,
+                originAddLimitOrderParam.sellXEarnY ? originAddLimitOrderParam.tokenY : originAddLimitOrderParam.tokenX,
+                originAddLimitOrderParam.fee,
+                costBeforeSwap + addLimitOrderParam.amount,
+                acquireBeforeSwap + acquire
+            );
+            return (0, costBeforeSwap, acquireBeforeSwap, 0);
+        }
         (uint256 accEarn, , ) = getEarn(pool, address(this), addLimitOrderParam.pt, addLimitOrderParam.sellXEarnY);
         uint128 poolId = cachePoolKey(pool, PoolMeta({tokenX: addLimitOrderParam.tokenX, tokenY: addLimitOrderParam.tokenY, fee: addLimitOrderParam.fee}));
         LimOrder[] storage limOrders = addr2ActiveOrder[msg.sender];
