@@ -666,12 +666,11 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
         if (order.sellingRemain > 0) {
             noRemain = (order.initSellingAmount / order.sellingRemain > 100000);
         }
-        uint128 sellingDec = noRemain ? order.sellingRemain : 0;
 
         bool sellXEarnY = order.sellXEarnY;
 
-        if (sellingDec > 0 || earn > 0) {
-            IiZiSwapPool(pool).collectLimOrder(recipient, order.pt, sellingDec, earn, sellXEarnY);
+        if (earn > 0) {
+            IiZiSwapPool(pool).collectLimOrder(recipient, order.pt, 0, earn, sellXEarnY);
         }
         
         if (noRemain) {
