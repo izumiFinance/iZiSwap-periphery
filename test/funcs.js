@@ -184,6 +184,91 @@ function y2xAt(point, rate, amountY) {
     return [acquireX, costY];
 }
 
+async function newLimOrderWithSwap(slotIdx, tokenX, tokenY, seller, limorderManager, amount, point, sellXEarnY, fee=3000) {
+
+    let ok = true
+    const amountXBefore = (await tokenX.balanceOf(seller.address)).toString()
+    const amountYBefore = (await tokenY.balanceOf(seller.address)).toString()
+    let error = undefined
+    try {
+        await limorderManager.connect(seller).newLimOrder(
+            slotIdx,
+            {
+                recipient: seller.address,
+                tokenX: tokenX.address,
+                tokenY: tokenY.address,
+                fee: fee,
+                pt: point,
+                isDesireMode: false,
+                amount,
+                swapMinAcquired: '0',
+                sellXEarnY,
+                deadline: '0xffffffff'
+            }
+        )
+    } catch (err) {
+        error = err
+        ok = false
+    }
+    const amountXAfter = (await tokenX.balanceOf(seller.address)).toString()
+    const amountYAfter = (await tokenY.balanceOf(seller.address)).toString()
+
+    const deltaX = stringMinus(amountXBefore, amountXAfter)
+    const deltaY = stringMinus(amountYBefore, amountYAfter)
+
+    return {ok, deltaX, deltaY, error}
+}
+
+async function cancelLimOrderWithSwap(seller, tokenX, tokenY, orderIdx, limorderManager) {
+    const tokenXBalanceBefore = await tokenX.balanceOf(seller.address)
+    const tokenYBalanceBefore = await tokenY.balanceOf(seller.address)
+    let ok = true
+    let error = undefined
+    try {
+        await limorderManager.connect(seller).cancel(
+            seller.address,
+            orderIdx,
+            '0xffffffff'
+        )
+    } catch (err) {
+        ok = false
+        error = err
+    }
+
+    const tokenXBalanceAfter = await tokenX.balanceOf(seller.address)
+    const tokenYBalanceAfter = await tokenY.balanceOf(seller.address)
+    return {
+        ok,
+        error,
+        deltaX: stringMinus(tokenXBalanceAfter.toString(), tokenXBalanceBefore.toString()),
+        deltaY: stringMinus(tokenYBalanceAfter.toString(), tokenYBalanceBefore.toString())
+    }
+}
+
+async function collectLimOrderWithSwap(seller, tokenX, tokenY, orderIdx, limorderManager) {
+    const tokenXBalanceBefore = await tokenX.balanceOf(seller.address)
+    const tokenYBalanceBefore = await tokenY.balanceOf(seller.address)
+    let ok = true
+    let error = undefined
+    try {
+        await limorderManager.connect(seller).collect(
+            seller.address,
+            orderIdx
+        )
+    } catch (err) {
+        ok = false
+        error = err
+    }
+
+    const tokenXBalanceAfter = await tokenX.balanceOf(seller.address)
+    const tokenYBalanceAfter = await tokenY.balanceOf(seller.address)
+    return {
+        ok,
+        error,
+        deltaX: stringMinus(tokenXBalanceAfter.toString(), tokenXBalanceBefore.toString()),
+        deltaY: stringMinus(tokenYBalanceAfter.toString(), tokenYBalanceBefore.toString())
+    }
+}
 function getCostYFromXAt(sqrtPrice_96, acquireX) {
     const q96 = BigNumber(2).pow(96).toFixed(0);
 
@@ -401,6 +486,9 @@ module.exports ={
     xInRange,
     yInRange,
     y2xAt,
+    newLimOrderWithSwap,
+    cancelLimOrderWithSwap,
+    collectLimOrderWithSwap,
     getCostYFromXAt,
     getCostXFromYAt,
     getEarnYFromXAt,
