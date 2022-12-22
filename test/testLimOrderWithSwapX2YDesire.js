@@ -302,10 +302,8 @@ async function newLimOrder(
 function translateLimOrder(limOrder) {
     return {
         pt: limOrder.pt,
-        amount: limOrder.amount.toString(),
+        initSellingAmount: limOrder.initSellingAmount.toString(),
         sellingRemain: limOrder.sellingRemain.toString(),
-        accSellingDec: limOrder.accSellingDec.toString(),
-        sellingDec: limOrder.sellingDec.toString(),
         earn: limOrder.earn.toString(),
         lastAccEarn: limOrder.lastAccEarn.toString(),
         poolId: limOrder.poolId.toString(),
@@ -467,9 +465,9 @@ describe("limorderWithSwapSwitch x2y desire", function () {
         expect(activeIdx.length).to.equal(1)
         activeLimitOrder = activeLimitOrder.map((e)=>translateLimOrder(e));
         const limOrder = activeLimitOrder[0]
-        expect(limOrder.amount).to.equal(totAmountX)
+        expect(limOrder.initSellingAmount).to.equal(totAmountX)
         expect(limOrder.sellingRemain).to.equal(costXAt5000)
-        expect(limOrder.earn).to.equal('0')
+        expect(limOrder.earn).to.equal(limOrder1.amountOut)
     });
 
     it("add limorder x2y desire offset not enough", async function() {
@@ -537,16 +535,16 @@ describe("limorderWithSwapSwitch x2y desire", function () {
 
         expect(limOrder1.ok).to.equal(true)
         expect(limOrder1.amountIn).to.equal(totAmountX)
-        expect(limOrder1.amountOut).to.equal(acquireY5000_5051)
+        expect(limOrder1.amountOut).to.equal(stringAdd(acquireY5000_5051, acquireYAt5000))
 
         let {activeIdx, activeLimitOrder} = await limorderWithSwapManager.getActiveOrders(seller1.address); //.map((e)=>translateLimOrder(e));
         activeIdx = activeIdx.map((e)=>e.toString());
-        expect(activeIdx.length).to.equal(1)
-        activeLimitOrder = activeLimitOrder.map((e)=>translateLimOrder(e));
-        const limOrder = activeLimitOrder[0]
-        expect(limOrder.amount).to.equal(totAmountX)
-        expect(limOrder.sellingRemain).to.equal('0')
-        expect(limOrder.earn).to.equal(acquireYAt5000)
+        expect(activeIdx.length).to.equal(0)
+        // activeLimitOrder = activeLimitOrder.map((e)=>translateLimOrder(e));
+        // const limOrder = activeLimitOrder[0]
+        // expect(limOrder.initSellingAmount).to.equal(totAmountX)
+        // expect(limOrder.sellingRemain).to.equal('0')
+        // expect(limOrder.earn).to.equal(limOrder1.amountOut)
     });
 
     it("add limorder x2y desire offset enough", async function() {
@@ -617,15 +615,15 @@ describe("limorderWithSwapSwitch x2y desire", function () {
 
         expect(limOrder1.ok).to.equal(true)
         expect(limOrder1.amountIn).to.equal(totAmountX)
-        expect(limOrder1.amountOut).to.equal(acquireY5000_5051)
+        expect(limOrder1.amountOut).to.equal(stringAdd(acquireY5000_5051, acquireYAt5000))
 
         let {activeIdx, activeLimitOrder} = await limorderWithSwapManager.getActiveOrders(seller1.address); //.map((e)=>translateLimOrder(e));
         activeIdx = activeIdx.map((e)=>e.toString());
         expect(activeIdx.length).to.equal(1)
         activeLimitOrder = activeLimitOrder.map((e)=>translateLimOrder(e));
         const limOrder = activeLimitOrder[0]
-        expect(limOrder.amount).to.equal(totAmountX)
+        expect(limOrder.initSellingAmount).to.equal(totAmountX)
         expect(limOrder.sellingRemain).to.equal(remainCostXAt5000)
-        expect(limOrder.earn).to.equal(amountYAt5000)
+        expect(limOrder.earn).to.equal(limOrder1.amountOut)
     });
 });

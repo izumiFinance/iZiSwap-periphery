@@ -304,10 +304,8 @@ async function newLimOrder(
 function translateLimOrder(limOrder) {
     return {
         pt: limOrder.pt,
-        amount: limOrder.amount.toString(),
+        initSellingAmount: limOrder.initSellingAmount.toString(),
         sellingRemain: limOrder.sellingRemain.toString(),
-        accSellingDec: limOrder.accSellingDec.toString(),
-        sellingDec: limOrder.sellingDec.toString(),
         earn: limOrder.earn.toString(),
         lastAccEarn: limOrder.lastAccEarn.toString(),
         poolId: limOrder.poolId.toString(),
@@ -474,9 +472,9 @@ describe("limorderWithSwapSwitch Y2X undesire", function () {
         expect(activeIdx.length).to.equal(1)
         activeLimitOrder = activeLimitOrder.map((e)=>translateLimOrder(e));
         const limOrder = activeLimitOrder[0]
-        expect(limOrder.amount).to.equal(totCostYWithFee)
+        expect(limOrder.initSellingAmount).to.equal(totCostYWithFee)
         expect(limOrder.sellingRemain).to.equal(remainYAt5050)
-        expect(limOrder.earn).to.equal('0')
+        expect(limOrder.earn).to.equal(limOrder1.amountOut)
     });
 
     it("add limorder y2x undesire offset not enough", async function() {
@@ -642,8 +640,8 @@ describe("limorderWithSwapSwitch Y2X undesire", function () {
         expect(activeIdx.length).to.equal(1)
         activeLimitOrder = activeLimitOrder.map((e)=>translateLimOrder(e));
         const limOrder = activeLimitOrder[0]
-        expect(limOrder.amount).to.equal(totAmountY)
+        expect(limOrder.initSellingAmount).to.equal(totAmountY)
         expect(limOrder.sellingRemain).to.equal(remainAmountYAt5050)
-        expect(limOrder.earn).to.equal('0')
+        expect(limOrder.earn).to.equal(limOrder1.amountOut)
     });
 });
