@@ -1,4 +1,10 @@
 const contracts = {
+    icplazaTest: {
+        wrapChainToken: '0x1eE5eDC5Fe498a2dD82862746D674DB2a5e7fef6',
+        iZiSwapFactory: '0xC6C7c2edF70A3245ad6051E93809162B9758ce08',
+        liquidityManager: '0x77132b63429718Db2B6ad8D942eE13A198f6Ab49',
+        swap: '0x95c5F14106ab4d1dc0cFC9326225287c18c2d247',
+    },
     scrollTestL2: {
         iZiSwapFactory: '0x67A1f4A939b477A6b7c5BF94D97E45dE87E608eF',
         wrapChainToken: '0x7A0cE5d01CDEe4F36c9ee4eA521404E6409064dA',

@@ -85,6 +85,10 @@ module.exports = {
       url: 'https://prealpha.scroll.io/l2',
       accounts: [sk],
     },
+    icplazaTest: {
+      url: 'https://rpctest.ic-plaza.org/',
+      accounts: [sk],
+    },
   },
   etherscan: {
     apiKey: apiKey,
