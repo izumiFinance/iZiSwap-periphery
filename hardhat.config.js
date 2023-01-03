@@ -77,7 +77,7 @@ module.exports = {
       url: 'https://rpc-mainnet.maticvigil.com',
       accounts: [sk],
     },
-    mintleTest: {
+    mantleTest: {
       url: 'https://rpc.testnet.mantle.xyz',
       accounts: [sk],
     },
