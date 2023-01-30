@@ -12,10 +12,10 @@ const contracts = {
 	swap: '0xE0c7b10009fC582beFE3cAFE777eC7E2753368aF',
     },
     scrollTestL2: {
-        iZiSwapFactory: '0x67A1f4A939b477A6b7c5BF94D97E45dE87E608eF',
-        wrapChainToken: '0x7A0cE5d01CDEe4F36c9ee4eA521404E6409064dA',
-        liquidityManager: '0xC6C7c2edF70A3245ad6051E93809162B9758ce08',
-        swap: '0xa9754f0D9055d14EB0D2d196E4C51d8B2Ee6f4d3',
+        iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
+        wrapChainToken: '0x25b48fAc54d774732451E1D5DF602E83D5B83964',
+        liquidityManager: '0x67A1f4A939b477A6b7c5BF94D97E45dE87E608eF',
+        swap: '0x77132b63429718Db2B6ad8D942eE13A198f6Ab49',
     },
     mantleTest: {
         iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
