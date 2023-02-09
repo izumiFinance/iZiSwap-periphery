@@ -93,6 +93,10 @@ module.exports = {
       url: 'https://rpcmainnet.ic-plaza.org/',
       accounts: [sk],
     },
+    bedrockRolluxTestL2: {
+      url: 'https://bedrock.rollux.com:9545/',
+      accounts: [sk],
+    },
   },
   etherscan: {
     apiKey: apiKey,
