@@ -93,7 +93,13 @@ const contracts = {
         wrapChainToken: '0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270',
         liquidityManager: '0x33531bDBFE34fa6Fd5963D0423f7699775AacaaF',
         swap: '0x3F559139C2Fc7B97Ad6FE9B4d1f75149F551DB18',
-    }
+    },
+    confluxEspace: {
+        iZiSwapFactory: '0x110dE362cc436D7f54210f96b8C7652C2617887D',
+        wrapChainToken: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+        liquidityManager: '0x1502d025BfA624469892289D45C0352997251728',
+        swap: '0x2db0AFD0045F3518c77eC6591a542e326Befd3D7',
+    },
 }
 
 module.exports = contracts;
