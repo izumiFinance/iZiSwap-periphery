@@ -18,6 +18,17 @@ module.exports = {
           optimizer: {
             enabled: true,
             runs: 100
+          },
+          outputSelection: {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+            }
           }
         }
       },
@@ -99,6 +110,10 @@ module.exports = {
     },
     confluxEspace: {
       url: 'https://evm.confluxrpc.com',
+      accounts: [sk],
+    },
+    meter: {
+      url: 'https://rpc.meter.io',
       accounts: [sk],
     }
   },
