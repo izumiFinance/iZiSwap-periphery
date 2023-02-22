@@ -18,6 +18,17 @@ module.exports = {
           optimizer: {
             enabled: true,
             runs: 100
+          },
+          outputSelection: {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+            }
           }
         }
       },
@@ -97,6 +108,10 @@ module.exports = {
       url: 'https://bedrock.rollux.com:9545/',
       accounts: [sk],
     },
+    meter: {
+      url: 'https://rpc.meter.io',
+      accounts: [sk],
+    }
   },
   etherscan: {
     apiKey: apiKey,

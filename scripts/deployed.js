@@ -93,6 +93,12 @@ const contracts = {
         wrapChainToken: '0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270',
         liquidityManager: '0x33531bDBFE34fa6Fd5963D0423f7699775AacaaF',
         swap: '0x3F559139C2Fc7B97Ad6FE9B4d1f75149F551DB18',
+    },
+    meter: {
+        iZiSwapFactory: '0x3aaacE835Db7Be1C7E0C4117dBc91c265D7f2D28',
+        wrapChainToken: '0x160361ce13ec33C993b5cCA8f62B6864943eb083',
+        liquidityManager: '0x07aBf894D5C25E626bb30f75eFC728a1d86BEeDC',
+        swap: '0x6960A7151d3310804aFA9CaD2c7415f9564BE03e',
     }
 }
 
