@@ -25,9 +25,9 @@ const contracts = {
     },
     mantleTest: {
         iZiSwapFactory: '0x848a0C239e1C42785f71e16B1d5c48D503fd0797',
-        wrapChainToken: '0x69AC69b272f96F5f17DDD9da3832ad9Dc86D1d8A',
-        liquidityManager: '0xaDd9336AB4a795a66E4E1820f5d347c4294dd76a',
-        swap: '0x3A507CB35fcDe6445EF6e3D44D836f81d24374B8',
+        wrapChainToken: '0x67A1f4A939b477A6b7c5BF94D97E45dE87E608eF',
+        liquidityManager: '0x3366351e9B0B4215396A442fF1A612CaBbed3017',
+        swap: '0x4FE2C54b7dDf6FaD344F2dD37563486d905933F2',
     },
     bscTest: {
         iZiSwapFactory: '0x7fc0574eAe768B109EF38BC32665e6421c52Ee9d',
