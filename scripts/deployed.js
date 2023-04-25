@@ -24,10 +24,10 @@ const contracts = {
 	swap: '0xa9754f0D9055d14EB0D2d196E4C51d8B2Ee6f4d3',
     },
     mantleTest: {
-        iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
+        iZiSwapFactory: '0x848a0C239e1C42785f71e16B1d5c48D503fd0797',
         wrapChainToken: '0x67A1f4A939b477A6b7c5BF94D97E45dE87E608eF',
-        liquidityManager: '0xC6C7c2edF70A3245ad6051E93809162B9758ce08',
-        swap: '0xa9754f0D9055d14EB0D2d196E4C51d8B2Ee6f4d3',
+        liquidityManager: '0x3366351e9B0B4215396A442fF1A612CaBbed3017',
+        swap: '0x4FE2C54b7dDf6FaD344F2dD37563486d905933F2',
     },
     bscTest: {
         iZiSwapFactory: '0x7fc0574eAe768B109EF38BC32665e6421c52Ee9d',
@@ -105,6 +105,18 @@ const contracts = {
         wrapChainToken: '0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270',
         liquidityManager: '0x33531bDBFE34fa6Fd5963D0423f7699775AacaaF',
         swap: '0x3F559139C2Fc7B97Ad6FE9B4d1f75149F551DB18',
+    },
+    meter: {
+        iZiSwapFactory: '0x3aaacE835Db7Be1C7E0C4117dBc91c265D7f2D28',
+        wrapChainToken: '0x160361ce13ec33C993b5cCA8f62B6864943eb083',
+        liquidityManager: '0x07aBf894D5C25E626bb30f75eFC728a1d86BEeDC',
+        swap: '0x6960A7151d3310804aFA9CaD2c7415f9564BE03e',
+    },
+    telos: {
+        iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
+        wrapChainToken: '0xD102cE6A4dB07D247fcc28F366A623Df0938CA9E',
+        liquidityManager: '0x110dE362cc436D7f54210f96b8C7652C2617887D',
+        swap: '0x2db0AFD0045F3518c77eC6591a542e326Befd3D7',
     }
 }
 
