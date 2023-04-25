@@ -50,12 +50,24 @@ const contracts = {
         LAND: '0x1017D7d37169f98EED32BBB68aD79A3881174e3f',
         FROYO: '0xed2F92D6D2b936ce3Db9e046E57D9119e4A31ECb',
     },
+    ontologyTest: {
+        iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
+        wrapChainToken: '0xe8cf015f797877a9a23e80447429c0b0f04e114b',
+        liquidityManager: '0x67A1f4A939b477A6b7c5BF94D97E45dE87E608eF',
+        swap: '0x77132b63429718Db2B6ad8D942eE13A198f6Ab49',
+    },
     bsc: {
         iZiSwapFactory: '0xd7de110Bd452AAB96608ac3750c3730A17993DE0',
         WBNB: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
 	wrapChainToken: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
 	liquidityManager: '0x93C22Fbeff4448F2fb6e432579b0638838Ff9581',
 	swap: '0xBd3bd95529e0784aD973FD14928eEDF3678cfad8',
+    },
+    ethereum: {
+        wrapChainToken: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+        iZiSwapFactory: '0x1502d025BfA624469892289D45C0352997251728',
+        liquidityManager: '0x19b683A2F45012318d9B2aE1280d68d3eC54D663',
+        swap: '0x2db0AFD0045F3518c77eC6591a542e326Befd3D7',
     },
     aurora: {
         iZiSwapFactory: '0x156d8a0bE25FA232bb637Fc76255bCd00dEae9E9',
