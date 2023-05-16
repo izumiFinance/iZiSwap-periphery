@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 
 import "../core/interfaces/IiZiSwapFactory.sol";
-import "../WrapToken.sol";
+import "./WrapToken.sol";
 
 interface IBox {
     function isMintOrAddLiquidity() external view returns(bool);
