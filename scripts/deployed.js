@@ -13,9 +13,9 @@ const contracts = {
     },
     scrollTestL2: {
         iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
-        wrapChainToken: '0x3aB38EF845E86E949253Dd3a6FdA37Cc7d4Cd892',
-        liquidityManager: '0x6953DEe956eEe39973F1e1090368Ba434CCa0d94',
-        swap: '0xaDd9336AB4a795a66E4E1820f5d347c4294dd76a',
+        wrapChainToken: '0xa1EA0B2354F5A344110af2b6AD68e75545009a03',
+        liquidityManager: '0x67A1f4A939b477A6b7c5BF94D97E45dE87E608eF',
+        swap: '0x77132b63429718Db2B6ad8D942eE13A198f6Ab49',
     },
     bedrockRolluxTestL2: {
         iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
@@ -50,12 +50,30 @@ const contracts = {
         LAND: '0x1017D7d37169f98EED32BBB68aD79A3881174e3f',
         FROYO: '0xed2F92D6D2b936ce3Db9e046E57D9119e4A31ECb',
     },
+    ontologyTest: {
+        iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
+        wrapChainToken: '0xe8cf015f797877a9a23e80447429c0b0f04e114b',
+        liquidityManager: '0x67A1f4A939b477A6b7c5BF94D97E45dE87E608eF',
+        swap: '0x77132b63429718Db2B6ad8D942eE13A198f6Ab49',
+    },
     bsc: {
         iZiSwapFactory: '0xd7de110Bd452AAB96608ac3750c3730A17993DE0',
         WBNB: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
 	wrapChainToken: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
 	liquidityManager: '0x93C22Fbeff4448F2fb6e432579b0638838Ff9581',
 	swap: '0xBd3bd95529e0784aD973FD14928eEDF3678cfad8',
+    },
+    ontology: {
+        iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
+        wrapChainToken: '0xd8bc24cfd45452ef2c8bc7618e32330b61f2691b',
+        liquidityManager: '0x110dE362cc436D7f54210f96b8C7652C2617887D',
+        swap: '0x02F55D53DcE23B4AA962CC68b0f685f26143Bdb2',
+    },
+    ethereum: {
+        wrapChainToken: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+        iZiSwapFactory: '0x1502d025BfA624469892289D45C0352997251728',
+        liquidityManager: '0x19b683A2F45012318d9B2aE1280d68d3eC54D663',
+        swap: '0x2db0AFD0045F3518c77eC6591a542e326Befd3D7',
     },
     aurora: {
         iZiSwapFactory: '0x156d8a0bE25FA232bb637Fc76255bCd00dEae9E9',
