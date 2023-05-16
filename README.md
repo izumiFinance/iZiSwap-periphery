@@ -11,12 +11,26 @@
 Contracts for iZiSwap periphery.
 
 
+## Overview
 
-## Set up Environment
+
+<div align="center">
+  <a href="https://izumi.finance"> 
+    <img width="900px" height="auto" 
+    src="image/overview.png">
+  </a>
+</div>
+
+
+
+
+
+## Usage
+### Set up Environment
 
 install node.js(at least 14.X) and npm
 
-## Compile from source
+### Compile from source
 
 ##### 1. clone repo from github
 
@@ -75,7 +89,7 @@ if you want to only run a single test case, simply run
 $ npx hardhat test test/${FILE_OF_TEST_CASE}.json
 ```
 
-## Example of Deploy and interact
+### Example of Deploy and interact
 
 ##### 1. Example of Deployment
 we provide example scripts for deploy contracts.
@@ -158,10 +172,10 @@ After filling those fields, run following command to deploy box.
 $ HARDHAT_NETWORK='bscTest' node scripts/box/deployBox.js
 ```
 
-### 9. Interact with those contracts
+##### 9. Interact with those contracts
 
 You can refer to our iziswap-sdk for interaction.
 
-Check [iZUMi.finance](https://developer.izumi.finance/iZiSwap/SDK/) for in-depth documentation.
+Check [dev.iZUMi.finance](https://developer.izumi.finance/iZiSwap/SDK/) for in-depth documentation.
 
 Check [Github](https://github.com/izumiFinance/iZiSwap-sdk) for latest sdk code.
