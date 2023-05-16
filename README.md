@@ -14,7 +14,7 @@ Contracts for iZiSwap periphery.
 
 ## Set up Environment
 
-install node.js(12.X) and npm
+install node.js(at least 14.X) and npm
 
 ## Compile from source
 
@@ -52,8 +52,18 @@ is `${IZUMI_SWAP_CORE_DIR}`
 ##### 2. copy compiled json from izumi-swap-core to izmui-swap-periphery
 after compile the izumi-swap-core project, copy dirs `${IZUMI_SWAP_CORE_DIR}/artifacts/*.sol` to 
 `${IZUMI_SWAP_PERIPHERY}/test/core/`
-copy compiled json file of weth into `${IZUMI_SWAP_PERIPHERY}/test/core/` and name it as `WETH9.json`
+copy compiled json file of weth9 into `${IZUMI_SWAP_PERIPHERY}/test/core/` and name it as `WETH9.json`
 because when we running test cases, we will find abi and code of izumi-swap-core contracts and weth contract under `${IZUMI_SWAP_PERIPHERY}/test/core/`
+
+Your file structure of `${IZUMI_SWAP_PERIPHERY}/test/core/` might be following:
+```
+/test
+    /core
+        WETH9.json
+        FlashModule.json
+        iZiSwapFactory.json
+        ...
+```
 
 ##### 3. run test case
 run test cases via following command
