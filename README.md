@@ -11,12 +11,26 @@
 Contracts for iZiSwap periphery.
 
 
+## Overview
 
-## Set up Environment
 
-install node.js(12.X) and npm
+<div align="center">
+  <a href="https://izumi.finance"> 
+    <img width="900px" height="auto" 
+    src="image/overview.png">
+  </a>
+</div>
 
-## Compile from source
+
+
+
+
+## Usage
+### Set up Environment
+
+install node.js(at least 14.X) and npm
+
+### Compile from source
 
 ##### 1. clone repo from github
 
@@ -52,8 +66,18 @@ is `${IZUMI_SWAP_CORE_DIR}`
 ##### 2. copy compiled json from izumi-swap-core to izmui-swap-periphery
 after compile the izumi-swap-core project, copy dirs `${IZUMI_SWAP_CORE_DIR}/artifacts/*.sol` to 
 `${IZUMI_SWAP_PERIPHERY}/test/core/`
-copy compiled json file of weth into `${IZUMI_SWAP_PERIPHERY}/test/core/` and name it as `WETH9.json`
+copy compiled json file of weth9 into `${IZUMI_SWAP_PERIPHERY}/test/core/` and name it as `WETH9.json`
 because when we running test cases, we will find abi and code of izumi-swap-core contracts and weth contract under `${IZUMI_SWAP_PERIPHERY}/test/core/`
+
+Your file structure of `${IZUMI_SWAP_PERIPHERY}/test/core/` might be following:
+```
+/test
+    /core
+        WETH9.json
+        FlashModule.json
+        iZiSwapFactory.json
+        ...
+```
 
 ##### 3. run test case
 run test cases via following command
@@ -65,75 +89,93 @@ if you want to only run a single test case, simply run
 $ npx hardhat test test/${FILE_OF_TEST_CASE}.json
 ```
 
-## Example of Deploy and interact
+### Example of Deploy and interact
 
-##### 1. Example of Deploy and interact
-we provide example scripts for deploy contracts, add pool, add liquidity, view liquidity, swap, prequery price.
-in the following, we take the example of deploying and interface in izumi-test network, which has been set in `${IZUMI_SWAP_PERIPHERY}/hardhat.config.js`, if you want to deploy and interface in other eth-networks, you could just configure the network in the `hardhat.config.js` and specified it via `--network` when runing coresponding scripts
+##### 1. Example of Deployment
+we provide example scripts for deploy contracts.
+in the following, we take the example of deploying and interface in izumi-test network, which has been set in `${IZUMI_SWAP_PERIPHERY}/hardhat.config.js`, if you want to deploy and interface in other eth-networks, you could just configure the network in the `hardhat.config.js` and specified it via env var `HARDHAT_NETWORK` when runing coresponding scripts
 
 ##### 2. prepare work
-establish a file called `.settings.js` under dir `${IZUMI_SWAP_PERIPHERY}`
+establish a file called `.secret.js` under dir `${IZUMI_SWAP_PERIPHERY}`
 ```
-$ cp .settings.js.example .settings.js
+$ cp .secret.js.example .secret.js
 ```
 following 3 field must be filled
 change the field of sk to a private key of your sign account of the network you want to deploy
-change the field of weth to address of contract weth of the network
-change the field of izumiswapFactory to address of the IzumiswapFactory contract in the network, the deployment of IzumiswapFactory can be refered in [izumi-swap-core](https://github.com/izumiFinance/izumi-swap-core) 
 
-the following field in the .settings.js can be empty string currently
+ensure that there exists an deployed `izumi-swap-factory` contract, ofcourse you can deploy it by yourself
+ the deployment of IzumiswapFactory can be refered in [izumi-swap-core](https://github.com/izumiFinance/izumi-swap-core) 
 
-##### 3. Example to deploy "NonfungibleLiquidityManager" and "Swap"
+you should fill the field `iZiSwapFactory` to corresponding address in the js file `scripts/deployed.js` under the target chain.
 
-you can refer to the example script `scripts/deployPeriphery.js`.
-if you want to deploy it in the izumi-test network configered in `hardhat.config.js`, simply run
-```
-$ npx hardhat run scripts/deployPeriphery.js --network izumi_test
-```
-replace `izumi_test` if you want to deploy the 2 contracts on other eth-networks
+##### 3. Deploy "LiquidityManager"
 
-after running, the deployed addresses of `NonfungibleLiquidityManager` and `Swap` can be viewed on the screen.
-and you should copy them to the fields `nflmAddr` and `swapAddr` in the `.settings.js` for  ineractions of add pool, add liquidity and swap
-
-##### 4. Example to deploy "Quoter" contract.
+you can refer to the example script `scripts/liquidityManager/deployNFLM.js`.
+if you want to deploy it in the bscTest network configered in `hardhat.config.js`, simply run
 ```
-$ npx hardhat run scripts/deployQuoter.js --network izumi_test
-```
-replace `izumi_test` to eth-network you want.
-after running, the deployed addresses of `Quoter` can be viewed on the screen.
-and you should copy them to the field `quoterAddr` in the `.settings.js` for  ineractions of pre query price
-
-##### 5. Example to "add pool", "add Liquidity", "swap" and "prequery price"
-`scripts/addPool` will add a pool of `(BIT/USDC/3000)`
-before runing, make sure that `nflmAddr`, `swapAddr`, `BIT`, `USDC` in the `.settings.js` is correct, `BIT` and `USDC` are 2 token address used in the script, if you donot have such tokens in your eth-network, you can deploy them using `contracts/test/Token.sol`
-running addPool
-```
-$ npx hardhat run scripts/addPool.js --network izumi_test
-```
-replace `izumi_test` to eth-network you want
+$ HARDHAT_NETWORK='bscTest' node scripts/liquidityManager/deployNFLM.js ${address of WBNB on bscTest}
 
 ```
-$ npx hardhat run scripts/getPool --network izumi_test
-```
-you can view the pool address of `(BIT/USDC/3000)`
+replace `bscTest` and corresponding ${address of WBNB on BSC} if you want to deploy the 2 contracts on other evm-networks
 
-add and view liquidity
-```
-$ npx hardhat run scripts/addPool.js --network izumi_test
-$ npx hardhat run scripts/viewLiquidity.js --network izumi_test
-```
+after running, the deployed addresses of `LiquidityManager` can be viewed on the screen.
 
-call swapX2Y(...) of Swap contract
+##### 4. Deploy "LimitOrderManager" contract
+
+if you want to deploy it in the bscTest network configered in `hardhat.config.js`, simply run
 ```
-$ npx hardhat run scripts/swapX2Y.js -- network izumi_test
+$ HARDHAT_NETWORK='bscTest' node scripts/limOrderManager/deployLimOrderManager.js ${address of WBNB on bscTest}
 ```
 
-call swapY2X(...)
+##### 5. Deploy "LimitOrderWithSwapManager" contract
+
+if you want to deploy it in the bscTest network configered in `hardhat.config.js`, simply run
 ```
-$ npx hardhat run scripts/swapY2X.js -- network izumi_test
+$ HARDHAT_NETWORK='bscTest' node scripts/limOrderWithSwapManager/deployLimOrderWithSwapManager.js ${address of WBNB on bscTest}
 ```
 
-prequery price
+##### 6. Deploy "Swap" contract.
+
+if you want to deploy it in the bscTest network configered in `hardhat.config.js`, simply run
 ```
-$ node scripts/getSwapPrice.js
+$ HARDHAT_NETWORK='bscTest' node scripts/swap/deploySwap.js ${address of WBNB on bscTest}
+
 ```
+
+##### 7. Deploy "Quoter" contract.
+
+if you want to deploy it in the bscTest network configered in `hardhat.config.js`, simply run
+```
+$ HARDHAT_NETWORK='bscTest' node scripts/quoter/deployQuoter.js ${address of WBNB on bscTest}
+
+```
+
+##### 7. Deploy "Quoter" contract.
+
+if you want to deploy it in the bscTest network configered in `hardhat.config.js`, simply run
+```
+$ HARDHAT_NETWORK='bscTest' node scripts/quoter/deployQuoter.js ${address of WBNB on bscTest}
+
+```
+
+##### 8. Deploy "Box" contract
+
+Suppose you want to deploy on bscTest network.
+
+Before running box's deploy script, you should fill the field `liquidityManager`, `swap` and `wrapChainToken` to corresponding address in the js file `scripts/deployed.js` under the target chain. Here `wrapChainToken` is address `WBNB` on bscTest network, and if you want to deploy `Box` on other networks, you should replace it to other `wrapped gas token` like `WETH` or `WMATIC` ...
+
+The field `liquidityManager` and `swap` are contracts you just deployed.
+
+After filling those fields, run following command to deploy box.
+
+```
+$ HARDHAT_NETWORK='bscTest' node scripts/box/deployBox.js
+```
+
+##### 9. Interact with those contracts
+
+You can refer to our iziswap-sdk for interaction.
+
+Check [dev.iZUMi.finance](https://developer.izumi.finance/iZiSwap/SDK/) for in-depth documentation.
+
+Check [Github](https://github.com/izumiFinance/iZiSwap-sdk) for latest sdk code.

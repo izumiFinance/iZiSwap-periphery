@@ -9,10 +9,10 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-import "./interfaces/ILiquidityManager.sol";
-import "./interfaces/IBase.sol";
-import "./interfaces/IWrapToken.sol";
-import "./interfaces/ISwap.sol";
+import "../interfaces/ILiquidityManager.sol";
+import "../interfaces/IBase.sol";
+import "../interfaces/IWrapToken.sol";
+import "../interfaces/ISwap.sol";
 
 /// @title Interface for WETH9
 interface IWETH9 is IERC20 {
