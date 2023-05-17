@@ -123,6 +123,10 @@ module.exports = {
     telos: {
       url: 'https://mainnet.telos.net/evm',
       accounts: [sk],
+    },
+    ultron: {
+       url: 'https://ultron-rpc.net',
+       accounts: [sk],
     }
   },
   etherscan: {

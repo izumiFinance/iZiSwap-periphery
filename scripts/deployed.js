@@ -123,7 +123,13 @@ const contracts = {
         wrapChainToken: '0xD102cE6A4dB07D247fcc28F366A623Df0938CA9E',
         liquidityManager: '0x110dE362cc436D7f54210f96b8C7652C2617887D',
         swap: '0x2db0AFD0045F3518c77eC6591a542e326Befd3D7',
-    }
+    },
+    ultron: {
+        iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
+        wrapChainToken: '0x3a4f06431457de873b588846d139ec0d86275d54',
+        liquidityManager: '',
+        swap: '',
+    },
 }
 
 module.exports = contracts;
