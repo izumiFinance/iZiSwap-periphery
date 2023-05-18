@@ -8,7 +8,8 @@
 </div>
 
 
-Contracts for iZiSwap periphery.
+Contracts for iZiSwap periphery. Periphery contracts are suggested entrances to interact with 
+[iZiSwap Core](https://github.com/izumiFinance/iZiSwap-core) contracts. 
 
 
 ## Overview
@@ -16,21 +17,36 @@ Contracts for iZiSwap periphery.
 
 <div align="center">
   <a href="https://izumi.finance"> 
-    <img width="900px" height="auto" 
+    <img width="700px" height="auto" 
     src="image/overview.png">
   </a>
 </div>
 
 
+- Swap Related:
+  - Quoter.sol: Used for simulating trades without restrictions on identity and assets. Typically called before actual trading to determine how many tokenB can be obtained by exchanging a specified quantity of tokenA.
+  - QuoterWithLim.sol: similar to Quoter.sol but only search liquidity around the current point to accelerate the search process and void **Out of gas** error.
+  - Swap.sol: Used to initiates real trades. There are two modes: **amount** mode and **desired** mode. Assuming the exchange is x tokenA -> y tokenB, in amount mode, x is fixed, while in desired mode, y is fixed.
 
+- Limit Order Related:
+  - LimitOrderManager.sol: Used for managing the logical operations related to limit orders, including placing orders, canceling orders, and claiming the traded tokens. To some extent, this contract is coupled with the core contract and is primarily used to avoid fund temporary storage. Only can place order above the current price for sell or below the current price for buy.
+  - LimitOrderWithSwapManager.sol: Similar to LimitOrderManger.sol but add an extra mode: swap and place order. In this mode, the price constrains are removed and the portion that should be executed immediately will be traded as a normal swap. Prone to sandwich attacks, careful setting of slippage is required.
 
+- Liquidity Related:
+  - LiquidityManager.sol: 
+  Used for managing the addition, removal, and fee claiming of liquidity. Liquidity is provided in ranges, where each range is determined by a triplet of <min_price, max_price, liquidity>. Each piece of liquidity generates an ERC-721 NFT.
+
+- Auxiliary Contracts:
+  - Box: Some tokens have additional fees when transferring, which can cause failures in iZiSwap because it uses a callback payment method. In such cases, the original token can be wrapped into a feeless version by using a box to encapsulate it, ensuring a seamless user experience.
+    - WrapToken: Used to wrap the fee-charging token into a normal one.
+    - Box: Used to wrap the swap and liquidity management operations. *Do not support limit order*.
 
 ## Usage
-### Set up Environment
+### Step 1: Set up Environment
 
 install node.js(at least 14.X) and npm
 
-### Compile from source
+### Step 2: Compile from source
 
 ##### 1. clone repo from github
 
@@ -56,7 +72,7 @@ $ npx hardhat compile
 ##### 5. compiled json file
 after compile, the abi and code of the contracts can be found in files `artifacts/*.sol/*.json`
 
-## Run test cases
+### Step 3: Run test cases
 
 ##### 1. compile izumi-swap-core
 before running test case, you should compile [izumi-swap-core](https://github.com/izumiFinance/izumi-swap-core) first.
@@ -89,7 +105,7 @@ if you want to only run a single test case, simply run
 $ npx hardhat test test/${FILE_OF_TEST_CASE}.json
 ```
 
-### Example of Deploy and interact
+### Step 4: Example of Deploy and interact
 
 ##### 1. Example of Deployment
 we provide example scripts for deploy contracts.
