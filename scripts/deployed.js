@@ -126,9 +126,9 @@ const contracts = {
     },
     ultron: {
         iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
-        wrapChainToken: '0x3a4f06431457de873b588846d139ec0d86275d54',
-        liquidityManager: '0x110dE362cc436D7f54210f96b8C7652C2617887D',
-        swap: '0x02F55D53DcE23B4AA962CC68b0f685f26143Bdb2',
+        wrapChainToken: '0xb1183357745D3fD7d291E42a2c4B478cdB5710c6',
+        liquidityManager: '0xcA7e21764CD8f7c1Ec40e651E25Da68AeD096037',
+        swap: '0x1D377311b342633A970e71a787C50F83858BFC1B',
     },
 }
 
