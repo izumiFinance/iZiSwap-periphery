@@ -130,6 +130,12 @@ const contracts = {
         liquidityManager: '0xcA7e21764CD8f7c1Ec40e651E25Da68AeD096037',
         swap: '0x1D377311b342633A970e71a787C50F83858BFC1B',
     },
+    lineaTest: {
+        iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
+        wrapChainToken: '0x67A1f4A939b477A6b7c5BF94D97E45dE87E608eF',
+        liquidityManager: '0xC6C7c2edF70A3245ad6051E93809162B9758ce08',
+        swap: '0xa9754f0D9055d14EB0D2d196E4C51d8B2Ee6f4d3',
+    },
 }
 
 module.exports = contracts;
