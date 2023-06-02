@@ -41,15 +41,10 @@ Contracts for iZiSwap periphery. Periphery contracts are suggested entrances to 
     - **Box**: Used to wrap the swap and liquidity management operations. *Do not support limit order*.
 
 ## Usage
+
 ### Set up Environment
 
 install node.js(at least 14.X) and npm
-
-### install from npm
-
-```
-$ npm install iziswap_periphery
-```
 
 ### Compile from source
 
@@ -200,3 +195,9 @@ You can refer to our iziswap-sdk for interaction.
 Check [dev.iZUMi.finance](https://developer.izumi.finance/iZiSwap/SDK/) for in-depth documentation.
 
 Check [Github](https://github.com/izumiFinance/iZiSwap-sdk) for latest sdk code.
+
+### Use source code as npm package
+
+```
+$ npm install iziswap_periphery
+```
