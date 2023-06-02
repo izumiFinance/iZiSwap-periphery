@@ -205,7 +205,7 @@ $ npm install iziswap_periphery
 An example to usage interfaces of Swap
 
 ```
-import 'izumifinance/iziswap_periphery/contracts/interfaces/ISwap.sol';
+import '@izumifinance/iziswap_periphery/contracts/interfaces/ISwap.sol';
 
 contract Foo {
   ISwap swapRouter;
