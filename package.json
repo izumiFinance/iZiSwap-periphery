@@ -1,18 +1,37 @@
 {
+  "name": "iziswap_periphery",
+  "version": "1.0.0",
+  "keywords": [
+    "iZUMi",
+    "iziswap",
+    "periphery"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/izumiFinance/iZiSwap-core"
+  },
+  "files": [
+    "contracts/*.sol",
+    "contracts/interfaces/*.sol",
+    "contracts/libraries/*.sol",
+    "artifacts/contracts/**/*.json",
+    "!artifacts/contracts/**/*.dbg.json",
+    "!artifacts/contracts/test/**/*"
+  ],
   "devDependencies": {
     "@cronos-labs/hardhat-cronoscan": "^0.0.4",
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
+    "@nomiclabs/hardhat-etherscan": "^3.0.3",
     "chai": "^4.3.4",
     "ethereum-waffle": "^3.4.0",
     "ethers": "^5.4.7",
-    "hardhat": "^2.6.6"
-  },
-  "dependencies": {
-    "@nomiclabs/hardhat-etherscan": "^3.0.3",
-    "@openzeppelin/contracts": "^4.3.2",
+    "hardhat": "^2.6.6",
     "bignumber.js": "^9.0.2",
     "hardhat-contract-sizer": "^2.1.1",
     "web3": "^1.6.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.3.2"
   }
 }
