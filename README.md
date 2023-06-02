@@ -201,3 +201,18 @@ Check [Github](https://github.com/izumiFinance/iZiSwap-sdk) for latest sdk code.
 ```
 $ npm install iziswap_periphery
 ```
+
+a example to usage interfaces of Swap
+
+```
+import 'iziswap_periphery/contracts/interfaces/ISwap.sol';
+
+contract Foo {
+  ISwap swapRouter;
+
+  function bar() {
+      // swapRouter.swapAmount(...)
+      // swapRouter.swapDesire(...)
+  }
+}
+```
