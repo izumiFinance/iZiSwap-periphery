@@ -45,6 +45,12 @@ Contracts for iZiSwap periphery. Periphery contracts are suggested entrances to 
 
 install node.js(at least 14.X) and npm
 
+### install from npm
+
+```
+$ npm install iziswap_periphery
+```
+
 ### Compile from source
 
 ##### 1. clone repo from github
