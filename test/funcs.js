@@ -335,7 +335,7 @@ function l2y(liquidity, sqrtPrice_96, up) {
     }
 }
 
-async function newLimOrderWithX(slotIdx, tokenX, tokenY, seller, limorderManager, amountX, point) {
+async function newLimOrderWithX(slotIdx, tokenX, tokenY, seller, limorderManager, amountX, point, fee=3000) {
     await tokenX.transfer(seller.address, amountX);
     await tokenX.connect(seller).approve(limorderManager.address, amountX);
     let ok = true;
@@ -345,7 +345,7 @@ async function newLimOrderWithX(slotIdx, tokenX, tokenY, seller, limorderManager
         {
             tokenX: tokenX.address,
             tokenY: tokenY.address,
-            fee: 3000,
+            fee,
             pt: point,
             amount: amountX,
             sellXEarnY: true,
