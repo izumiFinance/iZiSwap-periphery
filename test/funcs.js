@@ -47,6 +47,13 @@ function stringLess(a, b) {
     return BigNumber(a).lt(b);
 }
 
+async function getPool(poolAddr, signer) {
+    const poolJson = getContractJson(__dirname + '/core/iZiSwapPool.json');
+    const poolFactory = await ethers.getContractFactory(poolJson.abi, poolJson.bytecode, signer)
+    const pool =  poolFactory.attach(poolAddr)
+    return pool
+}
+
 async function getIzumiswapFactory(receiverAddr, swapX2YModule, swapY2XModule, liquidityModule, limitOrderModule, flashModule, signer) {
     const iZiSwapJson = getContractJson(__dirname + '/core/iZiSwapFactory.json');
     
@@ -393,7 +400,7 @@ async function collectLimOrderWithX(seller, tokenX, tokenY, recipientAddress, or
     }
 }
 
-async function newLimOrderWithY(slotIdx, tokenX, tokenY, seller, limorderManager, amountY, point) {
+async function newLimOrderWithY(slotIdx, tokenX, tokenY, seller, limorderManager, amountY, point, fee=3000) {
     await tokenY.transfer(seller.address, amountY);
     await tokenY.connect(seller).approve(limorderManager.address, amountY);
     let ok = true;
@@ -403,7 +410,7 @@ async function newLimOrderWithY(slotIdx, tokenX, tokenY, seller, limorderManager
         {
             tokenX: tokenX.address,
             tokenY: tokenY.address,
-            fee: 3000,
+            fee,
             pt: point,
             amount: amountY,
             sellXEarnY: false,
@@ -477,6 +484,7 @@ function getRevertString(originStr) {
 
 module.exports ={
     getPoolParts,
+    getPool,
     getIzumiswapFactory,
     getLimOrder,
     getAcquiredFee,

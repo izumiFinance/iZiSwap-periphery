@@ -4,10 +4,11 @@ const { ethers } = require("hardhat");
 const BigNumber = require('bignumber.js');
 const { 
     getPoolParts, 
+    getPool,
     getIzumiswapFactory, 
     stringMinus,
     ceil,
-    newLimOrderWithX
+    newLimOrderWithX,
 } = require("./funcs.js")
 
 async function getToken(dx, dy) {
@@ -137,7 +138,7 @@ async function newLimOrder(
     }
 }
 
-async function swapX2Y(swap, trader, amount, tokenX, tokenY, highPt, ) {
+async function swapY2X(swap, trader, amount, tokenX, tokenY, highPt, ) {
     await swap.connect(trader).swapY2X(
         {
             tokenX: tokenX.address, 
@@ -164,6 +165,7 @@ describe("test ue earn legacyearn", function () {
     var rate;
     var aBigAmount;
     var rate;
+    var pool;
     beforeEach(async function() {
         [signer, A, B, C, D, trader] = await ethers.getSigners();
 
@@ -181,6 +183,8 @@ describe("test ue earn legacyearn", function () {
         tyAddr = tokenY.address.toLowerCase();
 
         poolAddr = await nflm.createPool(tokenX.address, tokenY.address, 2000, -100);
+        pool = await getPool(poolAddr, signer)
+
         rate = BigNumber("1.0001");
         aBigAmount = '10000000000000000000000'
 
@@ -206,14 +210,14 @@ describe("test ue earn legacyearn", function () {
         
         await newLimOrderWithX(0, tokenX, tokenY, A, limorderManager, '10000000000', 0, 2000);
         const trade1 = '1000000000'
-        await swapX2Y(swap, trader, trade1, tokenX, tokenY, 1)
+        await swapY2X(swap, trader, trade1, tokenX, tokenY, 1)
         await newLimOrderWithX(0, tokenX, tokenY, B, limorderManager, '10000000000', 0, 2000);
         await decLimitOrder(limorderManager, A, 0, '10000000000')
         const trade2 = '100000000'
-        await swapX2Y(swap, trader, trade2, tokenX, tokenY, 1)
+        await swapY2X(swap, trader, trade2, tokenX, tokenY, 1)
         await newLimOrderWithX(0, tokenX, tokenY, C, limorderManager, '10000000000', 0, 2000);
         const trade3 = '10000000'
-        await swapX2Y(swap, trader, trade3, tokenX, tokenY, 1)
+        await swapY2X(swap, trader, trade3, tokenX, tokenY, 1)
         const bCollect = await collectLimOrder(limorderManager, B, 0, tokenX, tokenY, '0', '1000000000000000')
         expect(bCollect.amountSell).to.equal('0')
         expect(bCollect.amountEarn).to.equal('110000000')
@@ -222,9 +226,9 @@ describe("test ue earn legacyearn", function () {
         expect(cCollect.amountSell).to.equal('0')
         expect(cCollect.amountEarn).to.equal('0')
         await newLimOrderWithX(0, tokenX, tokenY, D, limorderManager, '10000000000', 0, 2000);
-        await swapX2Y(swap, trader, '10000000000', tokenX, tokenY, 1)
-        await swapX2Y(swap, trader, '10000000000', tokenX, tokenY, 1)
-        await swapX2Y(swap, trader, '10000000000', tokenX, tokenY, 1)
+        await swapY2X(swap, trader, '10000000000', tokenX, tokenY, 1)
+        await swapY2X(swap, trader, '10000000000', tokenX, tokenY, 1)
+        await swapY2X(swap, trader, '10000000000', tokenX, tokenY, 1)
         const bCollect2 = await collectLimOrder(limorderManager, B, 0, tokenX, tokenY, '10000000000', '10000000000')
         expect(bCollect2.amountSell).to.equal('5000000000')
         expect(bCollect2.amountEarn).to.equal('4890000000')
@@ -243,17 +247,17 @@ describe("test ue earn legacyearn", function () {
         
         await newLimOrderWithX(0, tokenX, tokenY, A, limorderManager1, '10000000000', 0, 2000);
         const trade1 = '5000000000'
-        await swapX2Y(swap, trader, trade1, tokenX, tokenY, 1)
+        await swapY2X(swap, trader, trade1, tokenX, tokenY, 1)
         
         await newLimOrderWithX(0, tokenX, tokenY, A, limorderManager2, '10000000000', 0, 2000);
         await newLimOrderWithX(0, tokenX, tokenY, B, limorderManager1, '10000000000', 0, 2000);
         await newLimOrderWithX(0, tokenX, tokenY, B, limorderManager2, '10000000000', 0, 2000);
         const trade2 = '500000000'
-        await swapX2Y(swap, trader, trade2, tokenX, tokenY, 1)
+        await swapY2X(swap, trader, trade2, tokenX, tokenY, 1)
         await decLimitOrder(limorderManager2, B, 0, '2000000000')
         await newLimOrderWithX(0, tokenX, tokenY, C, limorderManager1, '10000000000', 0, 2000);
         // over
-        await swapX2Y(swap, trader, '10000000000000', tokenX, tokenY, 1)
+        await swapY2X(swap, trader, '10000000000000', tokenX, tokenY, 1)
         const a1 = await collectLimOrder(limorderManager1, A, 0, tokenX, tokenY, '10000000000', '10000000000')
         expect(a1.amountSell).to.equal('0')
         expect(a1.amountEarn).to.equal('10000000000')
@@ -283,4 +287,5 @@ describe("test ue earn legacyearn", function () {
         expect(c1_2.amountSell).to.equal('0')
         expect(c1_2.amountEarn).to.equal('0')
     });
+
 });
