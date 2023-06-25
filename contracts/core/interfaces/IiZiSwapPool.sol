@@ -220,20 +220,24 @@ interface IiZiSwapPool {
     /// @param deltaX max amount of tokenX seller wants to decrease
     /// @return actualDeltaX actual amount of tokenX decreased
     /// @return legacyAccEarn legacyAccEarnY of pointOrder at point when calling this interface
+    /// @return claimSold claimed sold amount
+    /// @return claimEarn claimed earn amount
     function decLimOrderWithX(
         int24 point,
         uint128 deltaX
-    ) external returns (uint128 actualDeltaX, uint256 legacyAccEarn);
+    ) external returns (uint128 actualDeltaX, uint256 legacyAccEarn, uint128 claimSold, uint128 claimEarn);
     
     /// @notice Decrease limitorder of selling Y.
     /// @param point point of seller's limit order, be sure to be times of pointDelta
     /// @param deltaY max amount of tokenY seller wants to decrease
     /// @return actualDeltaY actual amount of tokenY decreased
     /// @return legacyAccEarn legacyAccEarnX of pointOrder at point when calling this interface
+    /// @return claimSold claimed sold amount
+    /// @return claimEarn claimed earn amount
     function decLimOrderWithY(
         int24 point,
         uint128 deltaY
-    ) external returns (uint128 actualDeltaY, uint256 legacyAccEarn);
+    ) external returns (uint128 actualDeltaY, uint256 legacyAccEarn, uint128 claimSold, uint128 claimEarn);
     
     /// @notice Add a limit order (selling x) in the pool.
     /// @param recipient owner of the limit order

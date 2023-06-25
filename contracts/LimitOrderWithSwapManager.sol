@@ -579,9 +579,9 @@ contract LimitOrderWithSwapManager is Switch, Base, IiZiSwapAddLimOrderCallback,
     ) private returns (uint128 earn) {
         uint256 legacyAccEarn;
         if (order.sellXEarnY) {
-            (, legacyAccEarn) = IiZiSwapPool(pool).decLimOrderWithX(order.pt, 0);
+            (, legacyAccEarn,,) = IiZiSwapPool(pool).decLimOrderWithX(order.pt, 0);
         } else {
-            (, legacyAccEarn) = IiZiSwapPool(pool).decLimOrderWithY(order.pt, 0);
+            (, legacyAccEarn,,) = IiZiSwapPool(pool).decLimOrderWithY(order.pt, 0);
         }
         uint128 sold;
         uint160 sqrtPrice_96 = LogPowMath.getSqrtPrice(order.pt);

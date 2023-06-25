@@ -356,9 +356,9 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
     ) private returns (uint128 earn) {
         uint256 legacyAccEarn;
         if (order.sellXEarnY) {
-            (, legacyAccEarn) = IiZiSwapPool(pool).decLimOrderWithX(order.pt, 0);
+            (, legacyAccEarn,,) = IiZiSwapPool(pool).decLimOrderWithX(order.pt, 0);
         } else {
-            (, legacyAccEarn) = IiZiSwapPool(pool).decLimOrderWithY(order.pt, 0);
+            (, legacyAccEarn,,) = IiZiSwapPool(pool).decLimOrderWithY(order.pt, 0);
         }
         uint128 sold;
         uint160 sqrtPrice_96 = LogPowMath.getSqrtPrice(order.pt);
@@ -413,9 +413,9 @@ contract LimitOrderManager is Base, IiZiSwapAddLimOrderCallback {
         }
         uint128 actualDeltaRefund;
         if (order.sellXEarnY) {
-            (actualDeltaRefund, ) = IiZiSwapPool(pool).decLimOrderWithX(order.pt, actualDelta);
+            (actualDeltaRefund, ,,) = IiZiSwapPool(pool).decLimOrderWithX(order.pt, actualDelta);
         } else {
-            (actualDeltaRefund, ) = IiZiSwapPool(pool).decLimOrderWithY(order.pt, actualDelta);
+            (actualDeltaRefund, ,,) = IiZiSwapPool(pool).decLimOrderWithY(order.pt, actualDelta);
         }
         // actualDeltaRefund may be less than actualDelta
         // but we still minus actualDelta in sellingRemain, and only add actualDeltaRefund to sellingDec

@@ -22,3 +22,22 @@ library LimOrderCircularQueue {
     }
 
 }
+
+library SoloLimOrderCircularQueue {
+
+    struct Queue {
+        // start, start+1, ..., MAX_LENGTH-1, 0, 1, ..., start-1
+        uint256 start;
+        SoloLimOrder[] limOrders;
+    }
+
+    function add(Queue storage queue, SoloLimOrder memory limOrder, uint256 capacity) internal {
+        if (queue.limOrders.length < capacity) {
+            queue.limOrders.push(limOrder);
+        } else {
+            queue.limOrders[queue.start] = limOrder;
+            queue.start = (queue.start + 1) % queue.limOrders.length;
+        }
+    }
+
+}
