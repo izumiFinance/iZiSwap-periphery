@@ -137,10 +137,6 @@ const contracts = {
         swap: '0xa9754f0D9055d14EB0D2d196E4C51d8B2Ee6f4d3',
     },
     opsideTestRollux: {
-        iZiSwapFactory: '0x308934C923c3F7bc082AeE9818C033aFAf358510',
-        wrapChainToken: '0x67A1f4A939b477A6b7c5BF94D97E45dE87E608eF',
-        liquidityManager: '0x512f0d70d9b06E4Bd45fAD199eFfabCFd10325A9',
-        swap: '0x7a8176293E5dbf4a18716bB03888442cb77dc386',
     },
 }
 
