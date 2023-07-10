@@ -222,7 +222,7 @@ describe("test ue earn legacyearn", function () {
         expect(bCollect.amountSell).to.equal('0')
         expect(bCollect.amountEarn).to.equal('110000000')
         await decLimitOrder(limorderManager, B, 0, '5000000000')
-        const cCollect = await collectLimOrder(limorderManager, B, 0, tokenX, tokenY, '0', '1000000000000000')
+        const cCollect = await collectLimOrder(limorderManager, C, 0, tokenX, tokenY, '0', '1000000000000000')
         expect(cCollect.amountSell).to.equal('0')
         expect(cCollect.amountEarn).to.equal('0')
         await newLimOrderWithX(0, tokenX, tokenY, D, limorderManager, '10000000000', 0, 2000);
