@@ -1,6 +1,7 @@
 const { ethers } = require("hardhat");
 const BigNumber = require('bignumber.js');
 const { createCipheriv } = require("crypto");
+const { expect } = require("chai");
 
 function stringMinus(a, b) {
     return BigNumber(a).minus(b).toFixed(0);
@@ -335,6 +336,67 @@ function l2y(liquidity, sqrtPrice_96, up) {
     }
 }
 
+async function newLimOrderSolo(slotIdx, tokenX, tokenY, seller, limorderManagerSolo, amount, point, sellXEarnY, fee=2000) {
+    let ok = true;
+    try {
+    await limorderManagerSolo.connect(seller).newLimOrder(
+        slotIdx,
+        {
+            tokenX: tokenX.address,
+            tokenY: tokenY.address,
+            fee,
+            pt: point,
+            amount,
+            sellXEarnY,
+            deadline: BigNumber("1000000000000").toFixed(0)
+        }
+    );
+    } catch(err) {
+        ok = false;
+    }
+    return ok;
+}
+
+async function addLimOrderSolo(slotIdx, seller, limorderManagerSolo, amount, fee=2000) {
+    let ok = true;
+    try {
+    await limorderManagerSolo.connect(seller).addLimOrder(
+        slotIdx,
+        amount,
+        '0xffffffff'
+    );
+    } catch(err) {
+        ok = false;
+    }
+    return ok;
+}
+
+async function getLimOrderSolo(limitOrderManagerSolo, orderIdx) {
+    try {
+        const {pt, amount, sellingRemain, accSellingDec, sellingDec, earn, sellXEarnY} = await limitOrderManagerSolo.getActiveOrder(orderIdx);
+        return {
+            pt, 
+            amount: amount.toString(), 
+            sellingRemain: sellingRemain.toString(), 
+            accSellingDec: accSellingDec.toString(), 
+            sellingDec: sellingDec.toString(), 
+            earn: earn.toString(), 
+            sellXEarnY
+        }
+    } catch (err) {
+        // console.log(err);
+    }
+    return undefined;
+}
+
+async function newLimOrderSoloWithX(slotIdx, tokenX, tokenY, seller, limorderManagerSolo, amountX, point, fee=2000) {
+    return newLimOrderSolo(slotIdx, tokenX, tokenY, seller, limorderManagerSolo, amountX, point, true, fee)
+}
+
+async function newLimOrderSoloWithY(slotIdx, tokenX, tokenY, seller, limorderManagerSolo, amountY, point, fee=2000) {
+    return newLimOrderSolo(slotIdx, tokenX, tokenY, seller, limorderManagerSolo, amountY, point, false, fee)
+}
+
 async function newLimOrderWithX(slotIdx, tokenX, tokenY, seller, limorderManager, amountX, point) {
     await tokenX.transfer(seller.address, amountX);
     await tokenX.connect(seller).approve(limorderManager.address, amountX);
@@ -358,12 +420,28 @@ async function newLimOrderWithX(slotIdx, tokenX, tokenY, seller, limorderManager
     return ok;
 }
 
+async function updateOrderSolo(seller, orderIdx, limorderManager) {
+    try {
+        await limorderManager.connect(seller).updateOrder(
+            orderIdx
+        ); 
+        return true;
+    } catch (err) {
+    }
+    return false;
+}
+
 async function decLimOrderWithX(seller, orderIdx, limorderManager, amountX) {
-    await limorderManager.connect(seller).decLimOrder(
-        orderIdx,
-        amountX,
-        BigNumber("10000000000").toFixed(0)
-    );
+    try {
+        await limorderManager.connect(seller).decLimOrder(
+            orderIdx,
+            amountX,
+            BigNumber("10000000000").toFixed(0)
+        ); 
+        return true;
+    } catch (err) {
+    }
+    return false;
 }
 
 async function updateOrder(seller, orderIdx, limorderManager) {
@@ -417,11 +495,16 @@ async function newLimOrderWithY(slotIdx, tokenX, tokenY, seller, limorderManager
 }
 
 async function decLimOrderWithY(seller, sellId, limorderManager, amountY) {
-    await limorderManager.connect(seller).decLimOrder(
-        sellId,
-        amountY,
-        BigNumber("10000000000").toFixed(0)
-    );
+    try {
+        await limorderManager.connect(seller).decLimOrder(
+            sellId,
+            amountY,
+            BigNumber("10000000000").toFixed(0)
+        );
+        return true
+    } catch (err) {
+        return false
+    }
 }
 
 async function collectLimOrderWithY(seller, tokenX, tokenY, recipientAddress, orderIdx, limorderManager, collectDec, collectEarn) {
@@ -438,6 +521,25 @@ async function collectLimOrderWithY(seller, tokenX, tokenY, recipientAddress, or
         collectDec: stringMinus(amountYAfter, amountYBefore),
         collectEarn: stringMinus(amountXAfter, amountXBefore)
     }
+}
+
+async function collectSoloLimOrder(limorderManager, tokenX, tokenY, seller, orderIdx) {
+    const xBefore = (await tokenX.balanceOf(seller.address)).toString()
+    const yBefore = (await tokenY.balanceOf(seller.address)).toString()
+    try {
+
+        await limorderManager.connect(seller).collectLimOrder(
+            seller.address,
+            orderIdx
+        );
+    } catch {
+
+    }
+    const xAfter = (await tokenX.balanceOf(seller.address)).toString()
+    const yAfter = (await tokenY.balanceOf(seller.address)).toString()
+    const amountX = stringMinus(xAfter, xBefore)
+    const amountY = stringMinus(yAfter, yBefore)
+    return {amountX, amountY}
 }
 
 async function addLiquidity(nflm, miner, tokenX, tokenY, fee, pl, pr, amountX, amountY) {
@@ -474,6 +576,73 @@ function getRevertString(originStr) {
     return originStr.slice(start, end)
 }
 
+function checkArrEqual(arr1, arr2) {
+    expect(arr1.length).to.equal(arr2.length);
+    arr1Sort = arr1.slice(0, arr1.length).sort()
+    arr2Sort = arr2.slice(0, arr2.length).sort()
+    for (let idx = 0; idx < arr1Sort.length; idx ++) {
+        expect(arr1Sort[idx]).to.equal(arr2Sort[idx])
+    }
+}
+
+async function getToken(decimalx, decimaly) {
+
+    // deploy token
+    const tokenFactory = await ethers.getContractFactory("TestToken")
+    tokenX = await tokenFactory.deploy('a', 'a', decimalx);
+    await tokenX.deployed();
+    tokenY = await tokenFactory.deploy('b', 'b', decimaly);
+    await tokenY.deployed();
+
+    txAddr = tokenX.address.toLowerCase();
+    tyAddr = tokenY.address.toLowerCase();
+
+    if (txAddr > tyAddr) {
+      tmpAddr = tyAddr;
+      tyAddr = txAddr;
+      txAddr = tmpAddr;
+
+      tmpToken = tokenY;
+      tokenY = tokenX;
+      tokenX = tmpToken;
+    }
+    
+    return [tokenX, tokenY];
+}
+
+function getContractJson(path) {
+    const fs = require('fs');
+    let rawdata = fs.readFileSync(path);
+    let data = JSON.parse(rawdata);
+    return data;
+}
+
+async function getWETH9(signer) {
+    var WETH9Json = getContractJson(__dirname + '/core/WETH9.json');
+    var WETH9Factory = await ethers.getContractFactory(WETH9Json.abi, WETH9Json.bytecode, signer);
+    var WETH9 = await WETH9Factory.deploy();
+    await WETH9.deployed();
+    return WETH9;
+}
+async function getNFTLiquidityManager(factory, weth) {
+    const NonfungibleLiquidityManager = await ethers.getContractFactory("LiquidityManager");
+    var nflm = await NonfungibleLiquidityManager.deploy(factory.address, weth.address);
+    await nflm.deployed();
+    return nflm;
+}
+async function getSwap(factory, weth) {
+    const SwapManager = await ethers.getContractFactory("Swap");
+    var swap = await SwapManager.deploy(factory.address, weth.address);
+    await swap.deployed();
+    return swap;
+}
+
+async function getLimitOrderManagerSoloFactory(factory, weth) {
+    const LimitOrderManagerSoloFactory = await ethers.getContractFactory('LimitOrderManagerSoloFactory')
+    var limitOrderManagerFactory = await LimitOrderManagerSoloFactory.deploy(factory.address, weth.address)
+    await limitOrderManagerFactory.deployed();
+    return limitOrderManagerFactory;
+}
 
 module.exports ={
     getPoolParts,
@@ -497,14 +666,20 @@ module.exports ={
     amountAddFee,
     l2x,
     l2y,
+    newLimOrderSoloWithX,
+    newLimOrderSoloWithY,
+    addLimOrderSolo,
+    getLimOrderSolo,
     newLimOrderWithX,
     decLimOrderWithX,
     newLimOrderWithY,
     updateOrder,
+    updateOrderSolo,
     decLimOrderWithY,
     addLiquidity,
     collectLimOrderWithX,
     collectLimOrderWithY,
+    collectSoloLimOrder,
     stringAdd,
     stringMinus,
     stringMul,
@@ -513,5 +688,10 @@ module.exports ={
     getSum,
     getRevertString,
     ceil,
-    floor
+    floor,
+    checkArrEqual,
+    getWETH9,
+    getNFTLiquidityManager,
+    getSwap,
+    getLimitOrderManagerSoloFactory,
 }
