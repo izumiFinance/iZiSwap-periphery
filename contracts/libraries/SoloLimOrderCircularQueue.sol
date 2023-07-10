@@ -2,22 +2,22 @@
 
 pragma solidity ^0.8.4;
 
-import "./LimOrder.sol";
+import "./SoloLimOrder.sol";
 
-library LimOrderCircularQueue {
+library SoloLimOrderCircularQueue {
 
     struct Queue {
         // start, start+1, ..., MAX_LENGTH-1, 0, 1, ..., start-1
-        uint256 start;
-        LimOrder[] limOrders;
+        uint128 start;
+        SoloLimOrder[] limOrders;
     }
 
-    function add(Queue storage queue, LimOrder memory limOrder, uint256 capacity) internal {
+    function add(Queue storage queue, SoloLimOrder memory limOrder, uint128 capacity) internal {
         if (queue.limOrders.length < capacity) {
             queue.limOrders.push(limOrder);
         } else {
             queue.limOrders[queue.start] = limOrder;
-            queue.start = (queue.start + 1) % queue.limOrders.length;
+            queue.start = (queue.start + 1) % uint128(queue.limOrders.length);
         }
     }
 

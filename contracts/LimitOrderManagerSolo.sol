@@ -10,8 +10,8 @@ import "./core/interfaces/IiZiSwapPool.sol";
 import "./libraries/MulDivMath.sol";
 import "./libraries/TwoPower.sol";
 import "./libraries/LogPowMath.sol";
-import "./libraries/LimOrder.sol";
-import "./libraries/LimOrderCircularQueue.sol";
+import "./libraries/SoloLimOrder.sol";
+import "./libraries/SoloLimOrderCircularQueue.sol";
 
 import "./base/base.sol";
 
@@ -88,6 +88,11 @@ contract LimitOrderManagerSolo is Base, IiZiSwapAddLimOrderCallback {
     // mapping from pool address to poolid
     mapping(address =>uint128) public poolIds;
 
+    // set 0 means cancel
+    // otherwise value = realIdx + 1
+    mapping(address=>mapping(int24=>uint128)) public sellXIdx;
+    mapping(address=>mapping(int24=>uint128)) public sellYIdx;
+
     // seller's active order id
     SoloLimOrder[] private activeOrder;
     // seller's canceled or finished order id
@@ -97,7 +102,7 @@ contract LimitOrderManagerSolo is Base, IiZiSwapAddLimOrderCallback {
     // TODO: 
     //   currently we used a fixed number of storage space. A better way is to allow user to expand it.
     //   Otherwise, the first 300 orders need more gas for storage.
-    uint256 public immutable DEACTIVE_ORDER_LIM = 300;
+    uint128 public immutable DEACTIVE_ORDER_LIM = 300;
 
     // callback data passed through iZiSwapPool#addLimOrderWithX(Y) to the callback
     struct LimCallbackData {
@@ -111,7 +116,7 @@ contract LimitOrderManagerSolo is Base, IiZiSwapAddLimOrderCallback {
         address payer;
     }
 
-    modifier checkActive(uint256 lIdx) {
+    modifier checkActive(uint128 lIdx) {
         require(activeOrder.length > lIdx, 'Out Of Length!');
         require(activeOrder[lIdx].active, 'Not Active!');
         _;
@@ -203,7 +208,7 @@ contract LimitOrderManagerSolo is Base, IiZiSwapAddLimOrderCallback {
         uint256 deadline;
     }
 
-    function _addLimOrder(
+    function _coreAddLimOrder(
         address pool, AddLimOrderParam memory addLimitOrderParam
     ) private returns (uint128 order, uint128 acquire) {
         if (addLimitOrderParam.sellXEarnY) {
@@ -243,19 +248,48 @@ contract LimitOrderManagerSolo is Base, IiZiSwapAddLimOrderCallback {
         return assignLegacy + assignUnlegacy;
     }
 
+    function getExistsIdx(address pool, int24 pt, bool sellX) public view returns (uint128 idx) {
+        if (sellX) {
+            idx = sellXIdx[pool][pt];
+        } else {
+            idx = sellYIdx[pool][pt];
+        }
+    }
+
+    function setExistIdx(address pool, int24 pt, bool sellX, uint128 idx) internal {
+        // idx = 0 means cancel
+        if (sellX) {
+            sellXIdx[pool][pt] = idx;
+        } else {
+            sellYIdx[pool][pt] = idx;
+        }
+    }
+
     /// @notice Create a limit order.
     /// @param idx slot in the addr2ActiveOrder[msg.sender]
     /// @param addLimitOrderParam describe params of added limit order, see AddLimOrderParam for more
     /// @return orderAmount actual amount of token added in limit order
     /// @return acquire amount of tokenY acquired if there is a limit order to sell the other token before adding
     function newLimOrder(
-        uint256 idx,
+        uint128 idx,
         AddLimOrderParam calldata addLimitOrderParam
     ) external payable onlySeller checkDeadline(addLimitOrderParam.deadline) returns (uint128 orderAmount, uint128 acquire) {
         require(addLimitOrderParam.tokenX < addLimitOrderParam.tokenY, 'x<y');
 
         address pool = IiZiSwapFactory(factory).pool(addLimitOrderParam.tokenX, addLimitOrderParam.tokenY, addLimitOrderParam.fee);
-        (orderAmount, acquire) = _addLimOrder(pool, addLimitOrderParam);
+        require(pool != address(0), "Pool Not Exists!");
+        uint128 existsIdx = getExistsIdx(pool, addLimitOrderParam.pt, addLimitOrderParam.sellXEarnY);
+        if (existsIdx > 0) {
+            existsIdx --;
+            SoloLimOrder storage order = activeOrder[existsIdx];
+            PoolMeta memory meta = PoolMeta({
+                tokenX: addLimitOrderParam.tokenX,
+                tokenY: addLimitOrderParam.tokenY,
+                fee: addLimitOrderParam.fee
+            });
+            return _addLimOrder(pool, meta, addLimitOrderParam.amount, order);
+        }
+        (orderAmount, acquire) = _coreAddLimOrder(pool, addLimitOrderParam);
         uint128 poolId = cachePoolKey(pool, PoolMeta({tokenX: addLimitOrderParam.tokenX, tokenY: addLimitOrderParam.tokenY, fee: addLimitOrderParam.fee}));
 
         if (idx < activeOrder.length) {
@@ -281,7 +315,36 @@ contract LimitOrderManagerSolo is Base, IiZiSwapAddLimOrderCallback {
                 active: true
             }));
         }
+        setExistIdx(pool, addLimitOrderParam.pt, addLimitOrderParam.sellXEarnY, idx + 1);
         emit NewLimitOrder(pool, addLimitOrderParam.pt, msg.sender, addLimitOrderParam.amount, orderAmount, acquire, addLimitOrderParam.sellXEarnY);
+    
+    }
+
+    function _addLimOrder(
+        address pool,
+        PoolMeta memory meta,
+        uint128 amount,
+        SoloLimOrder storage order
+    ) internal returns (uint128 orderAmount, uint128 acquire) {
+        (uint128 oldSellingRemain,,uint128 oldEarn) = getEarn(pool, address(this), order.pt, order.sellXEarnY);
+        (orderAmount, acquire) = _coreAddLimOrder(pool, AddLimOrderParam({
+            tokenX: meta.tokenX,
+            tokenY: meta.tokenY,
+            fee: meta.fee,
+            pt: order.pt,
+            amount: amount,
+            sellXEarnY: order.sellXEarnY,
+            deadline: 0xffffffff
+        }));
+        order.amount += amount;
+        assignLimOrderEarn(pool, order.pt, order.sellXEarnY);
+        (uint128 sellingRemain, , uint128 earn) = getEarn(pool, address(this), order.pt, order.sellXEarnY);
+
+        uint128 claimedSold = (oldSellingRemain + orderAmount > sellingRemain) ? oldSellingRemain + orderAmount - sellingRemain : 0;
+        uint128 claimedEarn = (earn > oldEarn + acquire) ? earn - oldEarn - acquire : 0;
+
+        emit Claim(pool, order.pt, msg.sender, claimedSold, claimedEarn, order.sellXEarnY);
+        emit AddLimitOrder(pool, order.pt, msg.sender, amount, sellingRemain, earn, order.sellXEarnY);
     }
 
     /// @notice add a limit order.
@@ -291,26 +354,15 @@ contract LimitOrderManagerSolo is Base, IiZiSwapAddLimOrderCallback {
     /// @return orderAmount actual amount of token added in limit order
     /// @return acquire amount of tokenY acquired if there is a limit order to sell the other token before adding
     function addLimOrder(
-        uint256 orderIdx,
+        uint128 orderIdx,
         uint128 amount,
         uint256 deadline
     ) external payable onlySeller checkActive(orderIdx) checkDeadline(deadline) returns (uint128 orderAmount, uint128 acquire) {
         require(amount > 0, "A0");
-        SoloLimOrder memory order = activeOrder[orderIdx];
+        SoloLimOrder storage order = activeOrder[orderIdx];
         address pool = poolAddrs[order.poolId];
         PoolMeta memory meta = poolMetas[order.poolId];
-        (orderAmount, acquire) = _addLimOrder(pool, AddLimOrderParam({
-            tokenX: meta.tokenX,
-            tokenY: meta.tokenY,
-            fee: meta.fee,
-            pt: order.pt,
-            amount: amount,
-            sellXEarnY: order.sellXEarnY,
-            deadline: deadline
-        }));
-        assignLimOrderEarn(pool, order.pt, order.sellXEarnY);
-        (uint128 sellingRemain, , uint128 earn) = getEarn(pool, address(this), order.pt, order.sellXEarnY);
-        emit AddLimitOrder(pool, order.pt, msg.sender, amount, sellingRemain, earn, order.sellXEarnY);
+        (orderAmount, acquire) = _addLimOrder(pool, meta, amount, order);
     }
 
     /// @notice Update a limit order to claim earned tokens as much as possible.
@@ -319,17 +371,25 @@ contract LimitOrderManagerSolo is Base, IiZiSwapAddLimOrderCallback {
     /// @return actualDec actual decreased amount
     /// @return earn amount of earned token this limit order can claim
     function _decOrder(
-        SoloLimOrder memory order,
+        SoloLimOrder storage order,
         address pool,
         uint128 amount
     ) private returns (uint128 actualDec, uint128 earn) {
-        uint128 sold;
+        (uint128 oldSellingRemain,,uint128 oldEarn) = getEarn(pool, address(this), order.pt, order.sellXEarnY);
         if (order.sellXEarnY) {
-            (actualDec,,sold, earn) = IiZiSwapPool(pool).decLimOrderWithX(order.pt, amount);
+            (actualDec,) = IiZiSwapPool(pool).decLimOrderWithX(order.pt, amount);
         } else {
-            (actualDec,,sold, earn) = IiZiSwapPool(pool).decLimOrderWithY(order.pt, amount);
+            (actualDec,) = IiZiSwapPool(pool).decLimOrderWithY(order.pt, amount);
+        }
+        if (actualDec > 0) {
+            order.accSellingDec += actualDec;
         }
         assignLimOrderEarn(pool, order.pt, order.sellXEarnY);
+        (uint128 sellingRemain, , uint128 currentEarn) = getEarn(pool, address(this), order.pt, order.sellXEarnY);
+
+        uint128 sold = (oldSellingRemain > sellingRemain) ? oldSellingRemain - sellingRemain : 0;
+        earn = (currentEarn > oldEarn) ? currentEarn - oldEarn : 0;
+
         emit Claim(pool, order.pt, msg.sender, sold, earn, order.sellXEarnY);
     }
 
@@ -337,9 +397,9 @@ contract LimitOrderManagerSolo is Base, IiZiSwapAddLimOrderCallback {
     /// @param orderIdx idx of order to update
     /// @return earn amount of earned token this limit order can claim
     function updateOrder(
-        uint256 orderIdx
+        uint128 orderIdx
     ) external checkActive(orderIdx) onlySeller returns (uint256 earn) {
-        SoloLimOrder memory order = activeOrder[orderIdx];
+        SoloLimOrder storage order = activeOrder[orderIdx];
         address pool = poolAddrs[order.poolId];
         (,earn) = _decOrder(order, pool, 0);
     }
@@ -350,14 +410,13 @@ contract LimitOrderManagerSolo is Base, IiZiSwapAddLimOrderCallback {
     /// @param deadline deadline timestamp of transaction
     /// @return actualDelta actual amount of selling-token decreased
     function decLimOrder(
-        uint256 orderIdx,
+        uint128 orderIdx,
         uint128 amount,
         uint256 deadline
     ) external checkActive(orderIdx) onlySeller checkDeadline(deadline) returns (uint128 actualDelta) {
         require(amount > 0, "A0");
-        SoloLimOrder memory order = activeOrder[orderIdx];
+        SoloLimOrder storage order = activeOrder[orderIdx];
         address pool = poolAddrs[order.poolId];
-        // update order first
         (actualDelta, ) = _decOrder(order, pool, amount);
     }
 
@@ -368,7 +427,7 @@ contract LimitOrderManagerSolo is Base, IiZiSwapAddLimOrderCallback {
     /// @return actualCollectEarn actual amount of earned token collected
     function collectLimOrder(
         address recipient,
-        uint256 orderIdx
+        uint128 orderIdx
     ) external onlySeller checkActive(orderIdx) returns (uint128 actualCollectDec, uint128 actualCollectEarn) {
         SoloLimOrder storage order = activeOrder[orderIdx];
         address pool = poolAddrs[order.poolId];
@@ -385,6 +444,8 @@ contract LimitOrderManagerSolo is Base, IiZiSwapAddLimOrderCallback {
         if (noRemain) {
             order.active = false;
             deactiveOrder.add(order, DEACTIVE_ORDER_LIM);
+            // set 0 means cancel
+            setExistIdx(pool, order.pt, order.sellXEarnY, 0);
         }
     }
 
@@ -394,11 +455,11 @@ contract LimitOrderManagerSolo is Base, IiZiSwapAddLimOrderCallback {
     function getActiveOrders()
         external
         view
-        returns (uint256[] memory activeIdx, SoloLimOrderInfo[] memory activeLimitOrder)
+        returns (uint128[] memory activeIdx, SoloLimOrderInfo[] memory activeLimitOrder)
     {
-        uint256 activeNum = 0;
-        uint256 length = activeOrder.length;
-        for (uint256 i = 0; i < length; i ++) {
+        uint128 activeNum = 0;
+        uint128 length = uint128(activeOrder.length);
+        for (uint128 i = 0; i < length; i ++) {
             if (activeOrder[i].active) {
                 activeNum += 1;
             }
@@ -406,10 +467,10 @@ contract LimitOrderManagerSolo is Base, IiZiSwapAddLimOrderCallback {
         if (activeNum == 0) {
             return (activeIdx, activeLimitOrder);
         }
-        activeIdx = new uint256[](activeNum);
+        activeIdx = new uint128[](activeNum);
         activeLimitOrder = new SoloLimOrderInfo[](activeNum);
         activeNum = 0;
-        for (uint256 i = 0; i < length; i ++) {
+        for (uint128 i = 0; i < length; i ++) {
             if (activeOrder[i].active) {
                 activeIdx[activeNum] = i;
                 SoloLimOrder memory order = activeOrder[i];
@@ -438,7 +499,7 @@ contract LimitOrderManagerSolo is Base, IiZiSwapAddLimOrderCallback {
     /// @notice Returns a single active order for the seller.
     /// @param idx index of the active order list
     /// @return orderInfo the target active order
-    function getActiveOrder(uint256 idx) external view returns (SoloLimOrderInfo memory orderInfo) {
+    function getActiveOrder(uint128 idx) external view returns (SoloLimOrderInfo memory orderInfo) {
         require(idx < activeOrder.length, 'Out Of Length');
         
         SoloLimOrder memory order = activeOrder[idx];
@@ -460,9 +521,9 @@ contract LimitOrderManagerSolo is Base, IiZiSwapAddLimOrderCallback {
 
     /// @notice Returns a slot in the active order list, which can be replaced with a new order.
     /// @return slotIdx the first available slot index
-    function getDeactiveSlot() external view returns (uint256 slotIdx) {
-        slotIdx = activeOrder.length;
-        for (uint256 i = 0; i < activeOrder.length; i ++) {
+    function getDeactiveSlot() external view returns (uint128 slotIdx) {
+        slotIdx = uint128(activeOrder.length);
+        for (uint128 i = 0; i < activeOrder.length; i ++) {
             if (!activeOrder[i].active) {
                 return i;
             }
@@ -478,8 +539,8 @@ contract LimitOrderManagerSolo is Base, IiZiSwapAddLimOrderCallback {
             return deactiveLimitOrder;
         }
         deactiveLimitOrder = new SoloLimOrderInfo[](queue.limOrders.length);
-        uint256 start = queue.start;
-        for (uint256 i = 0; i < queue.limOrders.length; i ++) {
+        uint128 start = queue.start;
+        for (uint128 i = 0; i < queue.limOrders.length; i ++) {
             SoloLimOrder memory order = queue.limOrders[(start + i) % queue.limOrders.length];
             SoloLimOrderInfo memory orderInfo = SoloLimOrderInfo({
                 amount: order.amount,
@@ -501,7 +562,7 @@ contract LimitOrderManagerSolo is Base, IiZiSwapAddLimOrderCallback {
     /// @notice Returns a single deactived order for the seller.
     /// @param idx index of the deactived order list
     /// @return orderInfo the target deactived order
-    function getDeactiveOrder(uint256 idx) external view returns (SoloLimOrderInfo memory orderInfo) {
+    function getDeactiveOrder(uint128 idx) external view returns (SoloLimOrderInfo memory orderInfo) {
         SoloLimOrderCircularQueue.Queue storage queue = deactiveOrder;
         require(idx < queue.limOrders.length, 'Out Of Length');
         SoloLimOrder memory order = queue.limOrders[(queue.start + idx) % queue.limOrders.length];
