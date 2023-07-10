@@ -139,6 +139,8 @@ const contracts = {
     opsideTestRollux: {
 	iZiSwapFactory: '0x58ce24c6cDC0d5A2c3BcA1e179E869AF97266829',
 	wrapChainToken: '0x67A1f4A939b477A6b7c5BF94D97E45dE87E608eF',
+	liquidityManager: '0xa341a31CCdD570cAEab465c96D64c880db609021',
+	swap: '0x2A19e0CF8c73280CdDdFd5877AA64A9690AE6d47',
     },
 }
 
