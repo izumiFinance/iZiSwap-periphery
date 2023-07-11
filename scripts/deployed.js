@@ -50,6 +50,12 @@ const contracts = {
         LAND: '0x1017D7d37169f98EED32BBB68aD79A3881174e3f',
         FROYO: '0xed2F92D6D2b936ce3Db9e046E57D9119e4A31ECb',
     },
+    opBNBTest: {
+        iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
+        wrapChainToken: '0x67A1f4A939b477A6b7c5BF94D97E45dE87E608eF',
+	liquidityManager: '0x1eE5eDC5Fe498a2dD82862746D674DB2a5e7fef6',
+	swap: '0xF6FFe4f3FdC8BBb7F70FFD48e61f17D1e343dDfD',
+    },
     ontologyTest: {
         iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
         wrapChainToken: '0xe8cf015f797877a9a23e80447429c0b0f04e114b',

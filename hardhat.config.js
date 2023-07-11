@@ -46,10 +46,16 @@ module.exports = {
       gasPrice: 100000000000,
     },
     bscTest: {
-      url: 'https://data-seed-prebsc-1-s3.binance.org:8545/',
+      url: 'https://data-seed-prebsc-2-s1.binance.org:8545/',
+      //url: 'https://data-seed-prebsc-1-s3.binance.org:8545/',
       accounts: [sk],
       // gas: 90000000,
-      gasPrice: 10000000000,
+      //gasPrice: 10000000000,
+    },
+    opBNBTest: {
+      url: 'https://opbnb-testnet-rpc.bnbchain.org',
+      accounts: [sk],
+      gasPrice: 5000000000,
     },
     ontologyTest: {
       url: 'https://polaris1.ont.io:10339',
