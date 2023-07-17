@@ -142,6 +142,10 @@ module.exports = {
        url: 'https://rpc.goerli.linea.build/',
        accounts: [sk],
     },
+    linea: {
+      url: 'https://linea-mainnet.infura.io/v3/<api key>',
+      accounts: [sk],
+    },
     opsideTest: {
        url: 'https://pre-alpha-us-http-geth.opside.network',
        accounts: [sk],

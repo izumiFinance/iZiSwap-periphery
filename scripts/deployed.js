@@ -148,6 +148,12 @@ const contracts = {
         liquidityManager: '',
         swap: '',
     },
+    linea: {
+        iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
+        wrapChainToken: '0xe5D7C2a44FfDDf6b295A15c148167daaAf5Cf34f',
+        liquidityManager: '0x110dE362cc436D7f54210f96b8C7652C2617887D',
+        swap: '0x02F55D53DcE23B4AA962CC68b0f685f26143Bdb2',
+    },
     opsideTestRollux: {
 	iZiSwapFactory: '0x58ce24c6cDC0d5A2c3BcA1e179E869AF97266829',
 	wrapChainToken: '0x67A1f4A939b477A6b7c5BF94D97E45dE87E608eF',
