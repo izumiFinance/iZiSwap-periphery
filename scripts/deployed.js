@@ -94,6 +94,12 @@ const contracts = {
         liquidityManager: '0x61A41182CD6e94f2A026aE3c0D1b73B1AA579aEa',
         swap: '0xEB9668316Cb87Bd107b05C52455ed31577eA82Cc',
     },
+    confluxEspace: {
+        iZiSwapFactory: '0x77aB297Da4f3667059ef0C32F5bc657f1006cBB0',
+	wrapChainToken: '0x14b2d3bc65e74dae1030eafd8ac30c533c976a9b',
+	liquidityManager: '0x6a7CDD0CC87ec02ed85c196e57BaBe1bc0Acd6f2',
+	swap: '0x611575eE1fbd4F7915D0eABCC518eD396fF78F0c',
+    },
     auroraTest: {
 	iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
 	WETH: '0x67A1f4A939b477A6b7c5BF94D97E45dE87E608eF',
