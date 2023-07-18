@@ -99,11 +99,11 @@ const contracts = {
 	WETH: '0x67A1f4A939b477A6b7c5BF94D97E45dE87E608eF',
     },
     arbitrum: {
-        iZiSwapFactory: '0x45e5F26451CDB01B0fA1f8582E0aAD9A6F27C218',
+        iZiSwapFactory: '0xCFD8A067e1fa03474e79Be646c5f6b6A27847399',
         WETH: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1',
         wrapChainToken: '0x82af49447d8a07e3bd95bd0d56f35241523fbab1',
-        liquidityManager: '0x611575eE1fbd4F7915D0eABCC518eD396fF78F0c',
-        swap: '0x1CB60033F61e4fc171c963f0d2d3F63Ece24319c',
+        liquidityManager: '0xAD1F11FBB288Cd13819cCB9397E59FAAB4Cdc16F',
+        swap: '0x01fDea353849cA29F778B2663BcaCA1D191bED0e',
     },
     cronos: {
         iZiSwapFactory: '0x3EF68D3f7664b2805D4E88381b64868a56f88bC4',
