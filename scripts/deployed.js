@@ -135,10 +135,8 @@ const contracts = {
         wrapChainToken: '0x160361ce13ec33C993b5cCA8f62B6864943eb083',
     },
     telos: {
-        iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
+        iZiSwapFactory: '0x6a7CDD0CC87ec02ed85c196e57BaBe1bc0Acd6f2',
         wrapChainToken: '0xD102cE6A4dB07D247fcc28F366A623Df0938CA9E',
-        liquidityManager: '0x110dE362cc436D7f54210f96b8C7652C2617887D',
-        swap: '0x2db0AFD0045F3518c77eC6591a542e326Befd3D7',
     },
     ultron: {
         iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
