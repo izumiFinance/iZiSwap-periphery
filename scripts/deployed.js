@@ -88,11 +88,11 @@ const contracts = {
         swap: '0x2db0AFD0045F3518c77eC6591a542e326Befd3D7',
     },
     aurora: {
-        iZiSwapFactory: '0x156d8a0bE25FA232bb637Fc76255bCd00dEae9E9',
+        iZiSwapFactory: '0xce326A82913EAb09f7ec899C4508Cbe0E6526A74',
         WETH: '0xc9bdeed33cd01541e1eed10f90519d2c06fe3feb',
         wrapChainToken: '0xc9bdeed33cd01541e1eed10f90519d2c06fe3feb',
-        liquidityManager: '0xE78e7447223aaED59301b44513D1d3A892ECF212',
-        swap: '0x96539F87cA176c9f6180d65Bc4c10fca264aE4A5',
+        liquidityManager: '0x61A41182CD6e94f2A026aE3c0D1b73B1AA579aEa',
+        swap: '0xEB9668316Cb87Bd107b05C52455ed31577eA82Cc',
     },
     auroraTest: {
 	iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
