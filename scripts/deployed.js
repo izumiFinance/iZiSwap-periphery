@@ -125,10 +125,8 @@ const contracts = {
         swap: '0xe6805638db944eA605e774e72c6F0D15Fb6a1347',
     },
     polygon: {
-        iZiSwapFactory: '0x3EF68D3f7664b2805D4E88381b64868a56f88bC4',
+        iZiSwapFactory: '0xcA7e21764CD8f7c1Ec40e651E25Da68AeD096037',
         wrapChainToken: '0x0d500b1d8e8ef31e21c99d1db9a6444d3adf1270',
-        liquidityManager: '0x33531bDBFE34fa6Fd5963D0423f7699775AacaaF',
-        swap: '0x3F559139C2Fc7B97Ad6FE9B4d1f75149F551DB18',
     },
     meter: {
         iZiSwapFactory: '0xed31C5a9C764761C3A699E2732183ba5d6EAcC35',
@@ -139,10 +137,8 @@ const contracts = {
         wrapChainToken: '0xD102cE6A4dB07D247fcc28F366A623Df0938CA9E',
     },
     ultron: {
-        iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
+        iZiSwapFactory: '0xd7de110Bd452AAB96608ac3750c3730A17993DE0',
         wrapChainToken: '0xb1183357745D3fD7d291E42a2c4B478cdB5710c6',
-        liquidityManager: '0xcA7e21764CD8f7c1Ec40e651E25Da68AeD096037',
-        swap: '0x1D377311b342633A970e71a787C50F83858BFC1B',
     },
     lineaTest: {
         iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
