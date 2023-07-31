@@ -158,6 +158,10 @@ module.exports = {
 	                url: 'https://evm.confluxrpc.com',
 	          accounts: [sk],
 	        },
+    base: {
+          url: 'https://developer-access-mainnet.base.org',
+          accounts: [sk],
+    },
   },
   etherscan: {
     apiKey: apiKey,
