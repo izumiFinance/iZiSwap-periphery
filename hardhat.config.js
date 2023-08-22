@@ -57,6 +57,10 @@ module.exports = {
       accounts: [sk],
       gasPrice: 5000000000,
     },
+    opBNB: {
+      url: 'https://opbnb-mainnet-rpc.bnbchain.org',
+      accounts: [sk],
+    },
     ontologyTest: {
       url: 'https://polaris1.ont.io:10339',
       accounts: [sk],
@@ -175,12 +179,16 @@ module.exports = {
       url: 'https://manta-testnet.calderachain.xyz/http',
       accounts: [sk],
     },
-    stagingFastActiveBellatrix: {
-      url: 'https://staging-v3.skalenodes.com/v1/staging-fast-active-bellatrix',
+    optimism: {
+      url: 'https://mainnet.optimism.io',
+      accounts: [sk],
+    },
+    zetaTest: {
+      url: 'https://zetachain-athens-evm.blockpi.network/v1/rpc/public',
       accounts: [sk],
     },
   },
   etherscan: {
     apiKey: apiKey,
-  }
+  },
 };

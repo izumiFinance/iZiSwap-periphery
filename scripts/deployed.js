@@ -60,6 +60,9 @@ const contracts = {
 	liquidityManager: '0x1eE5eDC5Fe498a2dD82862746D674DB2a5e7fef6',
 	swap: '0xF6FFe4f3FdC8BBb7F70FFD48e61f17D1e343dDfD',
     },
+    opBNB: {
+        iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
+    },
     ontologyTest: {
         iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
         wrapChainToken: '0xe8cf015f797877a9a23e80447429c0b0f04e114b',
@@ -168,6 +171,13 @@ const contracts = {
     mantaTest: {
         iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
         wrapChainToken: '0x67A1f4A939b477A6b7c5BF94D97E45dE87E608eF',
+    },
+    optimism: {
+        iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
+        wrapChainToken: '0x4200000000000000000000000000000000000006',
+    },
+    zetaTest: {
+        iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
     },
 }
 
