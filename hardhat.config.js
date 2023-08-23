@@ -187,6 +187,10 @@ module.exports = {
       url: 'https://zetachain-athens-evm.blockpi.network/v1/rpc/public',
       accounts: [sk],
     },
+    kromaSepoliaTest: {
+      url: 'https://api.sepolia.kroma.network',
+      accounts: [sk],
+    },
   },
   etherscan: {
     apiKey: apiKey,
