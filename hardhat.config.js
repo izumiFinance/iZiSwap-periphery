@@ -114,10 +114,6 @@ module.exports = {
       url: 'https://rpc.mantle.xyz',
       accounts: [sk],
     },
-    scrollTestL2: {
-      url: 'https://alpha-rpc.scroll.io/l2',
-      accounts: [sk],
-    },
     icplazaTest: {
       url: 'https://rpctest.ic-plaza.org/',
       accounts: [sk],
@@ -189,6 +185,10 @@ module.exports = {
     },
     kromaSepoliaTest: {
       url: 'https://api.sepolia.kroma.network',
+      accounts: [sk],
+    },
+    scrollSepoliaTest: {
+      url: 'https://sepolia-rpc.scroll.io',
       accounts: [sk],
     },
   },

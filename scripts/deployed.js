@@ -11,9 +11,8 @@ const contracts = {
 	liquidityManager: '0x5bD3E57915D8136d5118Fb08C838542A3DE817DC',
 	swap: '0xE0c7b10009fC582beFE3cAFE777eC7E2753368aF',
     },
-    scrollTestL2: {
-        wrapChainToken: '0xCE7fe0A153EF73759d253372b783E12a04849F35',
-        iZiSwapFactory: '0xe821322692Ef22e0BA985c1Ad8BD3042e9E1Cc43',
+    scrollSepoliaTest: {
+        iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
     },
     bedrockRolluxTestL2: {
         iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
