@@ -191,6 +191,10 @@ module.exports = {
       url: 'https://sepolia-rpc.scroll.io',
       accounts: [sk],
     },
+    kromaMainnet: {
+      url: 'https://api.kroma.network/',
+      accounts: [sk],
+    },
   },
   etherscan: {
     apiKey: apiKey,
