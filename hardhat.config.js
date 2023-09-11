@@ -175,6 +175,10 @@ module.exports = {
       url: 'https://manta-testnet.calderachain.xyz/http',
       accounts: [sk],
     },
+    manta: {
+      url: 'https://manta-pacific.calderachain.xyz/http',
+      accounts: [sk],
+    },
     optimism: {
       url: 'https://mainnet.optimism.io',
       accounts: [sk],
