@@ -199,6 +199,10 @@ module.exports = {
       url: 'https://api.kroma.network/',
       accounts: [sk],
     },
+    gasZeroGoerliL2: {
+      url: 'https://goerlitest.gaszero.com/',
+      accounts: [sk],
+    },
   },
   etherscan: {
     apiKey: apiKey,
