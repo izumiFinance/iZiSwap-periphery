@@ -66,10 +66,7 @@ const contracts = {
         iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
     },
     ontologyTest: {
-        iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
-        wrapChainToken: '0xe8cf015f797877a9a23e80447429c0b0f04e114b',
-        liquidityManager: '0x67A1f4A939b477A6b7c5BF94D97E45dE87E608eF',
-        swap: '0x77132b63429718Db2B6ad8D942eE13A198f6Ab49',
+        iZiSwapFactory: '0x7336A5a3251b9259DDf8B9D02a96dA0153e0799d',
     },
     bsc: {
         iZiSwapFactory: '0x93BB94a0d5269cb437A1F71FF3a77AB753844422',
