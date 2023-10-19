@@ -79,10 +79,7 @@ const contracts = {
 	swap: '0xedf2021f41AbCfE2dEA4427E1B61f4d0AA5aA4b8',
     },
     ontology: {
-        iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
-        wrapChainToken: '0xd8bc24cfd45452ef2c8bc7618e32330b61f2691b',
-        liquidityManager: '0x110dE362cc436D7f54210f96b8C7652C2617887D',
-        swap: '0x02F55D53DcE23B4AA962CC68b0f685f26143Bdb2',
+	iZiSwapFactory: '0x032b241De86a8660f1Ae0691a4760B426EA246d7',
     },
     ethereum: {
         wrapChainToken: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
