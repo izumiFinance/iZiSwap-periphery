@@ -208,7 +208,16 @@ module.exports = {
       accounts: [sk],
     },
   },
-  etherscan: {
+  etherscan: { 
+    customChains:[
+      {
+         network: "kromaMainnet",
+         chainId: 255,
+         urls: {
+           apiURL: "https://blockscout.kroma.network/api",
+           browserURL: "https://blockscout.kroma.network/",
+	 }
+      }],
     apiKey: apiKey,
   },
 };
