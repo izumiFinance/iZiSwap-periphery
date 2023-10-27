@@ -11,11 +11,11 @@ const contracts = {
 	liquidityManager: '0x5bD3E57915D8136d5118Fb08C838542A3DE817DC',
 	swap: '0xE0c7b10009fC582beFE3cAFE777eC7E2753368aF',
     },
-    scrollTestL2: {
+    scrollSepoliaTest: {
         iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
-        wrapChainToken: '0xa1EA0B2354F5A344110af2b6AD68e75545009a03',
-        liquidityManager: '0x67A1f4A939b477A6b7c5BF94D97E45dE87E608eF',
-        swap: '0x77132b63429718Db2B6ad8D942eE13A198f6Ab49',
+    },
+    scroll: {
+        iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
     },
     bedrockRolluxTestL2: {
         iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
@@ -62,11 +62,11 @@ const contracts = {
 	liquidityManager: '0x1eE5eDC5Fe498a2dD82862746D674DB2a5e7fef6',
 	swap: '0xF6FFe4f3FdC8BBb7F70FFD48e61f17D1e343dDfD',
     },
+    opBNB: {
+        iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
+    },
     ontologyTest: {
-        iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
-        wrapChainToken: '0xe8cf015f797877a9a23e80447429c0b0f04e114b',
-        liquidityManager: '0x67A1f4A939b477A6b7c5BF94D97E45dE87E608eF',
-        swap: '0x77132b63429718Db2B6ad8D942eE13A198f6Ab49',
+        iZiSwapFactory: '0x7336A5a3251b9259DDf8B9D02a96dA0153e0799d',
     },
     bsc: {
         iZiSwapFactory: '0x93BB94a0d5269cb437A1F71FF3a77AB753844422',
@@ -76,10 +76,7 @@ const contracts = {
 	swap: '0xedf2021f41AbCfE2dEA4427E1B61f4d0AA5aA4b8',
     },
     ontology: {
-        iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
-        wrapChainToken: '0xd8bc24cfd45452ef2c8bc7618e32330b61f2691b',
-        liquidityManager: '0x110dE362cc436D7f54210f96b8C7652C2617887D',
-        swap: '0x02F55D53DcE23B4AA962CC68b0f685f26143Bdb2',
+	iZiSwapFactory: '0x032b241De86a8660f1Ae0691a4760B426EA246d7',
     },
     ethereum: {
         wrapChainToken: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
@@ -119,10 +116,8 @@ const contracts = {
         swap: '0x04830cfCED9772b8ACbAF76Cfc7A630Ad82c9148',
     },
     etc: {
-        iZiSwapFactory: '0x25C030116Feb2E7BbA054b9de0915E5F51b03e31',
+        iZiSwapFactory: '0x79D175eF5fBe31b5D84B3ee359fcbBB466153E39',
         wrapChainToken: '0x1953cab0E5bFa6D4a9BaD6E05fD46C1CC6527a5a',
-        liquidityManager: '0x1D377311b342633A970e71a787C50F83858BFC1B',
-        swap: '0xe6805638db944eA605e774e72c6F0D15Fb6a1347',
     },
     polygon: {
         iZiSwapFactory: '0xcA7e21764CD8f7c1Ec40e651E25Da68AeD096037',
@@ -157,6 +152,40 @@ const contracts = {
 	wrapChainToken: '0x67A1f4A939b477A6b7c5BF94D97E45dE87E608eF',
 	liquidityManager: '0xa341a31CCdD570cAEab465c96D64c880db609021',
 	swap: '0x2A19e0CF8c73280CdDdFd5877AA64A9690AE6d47',
+    },
+    base: {
+        iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
+        wrapChainToken: '0x4200000000000000000000000000000000000006',
+    },
+    baseTest: {
+        iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
+    },
+    loot: {
+        iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
+        wrapChainToken: '0x7a524c7e82874226F0b51aade60A1BE4D430Cf0F',
+    },
+    mantaTest: {
+        iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
+        wrapChainToken: '0x67A1f4A939b477A6b7c5BF94D97E45dE87E608eF',
+    },
+    manta: {
+        iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
+    },
+    optimism: {
+        iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
+        wrapChainToken: '0x4200000000000000000000000000000000000006',
+    },
+    zetaTest: {
+        iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
+    },
+    kromaSepoliaTest: {
+        iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
+    },
+    kromaMainnet: {
+        iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
+    },
+    gasZeroGoerliL2: {
+	iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
     },
 }
 

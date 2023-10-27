@@ -57,6 +57,10 @@ module.exports = {
       accounts: [sk],
       gasPrice: 5000000000,
     },
+    opBNB: {
+      url: 'https://opbnb-mainnet-rpc.bnbchain.org',
+      accounts: [sk],
+    },
     ontologyTest: {
       url: 'https://polaris1.ont.io:10339',
       accounts: [sk],
@@ -110,10 +114,6 @@ module.exports = {
       url: 'https://rpc.mantle.xyz',
       accounts: [sk],
     },
-    scrollTestL2: {
-      url: 'https://alpha-rpc.scroll.io/l2',
-      accounts: [sk],
-    },
     icplazaTest: {
       url: 'https://rpctest.ic-plaza.org/',
       accounts: [sk],
@@ -158,8 +158,57 @@ module.exports = {
 	                url: 'https://evm.confluxrpc.com',
 	          accounts: [sk],
 	        },
+    base: {
+          url: 'https://developer-access-mainnet.base.org',
+          accounts: [sk],
+    },
+    baseTest: {
+          url: 'https://goerli.base.org',
+          accounts: [sk],
+	  gasPrice: 110000000
+    },
+    loot: {
+      url: 'https://rpc.lootchain.com/http',
+      accounts: [sk],
+    },
+    mantaTest: {
+      url: 'https://manta-testnet.calderachain.xyz/http',
+      accounts: [sk],
+    },
+    manta: {
+      url: 'https://manta-pacific.calderachain.xyz/http',
+      accounts: [sk],
+    },
+    optimism: {
+      url: 'https://mainnet.optimism.io',
+      accounts: [sk],
+    },
+    zetaTest: {
+      url: 'https://zetachain-athens-evm.blockpi.network/v1/rpc/public',
+      accounts: [sk],
+    },
+    kromaSepoliaTest: {
+      url: 'https://api.sepolia.kroma.network',
+      accounts: [sk],
+    },
+    scrollSepoliaTest: {
+      url: 'https://sepolia-rpc.scroll.io',
+      accounts: [sk],
+    },
+    scroll: {
+      url: 'https://rpc.scroll.io',
+      accounts: [sk],
+    },
+    kromaMainnet: {
+      url: 'https://api.kroma.network/',
+      accounts: [sk],
+    },
+    gasZeroGoerliL2: {
+      url: 'https://goerlitest.gaszero.com/',
+      accounts: [sk],
+    },
   },
   etherscan: {
     apiKey: apiKey,
-  }
+  },
 };
