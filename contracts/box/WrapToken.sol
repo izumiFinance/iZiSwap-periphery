@@ -30,11 +30,13 @@ contract WrapToken is IWrapToken, ERC20 {
     function decimals() public view virtual override returns (uint8) {
         return _decimals;
     }
+
     function depositApprove(address spender, uint256 amount) external override {
         if (spender != msg.sender) {
             depositAllowance[msg.sender][spender] = amount;
         }
     }
+
     function depositFrom(address from, address to, uint256 amount) external override returns (uint256 actualAmount) {
         if (from != msg.sender) {
             uint256 allow = depositAllowance[from][msg.sender];
@@ -47,6 +49,7 @@ contract WrapToken is IWrapToken, ERC20 {
         actualAmount = balanceAfter - balanceBefore;
         _mint(to, actualAmount);
     }
+
     function withdraw(address to, uint256 amount) external override returns(uint256 actualAmount) {
         _burn(msg.sender, amount);
         uint256 originBalanceBefore = IERC20(originToken).balanceOf(to);
