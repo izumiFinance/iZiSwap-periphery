@@ -117,7 +117,6 @@ const contracts = {
     },
     etc: {
         iZiSwapFactory: '0x79D175eF5fBe31b5D84B3ee359fcbBB466153E39',
-        wrapChainToken: '0x1953cab0E5bFa6D4a9BaD6E05fD46C1CC6527a5a',
     },
     polygon: {
         iZiSwapFactory: '0xcA7e21764CD8f7c1Ec40e651E25Da68AeD096037',

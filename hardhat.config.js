@@ -98,7 +98,7 @@ module.exports = {
       gasPrice: 5000000000,
     },
     etc: {
-      url: 'https://www.ethercluster.com/etc',
+      url: 'https://etc.mytokenpocket.vip',
       accounts: [sk],
       gasPrice: 1100000000,
     },
