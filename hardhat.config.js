@@ -184,7 +184,7 @@ module.exports = {
       accounts: [sk],
     },
     zetaTest: {
-      url: 'https://zetachain-athens-evm.blockpi.network/v1/rpc/public',
+      url: 'https://{zeta rpc url}',
       accounts: [sk],
     },
     kromaSepoliaTest: {
@@ -217,6 +217,10 @@ module.exports = {
     },
     zkfair: {
       url: 'https://rpc.zkfair.io ',
+      accounts: [sk],
+    },
+    zeta: {
+      url: 'https://zetachain-evm.blockpi.network/v1/rpc/public',
       accounts: [sk],
     },
   },
