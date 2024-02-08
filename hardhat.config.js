@@ -223,6 +223,14 @@ module.exports = {
       url: 'https://zetachain-evm.blockpi.network/v1/rpc/public',
       accounts: [sk],
     },
+    taikoKatlaL2Test: {
+      url: 'https://rpc.katla.taiko.xyz',
+      accounts: [sk],
+    },
+    beraTest: {
+      url: 'https://artio.rpc.berachain.com/',
+      accounts: [sk],
+    },
   },
   etherscan: { 
     customChains:[
