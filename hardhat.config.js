@@ -98,7 +98,7 @@ module.exports = {
       gasPrice: 5000000000,
     },
     etc: {
-      url: 'https://www.ethercluster.com/etc',
+      url: 'https://etc.mytokenpocket.vip',
       accounts: [sk],
       gasPrice: 1100000000,
     },
@@ -184,7 +184,7 @@ module.exports = {
       accounts: [sk],
     },
     zetaTest: {
-      url: 'https://zetachain-athens-evm.blockpi.network/v1/rpc/public',
+      url: 'https://{zeta rpc url}',
       accounts: [sk],
     },
     kromaSepoliaTest: {
@@ -213,6 +213,22 @@ module.exports = {
     },
     zkfairTest: {
       url: 'https://testnet-rpc.zkfair.io/',
+      accounts: [sk],
+    },
+    zkfair: {
+      url: 'https://rpc.zkfair.io ',
+      accounts: [sk],
+    },
+    zeta: {
+      url: 'https://zetachain-evm.blockpi.network/v1/rpc/public',
+      accounts: [sk],
+    },
+    taikoKatlaL2Test: {
+      url: 'https://rpc.katla.taiko.xyz',
+      accounts: [sk],
+    },
+    beraTest: {
+      url: 'https://artio.rpc.berachain.com/',
       accounts: [sk],
     },
   },

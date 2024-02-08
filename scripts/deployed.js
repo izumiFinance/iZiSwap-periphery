@@ -117,7 +117,6 @@ const contracts = {
     },
     etc: {
         iZiSwapFactory: '0x79D175eF5fBe31b5D84B3ee359fcbBB466153E39',
-        wrapChainToken: '0x1953cab0E5bFa6D4a9BaD6E05fD46C1CC6527a5a',
     },
     polygon: {
         iZiSwapFactory: '0xcA7e21764CD8f7c1Ec40e651E25Da68AeD096037',
@@ -191,6 +190,18 @@ const contracts = {
         iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
     },
     zkfairTest: {
+        iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
+    },
+    zkfair: {
+        iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
+    },
+    zeta: {
+        iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
+    },
+    taikoKatlaL2Test: {
+        iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
+    },
+    beraTest: {
         iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
     },
 }
