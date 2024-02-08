@@ -231,6 +231,10 @@ module.exports = {
       url: 'https://artio.rpc.berachain.com/',
       accounts: [sk],
     },
+    morphTest: {
+      url: 'https://rpc-testnet.morphl2.io',
+      accounts: [sk],
+    },
   },
   etherscan: { 
     customChains:[
