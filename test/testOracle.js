@@ -79,6 +79,13 @@ async function getOracle(oracle, poolAddr, deltaTime) {
     };
 }
 
+async function getTestOracle(testOracle, poolAddr, deltaTime) {
+    const {enough, avgPoint, oldestTime} = await testOracle.testOracle(poolAddr, deltaTime);
+    return {
+        enough, avgPoint, oldestTime
+    };
+}
+
 /*
 
         // the block timestamp of the observation
@@ -245,7 +252,7 @@ describe("test uniswap price oracle", function () {
 
     var q96;
 
-    var oracle;
+    var oracle, testOracle;
 
     var createPoolTime;
     
@@ -306,6 +313,10 @@ describe("test uniswap price oracle", function () {
         const Oracle = await ethers.getContractFactory('Oracle');
         oracle = await Oracle.deploy();
         await oracle.deployed();
+
+        const TestOracle = await ethers.getContractFactory('TestOracle');
+        testOracle = await TestOracle.deploy(oracle.address);
+        await testOracle.deployed();
 
         q96 = BigNumber(2).pow(96);
 
@@ -397,6 +408,13 @@ describe("test uniswap price oracle", function () {
         expect(res.enough).to.equal(false);
         expect(res.oldestTime).to.equal(createPoolTime);
 
+        // check testOracle
+        const resTestOracle = await getTestOracle(testOracle, poolXYAddr, 7200);
+
+        expect(resTestOracle.avgPoint).to.equal(res.avgPoint);
+        expect(resTestOracle.enough).to.equal(res.enough);
+        expect(resTestOracle.oldestTime).to.equal(res.oldestTime);
+
     }); 
 
     it("num of observations reach cardinality, oldest within 2h", async function() {
@@ -456,6 +474,14 @@ describe("test uniswap price oracle", function () {
         expect(res.enough).to.equal(false);
         expect(res.avgPoint).to.equal(stdAvgPoint);
         expect(res.oldestTime).to.equal(swapTime3);
+
+        // check testOracle
+        const resTestOracle = await getTestOracle(testOracle, poolXYAddr, 7200);
+
+        expect(resTestOracle.avgPoint).to.equal(res.avgPoint);
+        expect(resTestOracle.enough).to.equal(res.enough);
+        expect(resTestOracle.oldestTime).to.equal(res.oldestTime);
+
     }); 
     it("num of observations does not reach cardinality, oldest is enough", async function() {
 
@@ -496,6 +522,14 @@ describe("test uniswap price oracle", function () {
         expect(res.avgPoint).to.equal(stdAvgPoint);
         expect(res.enough).to.equal(true);
         expect(res.oldestTime).to.equal(createPoolTime);
+
+        // check testOracle
+        const resTestOracle = await getTestOracle(testOracle, poolXYAddr, queryTime - targetTime);
+
+        expect(resTestOracle.avgPoint).to.equal(res.avgPoint);
+        expect(resTestOracle.enough).to.equal(res.enough);
+        expect(resTestOracle.oldestTime).to.equal(res.oldestTime);
+
     }); 
 
     it("num of observations reach cardinality, oldest enough", async function() {
@@ -557,6 +591,14 @@ describe("test uniswap price oracle", function () {
         expect(res.enough).to.equal(true);
         expect(res.avgPoint).to.equal(stdAvgPoint);
         expect(res.oldestTime).to.equal(swapTime3);
+
+        // check testOracle
+        const resTestOracle = await getTestOracle(testOracle, poolXYAddr, deltaTime);
+
+        expect(resTestOracle.avgPoint).to.equal(res.avgPoint);
+        expect(resTestOracle.enough).to.equal(res.enough);
+        expect(resTestOracle.oldestTime).to.equal(res.oldestTime);
+
     }); 
 
     it("num of observations reach cardinality, oldest not enough, but swap before oldest is enough", async function() {
@@ -618,6 +660,14 @@ describe("test uniswap price oracle", function () {
         expect(res.enough).to.equal(false);
         expect(res.avgPoint).to.equal(stdAvgPoint);
         expect(res.oldestTime).to.equal(swapTime3);
+    
+        // check testOracle
+        const resTestOracle = await getTestOracle(testOracle, poolXYAddr, deltaTime);
+
+        expect(resTestOracle.avgPoint).to.equal(res.avgPoint);
+        expect(resTestOracle.enough).to.equal(res.enough);
+        expect(resTestOracle.oldestTime).to.equal(res.oldestTime);
+
     }); 
 
     it("queue expand before last 2 swaps, num of observations reach cardinality", async function() {
