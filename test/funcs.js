@@ -482,6 +482,23 @@ function getRevertString(originStr) {
 }
 
 
+async function attachiZiSwapPool(poolAddr) {
+    const iZiSwapPoolJson = getContractJson(__dirname + '/core/iZiSwapPool.json');
+    
+    const iZiSwapPoolFactory = await ethers.getContractFactory(iZiSwapPoolJson.abi, iZiSwapPoolJson.bytecode);
+
+    const pool = iZiSwapPoolFactory.attach(poolAddr);
+    return pool
+}
+
+async function getNFTLiquidityManager(signer, factoryAddr, wethAddr) {
+    const liquidityManagerJson = getContractJson(__dirname + '/core/LiquidityManager.json');
+    const LiquidityManagerFacrory = await ethers.getContractFactory(liquidityManagerJson.abi, liquidityManagerJson.bytecode, signer);
+    var nflm = await LiquidityManagerFacrory.deploy(factoryAddr, wethAddr);
+    await nflm.deployed();
+    return nflm;
+}
+
 module.exports ={
     getPoolParts,
     getPool,
@@ -521,5 +538,7 @@ module.exports ={
     getSum,
     getRevertString,
     ceil,
-    floor
+    floor,
+    attachiZiSwapPool,
+    getNFTLiquidityManager,
 }
