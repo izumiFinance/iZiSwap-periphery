@@ -119,6 +119,14 @@ contract Oracle {
         point = int24(pointAvg);
     }
     
+    /// @notice query time weighted average (TWA) point(log price) of a swap pool.
+    /// @param pool swap pool address
+    /// @param delta seconds of time period, 
+    ///        this interface calculates TWA point from delta ago to now
+    ///        etc, the time period is [currentTime - delta, currentTime]
+    /// @return enough whether oldest point in the observation queue is older than (currentTime - delta)
+    /// @return avgPoint TWA point calculated
+    /// @return oldestTime the oldest time of point in the observation queue.
     function getTWAPoint(address pool, uint256 delta)
         external
         view
