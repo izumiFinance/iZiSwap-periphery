@@ -807,4 +807,28 @@ describe("test uniswap price oracle", function () {
         expect(res2.avgPoint).to.equal(stdAvgPoint2);
         expect(res2.oldestTime).to.equal(createPoolTime);
     }); 
+
+    it("delta is zero", async function() {
+
+        await pool.expandObservationQueue(8);
+
+        const swapTime1 = await getCurrentTime() + 6;
+        await ethers.provider.send('evm_setNextBlockTimestamp', [swapTime1]);
+        await movePriceDown(swap, trader, tokenX, tokenY, 6000); // 2 obs
+
+        const swapTime2 = await getCurrentTime() + 10;
+        await ethers.provider.send('evm_setNextBlockTimestamp', [swapTime2]);
+        await movePriceDown(swap, trader, tokenX, tokenY, 3000); // 3 obs
+
+        const queryTime = await getCurrentTime() + 18;
+        await ethers.provider.send('evm_setNextBlockTimestamp', [queryTime]);
+        await pool.expandObservationQueue(20);
+
+        const res = await getOracle(oracle, poolXYAddr, 0);
+
+        expect(res.enough).to.equal(true);
+        expect(res.avgPoint).to.equal(3000);
+        expect(res.oldestTime).to.equal(createPoolTime);
+
+    }); 
 });

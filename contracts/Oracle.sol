@@ -102,10 +102,8 @@ contract Oracle {
         state.observationNextQueueLen = observationNextQueueLen;
     }
 
-    // note if we call this interface, we must ensure that the 
-    //    oldest observation preserved in pool is older than 2h ago
-    function _getAvgTickFromTarget(address pool, uint32 targetTimestamp)
-        private
+    function _getTWAPointFromTarget(address pool, uint32 targetTimestamp)
+        internal
         view
         returns (int24 point) 
     {
@@ -133,18 +131,21 @@ contract Oracle {
         returns (bool enough, int24 avgPoint, uint256 oldestTime)
     {
         State memory state = getState(pool);
-
         // get oldest observation
         Observation memory oldestObservation;
         oldestObservation = getOldestObservation(pool, state.observationCurrentIndex, state.observationQueueLen);
 
+        if (delta == 0) {
+            return (true, state.currentPoint, oldestObservation.blockTimestamp);
+        }
+
         if (uint256(oldestObservation.blockTimestamp) <= block.timestamp - delta) {
             uint256 targetTime = block.timestamp - delta;
-            avgPoint = _getAvgTickFromTarget(pool, uint32(targetTime));
+            avgPoint = _getTWAPointFromTarget(pool, uint32(targetTime));
             return (true, avgPoint, oldestObservation.blockTimestamp);
         } else {
             uint256 targetTime = oldestObservation.blockTimestamp;
-            avgPoint = _getAvgTickFromTarget(pool, uint32(targetTime));
+            avgPoint = _getTWAPointFromTarget(pool, uint32(targetTime));
             return (false, avgPoint, oldestObservation.blockTimestamp);
         }
     }
