@@ -73,7 +73,7 @@ async function getState(pool) {
 }
 
 async function getOracle(oracle, poolAddr, deltaTime) {
-    const {enough, avgPoint, oldestTime} = await oracle.getAvgPoint(poolAddr, deltaTime);
+    const {enough, avgPoint, oldestTime} = await oracle.getTWAPoint(poolAddr, deltaTime);
     return {
         enough, avgPoint, oldestTime
     };
@@ -192,7 +192,7 @@ async function getCurrentTime() {
     return blockStart.timestamp;
 }
 
-function getAvgPoint(timeList, pointList) {
+function getTWAPoint(timeList, pointList) {
     let sum = 0;
     let timeDelta = 0;
     for (let idx = 0; idx < pointList.length; idx ++) {
@@ -317,7 +317,7 @@ describe("test uniswap price oracle", function () {
     
     it("no swap", async function () {
         // var tick, sqrtPriceX96, currTick, currSqrtPriceX96;
-        // [tick, sqrtPriceX96, currTick, currSqrtPriceX96] = await testOracle.getAvgPointPriceWithin2Hour(poolXYAddr);
+        // [tick, sqrtPriceX96, currTick, currSqrtPriceX96] = await testOracle.getTWAPointPriceWithin2Hour(poolXYAddr);
 
         const res = await getOracle(oracle, poolXYAddr, 7200);
         expect(res.avgPoint).to.equal(8000);
@@ -347,7 +347,7 @@ describe("test uniswap price oracle", function () {
         await tokenX.mint(trader.address, "1");
 
         const res = await getOracle(oracle, poolXYAddr, 7200);
-        const stdAvgPoint = getAvgPoint([swapTime, queryTime], [-2000]);
+        const stdAvgPoint = getTWAPoint([swapTime, queryTime], [-2000]);
         expect(res.avgPoint).to.equal(stdAvgPoint);
         expect(res.enough).to.equal(false);
         expect(res.oldestTime).to.equal(swapTime);
@@ -388,7 +388,7 @@ describe("test uniswap price oracle", function () {
         expect(state.observationQueueLen).to.equal(8);
         const res = await getOracle(oracle, poolXYAddr, 7200);
 
-        const stdAvgPoint = getAvgPoint(
+        const stdAvgPoint = getTWAPoint(
             [createPoolTime, swapTime1, swapTime2, swapTime3, swapTime4, swapTime5, queryTime], 
             [8000, 6000, 3000, 0, 2000, 5000]
         );
@@ -449,7 +449,7 @@ describe("test uniswap price oracle", function () {
 
         const res = await getOracle(oracle, poolXYAddr, 7200);
 
-        const stdAvgPoint = getAvgPoint(
+        const stdAvgPoint = getTWAPoint(
             [swapTime3, swapTime4, swapTime5, swapTime6, swapTime7, swapTime8, swapTime9, swapTime10, queryTime], 
             [-3000, -1000, 2000, 10000, 5000, 4000, 3700, 3500]
         );
@@ -488,7 +488,7 @@ describe("test uniswap price oracle", function () {
         const targetTime = swapTime2 + 2;
         const res = await getOracle(oracle, poolXYAddr, queryTime - targetTime);
 
-        const stdAvgPoint = getAvgPoint(
+        const stdAvgPoint = getTWAPoint(
             [targetTime, swapTime3, swapTime4, swapTime5, queryTime], 
             [6500, 1500, -3000, 0]
         );
@@ -550,7 +550,7 @@ describe("test uniswap price oracle", function () {
 
         const res = await getOracle(oracle, poolXYAddr, deltaTime);
 
-        const stdAvgPoint = getAvgPoint(
+        const stdAvgPoint = getTWAPoint(
             [targetTime, swapTime6, swapTime7, swapTime8, swapTime9, swapTime10, queryTime], 
             [2000, 10000, 5000, 4000, 3700, 3500]
         );
@@ -611,7 +611,7 @@ describe("test uniswap price oracle", function () {
 
         const res = await getOracle(oracle, poolXYAddr, deltaTime);
 
-        const stdAvgPoint = getAvgPoint(
+        const stdAvgPoint = getTWAPoint(
             [swapTime3, swapTime4, swapTime5, swapTime6, swapTime7, swapTime8, swapTime9, swapTime10, queryTime], 
             [-3000, -1000, 2000, 10000, 5000, 4000, 3700, 3500]
         );
@@ -674,7 +674,7 @@ describe("test uniswap price oracle", function () {
 
         const res = await getOracle(oracle, poolXYAddr, deltaTime);
 
-        const stdAvgPoint = getAvgPoint(
+        const stdAvgPoint = getTWAPoint(
             [swapTime3, swapTime4, swapTime5, swapTime6, swapTime7, swapTime8, swapTime9, swapTime10, queryTime], 
             [-3000, -1000, 2000, 10000, 5000, 4000, 3700, 3500]
         );
@@ -738,7 +738,7 @@ describe("test uniswap price oracle", function () {
 
         const res = await getOracle(oracle, poolXYAddr, deltaTime);
 
-        const stdAvgPoint = getAvgPoint(
+        const stdAvgPoint = getTWAPoint(
             [targetTime, swapTime3, swapTime4, swapTime5, swapTime6, swapTime7, swapTime8, swapTime9, swapTime10, queryTime], 
             [3000, -3000, -1000, 2000, 10000, 5000, 4000, 3700, 3500]
         );
@@ -749,7 +749,7 @@ describe("test uniswap price oracle", function () {
 
         const res2 = await getOracle(oracle, poolXYAddr, queryTime - swapTime2);
 
-        const stdAvgPoint2 = getAvgPoint(
+        const stdAvgPoint2 = getTWAPoint(
             [swapTime2, swapTime3, swapTime4, swapTime5, swapTime6, swapTime7, swapTime8, swapTime9, swapTime10, queryTime], 
             [3000, -3000, -1000, 2000, 10000, 5000, 4000, 3700, 3500]
         );

@@ -119,7 +119,7 @@ contract Oracle {
         point = int24(pointAvg);
     }
     
-    function getAvgPoint(address pool, uint256 delta)
+    function getTWAPoint(address pool, uint256 delta)
         external
         view
         returns (bool enough, int24 avgPoint, uint256 oldestTime)
