@@ -110,6 +110,10 @@ module.exports = {
       url: 'https://rpc.testnet.mantle.xyz',
       accounts: [sk],
     },
+    mantleSepoliaTest: {
+      url: 'https://rpc.sepolia.mantle.xyz',
+      accounts: [sk],
+    },
     mantle: {
       url: 'https://rpc.mantle.xyz',
       accounts: [sk],
