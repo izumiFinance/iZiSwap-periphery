@@ -103,7 +103,9 @@ module.exports = {
       gasPrice: 1100000000,
     },
     polygon: {
-      url: 'https://rpc-mainnet.maticvigil.com',
+	    url: 'https://polygon-bor-rpc.publicnode.com',
+	    //url: 'https://polygon-rpc.com/',
+      //url: 'https://rpc-mainnet.maticvigil.com',
       accounts: [sk],
     },
     mantleTest: {
@@ -147,7 +149,7 @@ module.exports = {
        accounts: [sk],
     },
     linea: {
-      url: 'https://linea-mainnet.infura.io/v3/<api key>',
+      url: 'https://linea-mainnet.infura.io/v3/<your api key>',
       accounts: [sk],
     },
     opsideTest: {
@@ -204,7 +206,7 @@ module.exports = {
       accounts: [sk],
     },
     kromaMainnet: {
-      url: 'https://api.kroma.network/',
+	    url: 'https://1rpc.io/kroma	',
       accounts: [sk],
     },
     gasZeroGoerliL2: {
@@ -249,7 +251,32 @@ module.exports = {
            apiURL: "https://blockscout.kroma.network/api",
            browserURL: "https://blockscout.kroma.network/",
 	 }
-      }],
+      },
+      {
+         network: "linea",
+         chainId: 59144,
+         urls:{
+           apiURL: "https://api.lineascan.build/api",
+           browserURL: "https://lineascan.build/",
+         }
+      },
+      {
+         network: "base",
+         chainId: 8453,
+         urls:{
+	   apiURL: "https://api.basescan.org/api",
+           browserURL: "https://basescan.org",
+         }
+      },
+      {
+         network: "scroll",
+         chainId: 534352,
+         urls:{
+	   apiURL: "https://api.scrollscan.com/api",
+           browserURL: "https://scrollscan.com/",
+         }
+      },
+    ],
     apiKey: apiKey,
   },
 };
