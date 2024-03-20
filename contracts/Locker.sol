@@ -21,7 +21,7 @@ interface IWETH9 is IERC20 {
     function withdraw(uint256) external;
 }
 
-/// @title Locker contract for iZiSwap LiquidityManager NFT
+/// @title Locker contract for Swap LiquidityManager NFT
 contract Locker is Ownable, ReentrancyGuard, IERC721Receiver {
     // using Math for int24;
     using SafeERC20 for IERC20;
@@ -43,8 +43,8 @@ contract Locker is Ownable, ReentrancyGuard, IERC721Receiver {
         address indexed user
     );
 
-    /// @dev Contract of the iZiSwap Nonfungible Position Manager.
-    address public immutable iZiSwapLiquidityManager;
+    /// @dev Contract of the Swap Nonfungible Position Manager.
+    address public immutable SwapLiquidityManager;
     address public immutable weth;
 
     uint256 public immutable WEEK;
@@ -76,7 +76,7 @@ contract Locker is Ownable, ReentrancyGuard, IERC721Receiver {
     }
 
     constructor(address _liquidityManager, uint256 _maxCnt) {
-        iZiSwapLiquidityManager = _liquidityManager;
+        SwapLiquidityManager = _liquidityManager;
         weth = IBase(_liquidityManager).WETH9();
         WEEK = 7 * 24 * 60 * 60;
         maxCnt = _maxCnt;
@@ -96,8 +96,8 @@ contract Locker is Ownable, ReentrancyGuard, IERC721Receiver {
     }
 
     function getPoolInfo(uint256 nftId) internal view returns(address tokenX, address tokenY, uint24 fee) {
-        (,,,,,,,uint128 poolId) = ILiquidityManager(iZiSwapLiquidityManager).liquidities(nftId);
-        (tokenX, tokenY, fee) = ILiquidityManager(iZiSwapLiquidityManager).poolMetas(poolId);
+        (,,,,,,,uint128 poolId) = ILiquidityManager(SwapLiquidityManager).liquidities(nftId);
+        (tokenX, tokenY, fee) = ILiquidityManager(SwapLiquidityManager).poolMetas(poolId);
     }
 
     /// @notice View function to get position ids staked here for an user.
@@ -121,10 +121,10 @@ contract Locker is Ownable, ReentrancyGuard, IERC721Receiver {
         require(lockTime >= WEEK, "LOCKTIME MUST >= 1 WEEK");
         uint256 unlockTime = block.timestamp + lockTime;
 
-        address nftOwner = IERC721(iZiSwapLiquidityManager).ownerOf(tokenId);
+        address nftOwner = IERC721(SwapLiquidityManager).ownerOf(tokenId);
         require(nftOwner == msg.sender, "NFT NOT OWNER");
 
-        IERC721(iZiSwapLiquidityManager).safeTransferFrom(msg.sender, address(this), tokenId);
+        IERC721(SwapLiquidityManager).safeTransferFrom(msg.sender, address(this), tokenId);
         owners[tokenId] = msg.sender;
 
         EnumerableSet.UintSet storage ids = tokenIds[msg.sender];
@@ -159,7 +159,7 @@ contract Locker is Ownable, ReentrancyGuard, IERC721Receiver {
         require(owners[tokenId] == msg.sender, "NOT OWNER OR NOT EXIST");
         TokenInfo memory tokenInfo = tokenInfos[tokenId];
         require(tokenInfo.unlockTime <= block.timestamp, "NOT TIME YET");
-        IERC721(iZiSwapLiquidityManager).safeTransferFrom(address(this), msg.sender, tokenId);
+        IERC721(SwapLiquidityManager).safeTransferFrom(address(this), msg.sender, tokenId);
         owners[tokenId] = address(0);
         bool res = tokenIds[msg.sender].remove(tokenId);
         require(res, "LIST REMOVE FAIL");
@@ -171,7 +171,7 @@ contract Locker is Ownable, ReentrancyGuard, IERC721Receiver {
     function adminWithdraw(uint256 tokenId) external onlyOwner nonReentrant {
         address nftOwner = owners[tokenId];
         require(nftOwner != address(0), "WITHDRAWED OR NOT EXIST");
-        IERC721(iZiSwapLiquidityManager).safeTransferFrom(address(this), nftOwner, tokenId);
+        IERC721(SwapLiquidityManager).safeTransferFrom(address(this), nftOwner, tokenId);
         owners[tokenId] = address(0);
         bool res = tokenIds[nftOwner].remove(tokenId);
         require(res, "LIST REMOVE FAIL");
@@ -199,7 +199,7 @@ contract Locker is Ownable, ReentrancyGuard, IERC721Receiver {
 
         try
             ILiquidityManager(
-                iZiSwapLiquidityManager
+                SwapLiquidityManager
             ).collect(
                 address(this),
                 tokenId,
