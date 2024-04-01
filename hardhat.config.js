@@ -241,6 +241,12 @@ module.exports = {
       url: 'https://rpc-testnet.morphl2.io',
       accounts: [sk],
     },
+    XLayer: {
+      // url: 'https://rpc.xlayer.tech',
+      url: 'https://xlayerrpc.okx.com',
+      accounts: [sk],
+      gasPrice: 100000000,
+    }
   },
   etherscan: { 
     customChains:[
