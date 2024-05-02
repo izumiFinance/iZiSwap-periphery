@@ -216,6 +216,9 @@ const contracts = {
     XLayer: {
         iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
     },
+    BOB: {
+        iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
+    },
 }
 
 module.exports = contracts;
