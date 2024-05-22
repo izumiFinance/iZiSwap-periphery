@@ -31,10 +31,13 @@ contract UniversalQuoter is iZiClassicQuoter, iZiSwapQuoter {
     /// @notice Construct this contract.
     /// @param _iZiSwapFactory address iZiSwap factory
     /// @param _iZiClassicFactory address iZiSwap classic factory
-    constructor(address _iZiSwapFactory, address _iZiClassicFactory) 
+    /// @param _swapRouter address iZiSwap classic universal router
+    constructor(address _iZiSwapFactory, address _iZiClassicFactory, address _swapRouter) 
     iZiClassicQuoter(_iZiClassicFactory) 
     iZiSwapQuoter(_iZiSwapFactory)
-    {}
+    {
+        swapRouter = _swapRouter;
+    }
 
 
     /// @notice Make multiple function calls in this contract in a single transaction
