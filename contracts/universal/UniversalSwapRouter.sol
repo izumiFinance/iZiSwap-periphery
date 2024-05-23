@@ -30,7 +30,7 @@ contract UniversalSwapRouter is
 
     address public charger;
     // outFee / 10000 is outFee rate
-    uint16 outFee;
+    uint16 public outFee;
 
     /// @notice constructor to create this contract
     /// @param _iZiSwapFactory address of iZiSwap factory
