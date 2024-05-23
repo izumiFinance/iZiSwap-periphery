@@ -61,12 +61,14 @@ contract UniversalSwapRouter is
             // pay with WETH9
             IWETH9(WETH9).deposit{value: value}(); // wrap only what is needed to pay
             IWETH9(WETH9).transfer(recipient, value);
+            payedCached = value;
         } else if (payer == address(this)) {
             // pay with tokens already in the contract (for the exact input multihop case)
             safeTransfer(token, recipient, value);
         } else {
             // pull payment
             safeTransferFrom(token, payer, recipient, value);
+            payedCached = value;
         }
     }
 
@@ -167,7 +169,7 @@ contract UniversalSwapRouter is
         if (charger == address(0) || outFee == 0) {
             return originDesire;
         }
-        desire = originDesire * 10000 / (10000 - outFee);
+        desire = originDesire * 10000 / (10000 - outFee) + 1;
         return desire;
     }
 
