@@ -82,6 +82,7 @@ contract UniversalQuoter is iZiClassicQuoter, iZiSwapQuoter {
         uint128 amount;
         bytes path;
         bool limit;
+        bool fee;
     }
 
     function swapAmount(
@@ -130,8 +131,12 @@ contract UniversalQuoter is iZiClassicQuoter, iZiSwapQuoter {
                 break;
             }
         }
-        acquire = uint128(chargeFee(acquire));
-        outFee = getOutFee();
+        if (params.fee) {
+            acquire = uint128(chargeFee(acquire));
+            outFee = getOutFee();
+        } else {
+            outFee = 0;
+        }
     }
 
     function swapDesire(
@@ -141,7 +146,10 @@ contract UniversalQuoter is iZiClassicQuoter, iZiSwapQuoter {
 
         uint256 i = 0;
         price = new Price[](params.path.numPools());
-        uint128 desire = uint128(desireAddFee(params.amount));
+        uint128 desire = params.amount;
+        if (params.fee) {
+            desire = uint128(desireAddFee(desire));
+        }
         while (true) {
             bool hasMultiplePools = params.path.hasMultiplePools();
             (address tokenOut, address tokenIn, uint24 fee) = params.path.decodeFirstPool();
@@ -180,7 +188,11 @@ contract UniversalQuoter is iZiClassicQuoter, iZiSwapQuoter {
                 break;
             }
         }
-        outFee = getOutFee();
+        if (params.fee) {
+            outFee = getOutFee();
+        } else {
+            outFee = 0;
+        }
     }
 
 }

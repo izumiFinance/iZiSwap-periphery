@@ -191,6 +191,7 @@ contract UniversalSwapRouter is
         uint128 desire;
         uint256 maxPayed;
         uint256 deadline;
+        bool fee;
     }
 
 
@@ -206,13 +207,18 @@ contract UniversalSwapRouter is
             recipient = address(this);
         }
         address tokenOut;
-        uint256 desire = desireAddFee(params.desire);
+        uint256 desire = params.desire;
+        if (params.fee) {
+            desire = desireAddFee(params.desire);
+        }
         (acquire, tokenOut) = swapDesireInternal(
             desire,
             address(this),
             SwapCallbackData({path: params.path, payer: msg.sender})
         );
-        acquire = chargeFee(tokenOut, acquire);
+        if (params.fee) {
+            acquire = chargeFee(tokenOut, acquire);
+        }
         if (recipient != address(this)) {
             safeTransfer(tokenOut, recipient, acquire);
         }
@@ -225,11 +231,10 @@ contract UniversalSwapRouter is
     struct SwapAmountParams {
         bytes path;
         address recipient;
-        // uint256 deadline;
         uint128 amount;
         uint256 minAcquired;
-
         uint256 deadline;
+        bool fee;
     }
 
     /// @notice Swap given amount of input token, usually used in multi-hop case.
@@ -248,7 +253,9 @@ contract UniversalSwapRouter is
             params.amount,
             SwapCallbackData({path: params.path, payer: msg.sender})
         );
-        acquire = chargeFee(tokenOut, acquire);
+        if (params.fee) {
+            acquire = chargeFee(tokenOut, acquire);
+        }
         if (recipient != address(this)) {
             safeTransfer(tokenOut, recipient, acquire);
         }
