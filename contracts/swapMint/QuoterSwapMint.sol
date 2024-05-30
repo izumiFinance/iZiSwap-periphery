@@ -23,7 +23,6 @@ contract QuoterSwapMint is Base, IiZiSwapCallback {
         address tokenX;
         address tokenY;
         uint24 fee;
-        address payer;
     }
 
     /// @notice Construct this contract.
@@ -170,8 +169,12 @@ contract QuoterSwapMint is Base, IiZiSwapCallback {
         if (params.targetPt > currentPt) {
             try
                 IiZiSwapPool(params.poolAddress).swapY2X(
-                    address(this), params.amount, params.targetPt + 1,
-                    abi.encodePacked(pairInfo.tokenY, pairInfo.fee, pairInfo.tokenX)
+                    address(this), params.amount, params.targetPt,
+                    abi.encode(SwapCallbackData({
+                        tokenX: pairInfo.tokenX, 
+                        fee: pairInfo.fee, 
+                        tokenY: pairInfo.tokenY
+                    }))
                 )
             {} catch (bytes memory reason) {
                 (acquireAmountX, payAmountY, finalPt) = parseRevertReason(reason);
@@ -180,7 +183,11 @@ contract QuoterSwapMint is Base, IiZiSwapCallback {
             try
                 IiZiSwapPool(params.poolAddress).swapX2Y(
                     address(this), params.amount, params.targetPt,
-                    abi.encodePacked(pairInfo.tokenX, pairInfo.fee, pairInfo.tokenY)
+                    abi.encode(SwapCallbackData({
+                        tokenX: pairInfo.tokenX, 
+                        fee: pairInfo.fee, 
+                        tokenY: pairInfo.tokenY
+                    }))
                 )
             {} catch (bytes memory reason) {
                 (payAmountX, acquireAmountY, finalPt) = parseRevertReason(reason);
