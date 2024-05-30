@@ -125,6 +125,7 @@ contract QuoterSwapMint is Base, IiZiSwapCallback {
     struct QuoteParams {
         address poolAddress;
         int24 targetPt;
+        uint128 amount;
     }
 
     struct PairInfo {
@@ -169,7 +170,7 @@ contract QuoterSwapMint is Base, IiZiSwapCallback {
         if (params.targetPt > currentPt) {
             try
                 IiZiSwapPool(params.poolAddress).swapY2X(
-                    address(this), type(uint128).max, params.targetPt + 1,
+                    address(this), params.amount, params.targetPt + 1,
                     abi.encodePacked(pairInfo.tokenY, pairInfo.fee, pairInfo.tokenX)
                 )
             {} catch (bytes memory reason) {
@@ -178,7 +179,7 @@ contract QuoterSwapMint is Base, IiZiSwapCallback {
         } else {
             try
                 IiZiSwapPool(params.poolAddress).swapX2Y(
-                    address(this), type(uint128).max, params.targetPt,
+                    address(this), params.amount, params.targetPt,
                     abi.encodePacked(pairInfo.tokenX, pairInfo.fee, pairInfo.tokenY)
                 )
             {} catch (bytes memory reason) {
