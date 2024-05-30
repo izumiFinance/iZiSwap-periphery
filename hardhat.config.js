@@ -47,10 +47,7 @@ module.exports = {
     },
     bscTest: {
       url: 'https://data-seed-prebsc-2-s1.binance.org:8545/',
-      //url: 'https://data-seed-prebsc-1-s3.binance.org:8545/',
       accounts: [sk],
-      // gas: 90000000,
-      //gasPrice: 10000000000,
     },
     opBNBTest: {
       url: 'https://opbnb-testnet-rpc.bnbchain.org',
@@ -237,6 +234,11 @@ module.exports = {
       url: 'https://rpc.hekla.taiko.xyz',
       accounts: [sk],
     },
+    taiko: {
+      url: 'https://rpc.mainnet.taiko.xyz',
+      accounts: [sk],
+      gasPrice: 12000000,
+    },
     beraTest: {
       url: 'https://artio.rpc.berachain.com/',
       accounts: [sk],
@@ -290,6 +292,14 @@ module.exports = {
            browserURL: "https://scrollscan.com/",
          }
       },
+      {
+         network: "taiko",
+         chainId: 167000,
+         urls: {
+           apiURL: "https://api.routescan.io/v2/network/mainnet/evm/167000/etherscan",
+           browserURL: "https://taikoscan.network"
+         }
+      }
     ],
     apiKey: apiKey,
   },
