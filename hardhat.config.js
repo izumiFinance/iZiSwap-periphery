@@ -257,6 +257,14 @@ module.exports = {
       url: 'https://rpc.gobob.xyz',
       accounts: [sk],
     },
+    Kava: {
+      url: 'https://evm.kava-rpc.com',
+      accounts: [sk],
+    },
+    kakarotSepoliaTest: {
+      url: 'https://sepolia-rpc.kakarot.org',
+      accounts: [sk],
+    },
   },
   etherscan: { 
     customChains:[
@@ -299,7 +307,15 @@ module.exports = {
            apiURL: "https://api.routescan.io/v2/network/mainnet/evm/167000/etherscan",
            browserURL: "https://taikoscan.network"
          }
-      }
+      },
+      {
+         network: 'Kava',
+         chainId: 2222,
+         urls: {
+           apiURL: 'https://api.verify.mintscan.io/evm/api/0x8ae',
+           browserURL: 'https://kavascan.com',
+         },
+      },
     ],
     apiKey: apiKey,
   },
