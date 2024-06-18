@@ -239,8 +239,8 @@ module.exports = {
       accounts: [sk],
       gasPrice: 12000000,
     },
-    beraTest: {
-      url: 'https://artio.rpc.berachain.com/',
+    beraBArtioTest: {
+      url: 'https://bartio.rpc.berachain.com/',
       accounts: [sk],
     },
     morphTest: {
