@@ -7,7 +7,6 @@ const v = process.argv
 
 const para = {
     classicFactory: v[2],
-    swapRouter: v[3],
 }
 
 async function main() {
@@ -23,7 +22,6 @@ async function main() {
     const quoter = await Quoter.deploy(
         iZiSwapFactory,
         para.classicFactory,
-        para.swapRouter,
     );
     await quoter.deployed();
     console.log("quoter: ", quoter.address);

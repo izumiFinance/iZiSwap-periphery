@@ -10,11 +10,6 @@ import "../libraries/Path.sol";
 import "./iZiClassicQuoter.sol";
 import "./iZiSwapQuoter.sol";
 
-interface IUniversalSwapRouter {
-    function outFee() external view returns(uint16);
-    function charger() external view returns(address);
-}
-
 contract UniversalQuoter is iZiClassicQuoter, iZiSwapQuoter {
 
     using Path for bytes;
@@ -26,18 +21,13 @@ contract UniversalQuoter is iZiClassicQuoter, iZiSwapQuoter {
         uint256 reserveOut;
     }
 
-    address swapRouter;
-
     /// @notice Construct this contract.
     /// @param _iZiSwapFactory address iZiSwap factory
     /// @param _iZiClassicFactory address iZiSwap classic factory
-    /// @param _swapRouter address iZiSwap classic universal router
     constructor(address _iZiSwapFactory, address _iZiClassicFactory, address _swapRouter) 
     iZiClassicQuoter(_iZiClassicFactory) 
     iZiSwapQuoter(_iZiSwapFactory)
-    {
-        swapRouter = _swapRouter;
-    }
+    {}
 
 
     /// @notice Make multiple function calls in this contract in a single transaction
@@ -56,23 +46,12 @@ contract UniversalQuoter is iZiClassicQuoter, iZiSwapQuoter {
         }
     }
 
-    function getOutFee() internal view returns(uint16 outFee) {
-        address charger = IUniversalSwapRouter(swapRouter).charger();
-        if (charger == address(0)) {
-            return 0;
-        }
-        outFee = IUniversalSwapRouter(swapRouter).outFee();
-        return outFee;
-    }
-
-    function desireAddFee(uint256 originDesire) internal view returns(uint256 desire) {
-        uint16 outFee = getOutFee();
+    function desireAddFee(uint256 originDesire, uint16 outFee) internal pure returns(uint256 desire) {
         desire = originDesire * 10000 / (10000 - outFee);
         return desire;
     }
 
-    function chargeFee(uint256 originAcquire) internal view returns(uint256 acquire) {
-        uint16 outFee = getOutFee();
+    function chargeFee(uint256 originAcquire, uint16 outFee) internal pure returns(uint256 acquire) {
         uint256 tokenFee = originAcquire * outFee / 10000;
         acquire = originAcquire - tokenFee;
         return acquire;
@@ -82,12 +61,12 @@ contract UniversalQuoter is iZiClassicQuoter, iZiSwapQuoter {
         uint128 amount;
         bytes path;
         bool limit;
-        bool fee;
+        uint16 outFee;
     }
 
     function swapAmount(
         QuoteParams memory params
-    ) public returns (uint256 acquire, Price[] memory price, uint16 outFee) {
+    ) public returns (uint256 acquire, Price[] memory price) {
         // allow swapping to the router address with address 0
 
         uint256 i = 0;
@@ -131,24 +110,21 @@ contract UniversalQuoter is iZiClassicQuoter, iZiSwapQuoter {
                 break;
             }
         }
-        if (params.fee) {
-            acquire = uint128(chargeFee(acquire));
-            outFee = getOutFee();
-        } else {
-            outFee = 0;
+        if (params.outFee > 0) {
+            acquire = uint128(chargeFee(acquire, params.outFee));
         }
     }
 
     function swapDesire(
         QuoteParams memory params
-    ) public returns (uint256 cost, Price[] memory price, uint16 outFee) {
+    ) public returns (uint256 cost, Price[] memory price) {
         // allow swapping to the router address with address 0
 
         uint256 i = 0;
         price = new Price[](params.path.numPools());
         uint128 desire = params.amount;
-        if (params.fee) {
-            desire = uint128(desireAddFee(desire));
+        if (params.outFee > 0) {
+            desire = uint128(desireAddFee(desire, params.outFee));
         }
         while (true) {
             bool hasMultiplePools = params.path.hasMultiplePools();
@@ -187,11 +163,6 @@ contract UniversalQuoter is iZiClassicQuoter, iZiSwapQuoter {
             } else {
                 break;
             }
-        }
-        if (params.fee) {
-            outFee = getOutFee();
-        } else {
-            outFee = 0;
         }
     }
 

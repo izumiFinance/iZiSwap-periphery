@@ -29,22 +29,18 @@ contract UniversalSwapRouter is
     uint256 private payedCached = DEFAULT_PAYED_CACHED;
 
     address public charger;
-    // outFee / 10000 is outFee rate
-    uint16 public outFee;
 
     /// @notice constructor to create this contract
     /// @param _iZiSwapFactory address of iZiSwap factory
     /// @param _iZiClassicFactory address of iZiSwap classic factory
     /// @param _weth address of weth token
     /// @param _charger address of fee charger
-    /// @param _outFee _outFee / 10000 is feeRate
-    constructor(address _iZiSwapFactory, address _iZiClassicFactory, address _weth, address _charger, uint16 _outFee)
+    constructor(address _iZiSwapFactory, address _iZiClassicFactory, address _weth, address _charger)
         UniversalBase(_weth)
         iZiSwapRouter(_iZiSwapFactory)
         ClassicSwapRouter(_iZiClassicFactory)
     {
         charger = _charger;
-        outFee = _outFee;
     }
 
     /// @param token The token to pay
@@ -165,7 +161,7 @@ contract UniversalSwapRouter is
         }
     }
 
-    function desireAddFee(uint256 originDesire) internal view returns(uint256 desire) {
+    function desireAddFee(uint256 originDesire, uint16 outFee) internal view returns(uint256 desire) {
         if (charger == address(0) || outFee == 0) {
             return originDesire;
         }
@@ -173,7 +169,7 @@ contract UniversalSwapRouter is
         return desire;
     }
 
-    function chargeFee(address token, uint256 originAcquire) internal returns(uint256 acquire) {
+    function chargeFee(address token, uint256 originAcquire, uint16 outFee) internal returns(uint256 acquire) {
         if (charger == address(0)) {
             return originAcquire;
         }
@@ -190,8 +186,10 @@ contract UniversalSwapRouter is
         address recipient;
         uint128 desire;
         uint256 maxPayed;
+        // outFee / 10000 is feeTier
+        // outFee must <= 500
+        uint16 outFee;
         uint256 deadline;
-        bool fee;
     }
 
 
@@ -202,22 +200,23 @@ contract UniversalSwapRouter is
         checkDeadline(params.deadline)
         returns (uint256 cost, uint256 acquire)
     {
+        require(params.outFee <= 500, "outFee too much!");
         address recipient = params.recipient;
         if (recipient == address(0)) {
             recipient = address(this);
         }
         address tokenOut;
         uint256 desire = params.desire;
-        if (params.fee) {
-            desire = desireAddFee(params.desire);
+        if (params.outFee > 0) {
+            desire = desireAddFee(params.desire, params.outFee);
         }
         (acquire, tokenOut) = swapDesireInternal(
             desire,
             address(this),
             SwapCallbackData({path: params.path, payer: msg.sender})
         );
-        if (params.fee) {
-            acquire = chargeFee(tokenOut, acquire);
+        if (params.outFee > 0) {
+            acquire = chargeFee(tokenOut, acquire, params.outFee);
         }
         if (recipient != address(this)) {
             safeTransfer(tokenOut, recipient, acquire);
@@ -233,8 +232,10 @@ contract UniversalSwapRouter is
         address recipient;
         uint128 amount;
         uint256 minAcquired;
+        // outFee / 10000 is feeTier
+        // outFee must <= 500
+        uint16 outFee;
         uint256 deadline;
-        bool fee;
     }
 
     /// @notice Swap given amount of input token, usually used in multi-hop case.
@@ -244,6 +245,7 @@ contract UniversalSwapRouter is
         checkDeadline(params.deadline)
         returns (uint256 cost, uint256 acquire) 
     {
+        require(params.outFee <= 500, "outFee too much!");
         address recipient = params.recipient;
         if (recipient == address(0)) {
             recipient = address(this);
@@ -253,8 +255,8 @@ contract UniversalSwapRouter is
             params.amount,
             SwapCallbackData({path: params.path, payer: msg.sender})
         );
-        if (params.fee) {
-            acquire = chargeFee(tokenOut, acquire);
+        if (params.outFee > 0) {
+            acquire = chargeFee(tokenOut, acquire, params.outFee);
         }
         if (recipient != address(this)) {
             safeTransfer(tokenOut, recipient, acquire);
@@ -266,7 +268,4 @@ contract UniversalSwapRouter is
         charger = _charger;
     }
 
-    function setOutFee(uint16 _outFee) external onlyOwner {
-        outFee = _outFee;
-    }
 }

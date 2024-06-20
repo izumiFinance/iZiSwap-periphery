@@ -9,7 +9,6 @@ const para = {
     classicFactory: v[2],
     weth: v[3],
     charger: v[4],
-    outFee: v[5],
 }
 
 async function main() {
@@ -27,7 +26,6 @@ async function main() {
         para.classicFactory,
         para.weth,
         para.charger,
-        para.outFee
     );
     await router.deployed();
     console.log("router: ", router.address);
