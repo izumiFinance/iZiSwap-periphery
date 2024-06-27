@@ -269,6 +269,10 @@ module.exports = {
       url: 'https://core.public.infstones.com',
       accounts: [sk],
     },
+    gravity: {
+      url: 'https://rpc.gravity.xyz',
+      accounts: [sk],
+    },
   },
   etherscan: { 
     customChains:[
