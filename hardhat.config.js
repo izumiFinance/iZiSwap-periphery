@@ -265,6 +265,14 @@ module.exports = {
       url: 'https://sepolia-rpc.kakarot.org',
       accounts: [sk],
     },
+    core: {
+      url: 'https://core.public.infstones.com',
+      accounts: [sk],
+    },
+    gravity: {
+      url: 'https://rpc.gravity.xyz',
+      accounts: [sk],
+    },
   },
   etherscan: { 
     customChains:[
@@ -315,6 +323,14 @@ module.exports = {
            apiURL: 'https://api.verify.mintscan.io/evm/api/0x8ae',
            browserURL: 'https://kavascan.com',
          },
+      },
+      {
+         network: "core",
+         chainId: 1116,
+         urls: {
+             apiURL: "https://openapi.coredao.org/api",
+             browserURL: "https://scan.coredao.org/"
+         }
       },
     ],
     apiKey: apiKey,
