@@ -92,6 +92,7 @@ contract UniversalQuoter is iZiClassicQuoter, iZiSwapQuoter {
                 poolPrice.point = finalPt;
             } else {
                 // iZiSwap classic
+                require(iZiClassicFactory != address(0), "classic not supported!");
                 uint256 reserveIn;
                 uint256 reserveOut;
                 (acquire, reserveIn, reserveOut) = classicGetAmountOut(tokenIn, tokenOut, params.amount);
@@ -146,6 +147,7 @@ contract UniversalQuoter is iZiClassicQuoter, iZiSwapQuoter {
                 poolPrice.point = finalPt;
             } else {
                 // iZiSwap classic
+                require(iZiClassicFactory != address(0), "classic not supported!");
                 uint256 reserveIn;
                 uint256 reserveOut;
                 (cost, reserveIn, reserveOut) = classicGetAmountIn(tokenIn, tokenOut, desire);

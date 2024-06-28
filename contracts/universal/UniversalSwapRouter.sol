@@ -93,6 +93,7 @@ contract UniversalSwapRouter is
             );
         } else {
             // iZiSwap classic
+            require(iZiClassicFactory != address(0), "classic not supported!");
             acquire = classicDesireSingleInternal(
                 SwapSingleParams({
                     tokenIn: tokenIn,
@@ -140,6 +141,7 @@ contract UniversalSwapRouter is
                 );
             } else {
                 // iZiSwap classic
+                require(iZiClassicFactory != address(0), "classic not supported!");
                 (_cost, acquire) = classicAmountSingleInternal(
                     params,
                     payer
