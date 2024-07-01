@@ -251,7 +251,6 @@ module.exports = {
       // url: 'https://rpc.xlayer.tech',
       url: 'https://xlayerrpc.okx.com',
       accounts: [sk],
-      gasPrice: 100000000,
     },
     BOB: {
       url: 'https://rpc.gobob.xyz',
