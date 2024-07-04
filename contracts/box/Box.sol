@@ -92,6 +92,7 @@ contract Box is ReentrancyGuard {
         require(ILiquidityManager(peripheryAddr.liquidityManager).ownerOf(lid) == msg.sender, 'not owner');
         _;
     }
+
     function mint(
         ILiquidityManager.MintParam calldata mintParam, 
         bool tokenXIsWrap, 
@@ -243,7 +244,6 @@ contract Box is ReentrancyGuard {
         }
     }
 
-
     function collect(
         address recipient,
         uint256 lid,
@@ -300,6 +300,7 @@ contract Box is ReentrancyGuard {
 
         return tempAddress;
     }
+
     function decodeFirstLastToken(bytes memory path)
         internal
         pure
@@ -311,6 +312,7 @@ contract Box is ReentrancyGuard {
         firstToken = toAddress(path, 0);
         lastToken = toAddress(path, path.length - ADDR_SIZE);
     }
+
     function swapAmount(
         ISwap.SwapAmountParams calldata params,
         bool firstIsWrap,
