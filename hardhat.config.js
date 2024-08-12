@@ -272,6 +272,10 @@ module.exports = {
       url: 'https://rpc.gravity.xyz',
       accounts: [sk],
     },
+    iotex: {
+      url: 'https://babel-api.fastblocks.io',
+      accounts: [sk],
+    },
   },
   etherscan: { 
     customChains:[
@@ -330,6 +334,14 @@ module.exports = {
              apiURL: "https://openapi.coredao.org/api",
              browserURL: "https://scan.coredao.org/"
          }
+      },
+      {
+        network: "iotex",
+        chainId: 4689,
+        urls: {
+          apiURL: "https://IoTeXscout.io/api",
+          browserURL: "https://IoTeXscan.io"
+        }
       },
     ],
     apiKey: apiKey,
