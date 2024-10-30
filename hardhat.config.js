@@ -260,9 +260,10 @@ module.exports = {
       url: 'https://evm.kava-rpc.com',
       accounts: [sk],
     },
-    kakarotSepoliaTest: {
+    kakarotStarknetSepoliaTest: {
       url: 'https://sepolia-rpc.kakarot.org',
       accounts: [sk],
+      gas: 10000000
     },
     core: {
       url: 'https://core.public.infstones.com',
