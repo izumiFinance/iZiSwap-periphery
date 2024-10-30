@@ -276,6 +276,10 @@ module.exports = {
       url: 'https://babel-api.fastblocks.io',
       accounts: [sk],
     },
+    morph: {
+      url: 'https://rpc.morphl2.io',
+      accounts: [sk],
+    },
   },
   etherscan: { 
     customChains:[
