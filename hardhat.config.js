@@ -281,6 +281,10 @@ module.exports = {
       url: 'https://rpc.morphl2.io',
       accounts: [sk],
     },
+    formicariumTest: {
+      url: 'https://rpc.formicarium.memecore.net',
+      accounts: [sk],
+    },
   },
   etherscan: { 
     customChains:[
