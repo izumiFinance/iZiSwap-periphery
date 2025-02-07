@@ -31,6 +31,8 @@ const contracts = {
     },
     mantleSepoliaTest: {
         iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
+        iZiSwapV3Factory: '0x6953DEe956eEe39973F1e1090368Ba434CCa0d94',
+        wrappedNative: '0x67A1f4A939b477A6b7c5BF94D97E45dE87E608eF',
     },
     mantle: {
 	iZiSwapFactory: '0x45e5F26451CDB01B0fA1f8582E0aAD9A6F27C218',
@@ -40,6 +42,10 @@ const contracts = {
     },
     bscTest: {
         iZiSwapFactory: '0x7fc0574eAe768B109EF38BC32665e6421c52Ee9d',
+        iZiClassicFactory: '0x92322780ca702b5457524a685664bf346bd48f1a',
+        iZiSwapV3Factory: '0x48283d44440f49B43670EE3A06Ff43acf4eDFE6e',
+        wrappedNative: '0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd',
+
 	liquidityManager: '0xDE02C26c46AC441951951C97c8462cD85b3A124c',
 	swap: '0x4bD007912911f3Ee4b4555352b556B08601cE7Ce',
         WETH9: '0xae13d989dac2f0debff460ac112a837c89baa7cd',
@@ -242,6 +248,21 @@ const contracts = {
     },
     formicariumTest: {
         iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
+    },
+    plume: {
+        iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
+    },
+    monadTest: {
+        iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
+    },
+    hashKey: {
+        iZiSwapFactory: '0x110dE362cc436D7f54210f96b8C7652C2617887D',
+    },
+    hemi: {
+        iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
+    },
+    overProtocol: {
+        iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
     },
 }
 

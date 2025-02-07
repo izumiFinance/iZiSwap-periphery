@@ -46,7 +46,7 @@ module.exports = {
       gasPrice: 100000000000,
     },
     bscTest: {
-      url: 'https://data-seed-prebsc-2-s1.binance.org:8545/',
+      url: 'https://bsc-testnet-rpc.publicnode.com',
       accounts: [sk],
     },
     opBNBTest: {
@@ -285,6 +285,30 @@ module.exports = {
       url: 'https://rpc.formicarium.memecore.net',
       accounts: [sk],
     },
+    plume: {
+      url: 'https://rpc.plumenetwork.xyz',
+      accounts: [sk],
+    },
+    hashKey: {
+      url: 'https://mainnet.hsk.xyz',
+      accounts: [sk],
+    },
+    monadTest: {
+      url: 'https://rpc.monad-testnet.category.xyz/rpc/SPa4TbSgMJxz5ywmzYvvc9O5nkAVGTgOcsi7yErG',
+      accounts: [sk],
+    },
+    tacTurinTest: {
+      url: 'https://turin.rpc.tac.build',
+      accounts: [sk],
+    },
+    hemi: {
+      url: 'https://rpc.hemi.network/rpc',
+      accounts: [sk],
+    },
+    overProtocol: {
+      url: 'https://rpc.overprotocol.com/',
+      accounts: [sk],
+    },
   },
   etherscan: { 
     customChains:[
@@ -294,7 +318,7 @@ module.exports = {
          urls: {
            apiURL: "https://blockscout.kroma.network/api",
            browserURL: "https://blockscout.kroma.network/",
-	 }
+	       }
       },
       {
          network: "linea",
@@ -308,7 +332,7 @@ module.exports = {
          network: "base",
          chainId: 8453,
          urls:{
-	   apiURL: "https://api.basescan.org/api",
+	         apiURL: "https://api.basescan.org/api",
            browserURL: "https://basescan.org",
          }
       },
@@ -350,6 +374,30 @@ module.exports = {
         urls: {
           apiURL: "https://IoTeXscout.io/api",
           browserURL: "https://IoTeXscan.io"
+        }
+      },
+      {
+        network: "tacTurinTest",
+        chainId: 2390,
+        urls: {
+          apiURL: "https://turin.explorer.tac.build/api",
+          browserURL: "https://turin.explorer.tac.build"
+        }
+      },
+      {
+        network: "hemi",
+        chainId: 43111,
+        urls: {
+          apiURL: "https://explorer.hemi.xyz/api",
+          browserURL: "https://explorer.hemi.xyz"
+        }
+      },
+      {
+        network: "overProtocol",
+        chainId: 54176,
+        urls: {
+          apiURL: "https://scan.over.network:443/api",
+          browserURL: "https://scan.over.network:443"
         }
       },
     ],
