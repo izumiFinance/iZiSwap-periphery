@@ -42,7 +42,7 @@ $ npx hardhat compile
 
 ### 2. test
 
-first, copy compiled ".json" files from  `izumi-swap-core` and `WETH9.json` into periphery's `test/core/`
+first, copy compiled ".json" files from  `izumi-swap-core` and `WETH9.json` into periphery's `test/core/`. If no `test/core` dir, just create it and then copy those files.
 
 after that, hierarchy of `test/core` will look like following
 
