@@ -500,6 +500,7 @@ async function getNFTLiquidityManager(signer, factoryAddr, wethAddr) {
 }
 
 module.exports ={
+    getContractJson,
     getPoolParts,
     getPool,
     getIzumiswapFactory,
