@@ -41,7 +41,7 @@ const contracts = {
         swap: '0x25C030116Feb2E7BbA054b9de0915E5F51b03e31',
     },
     bscTest: {
-        iZiSwapFactory: '0x7fc0574eAe768B109EF38BC32665e6421c52Ee9d',
+        iZiSwapFactory: '0x31834FEc56F3e245715D3A68F63927D93a2d3e6d',
         iZiClassicFactory: '0x92322780ca702b5457524a685664bf346bd48f1a',
         iZiSwapV3Factory: '0x48283d44440f49B43670EE3A06Ff43acf4eDFE6e',
         wrappedNative: '0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd',

@@ -48,6 +48,7 @@ module.exports = {
     bscTest: {
       url: 'https://bsc-testnet-rpc.publicnode.com',
       accounts: [sk],
+      gasPrice: 5000000000,
     },
     opBNBTest: {
       url: 'https://opbnb-testnet-rpc.bnbchain.org',

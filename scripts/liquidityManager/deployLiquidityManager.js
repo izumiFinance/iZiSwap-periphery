@@ -11,14 +11,16 @@ HARDHAT_NETWORK='izumiTest' node scripts/nftLiquidityManager/deployNFLM.js
 
 const net = process.env.HARDHAT_NETWORK
 const v = process.argv
-const weth = v[2]
 
 async function main() {
     // deploy nft
     const LiquidityManager = await ethers.getContractFactory("LiquidityManager");
     const iZiSwapFactory = deployed[net].iZiSwapFactory;
+    const weth = deployed[net].wrappedNative;
     nflm = await LiquidityManager.deploy(iZiSwapFactory, weth);
     console.log("LiquidityManager: ", nflm.address);
+    console.log("constructor args:")
+    console.log("module.exports =", [iZiSwapFactory, weth])
     await nflm.deployed();
 }
 

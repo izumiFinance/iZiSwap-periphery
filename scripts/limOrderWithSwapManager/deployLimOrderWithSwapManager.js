@@ -10,15 +10,16 @@ HARDHAT_NETWORK='izumiTest' node scripts/nfLimOrderManager/deployNfLimOrder.js
 */
 
 const net = process.env.HARDHAT_NETWORK
-const v = process.argv
-const weth = v[2]
 
 async function main() {
     // deploy nft
     const LimitOrderWithSwapManager = await ethers.getContractFactory("LimitOrderWithSwapManager");
     const iZiSwapFactory = deployed[net].iZiSwapFactory;
+    const weth = deployed[net].wrappedNative
     const manager = await LimitOrderWithSwapManager.deploy(iZiSwapFactory, weth);
     console.log("LimitOrderWithSwapManager: ", manager.address);
+    console.log("constructor args:")
+    console.log("module.exports =", [iZiSwapFactory, weth])
     await manager.deployed();
 }
 
