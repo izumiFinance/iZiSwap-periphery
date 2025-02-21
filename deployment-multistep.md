@@ -20,7 +20,7 @@ Asume we are deploying on `bscTest` and we have finished sections above.
 
 ##### deploy WETH9 (optional)
 
-if you want to deploy your own `WETH9` on some testnet, use following code
+if you want to deploy your own `WETH9` on some testnet, use following command
 
 ```
 $ HARDHAT_NETWORK=bscTest node scripts/weth9/deployWETH9.js "Wrapped BNB" "WBNB"
@@ -205,11 +205,51 @@ module.exports = [
 ]
 ```
 
-##### deploy universal quoter (v1+v2)
+##### deploy universal quoter and swap router (v1+v2)
 
-##### deploy universal router (v1+v2)
+ensure `iZiSwapFactory`, `iZiClassicFactory` and `wrappedNative` have been configured in `scripts/deployed.js`.
 
-##### deploy universal quoter (v1+v2+v3)
+Just like following:
+
+```
+    bscTest: {
+        iZiSwapFactory: '0x31834FEc56F3e245715D3A68F63927D93a2d3e6d',
+        iZiClassicFactory: '0x784EE74BE57D2567A17399F6aA435183C4e267EE', // default is zero-address
+        wrappedNative: '0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd',
+    }
+```
+
+You should fill these fields with actual contract address when you deploy on other chains.
+
+**deploy quoter**
+
+```
+$ HARDHAT_NETWORK=bscTest node scripts/universal/deployUniversalQuoter.js
+```
+
+and we can get output like following
+
+```
+quoter:  0x24D0F8908700267187b757201FB302C0E2D0Ccf4
+
+constructor args:
+module.exports = [
+  '0x31834FEc56F3e245715D3A68F63927D93a2d3e6d',
+  '0x784EE74BE57D2567A17399F6aA435183C4e267EE'
+]
+```
+
+**deploy swap router**
+
+```
+$ HARDHAT_NETWORK=bscTest node scripts/universal/deployUniversalRouter.js 0xe90ebA9b7f3fC6a0B1aE28FfF4932cb9E35B6946
+```
+
+Here, `0xe90ebA9b7f3fC6a0B1aE28FfF4932cb9E35B6946` is `fee collector` of this router, you can replace it with arbitrary address you want.
+
+both scripts above will print deployed contract address and constructor args.
+
+##### deploy universal quoter and router (v1+v2+v3)
 
 ##### deploy universal router (v1+v2+v3)
 

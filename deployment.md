@@ -76,19 +76,16 @@ npx hardhat test
 
 we may need config following 6 contracts in `scripts/deployed.js`.
 ```
-iZiSwapFactory (required)
-wrappedNative (required)
-pancakeSwapRouter (optional, need by tap-proxy, default is zero-address)
-uniswapRouter (optional, need by tap-proxy, default is zero-address)
-iZiClassicFactory (optional, need by UniversalV2/V3, default is zero-address)
-iZiSwapV3Factory (optional, need by UniversalV3)
+iZiSwapFactory           # required
+wrappedNative            # required, WETH9 interface
+pancakeSwapRouter        # optional, need by tap-proxy, default is zero-address
+uniswapRouter            # optional, need by tap-proxy, default is zero-address
+iZiClassicFactory        # optional, need by UniversalV2/V3, default is zero-address
+iZiSwapV3Factory         # optional, need by UniversalV3
 ```
 
-in this example, we are deploying on `bscTest`, and we need config those contract 
-
-`scripts/deployed.js`, and add (or replace) 3 fields `iZiSwapFactory`, `pancakeSwapRouter`, and  `uniswapRouter`.
-
-Just like following:
+in this example, we config those contract in 
+`scripts/deployed.js` like following:
 
 ```
 const contracts = { 
@@ -112,14 +109,16 @@ here, `0x31834FEc56F3e245715D3A68F63927D93a2d3e6d` is address of `iZiSwapFactory
 
 `0x9ac64cc6e4415144c455bd8e4837fea55603e5c3` is `pancakeSwapRouter` on `bscTest`.
 
+**Notice:** On some testnet, we may need deploy `WETH9` separately, and we can refer to `deployment-multistep.md` for deployment of `WETH9`.
+
 
 ### 4. deploy and verify
 
+before deployment, we should complete previous sections.
+
 ##### deploy in one command
 
-before deployment, you should finish previous section.
-
-**Notice 1:** `deploy-in-one-command` will not involve deployment of `universal quoter and router`, due to the fact that `universal quoter and router` may need `v2 or v3` addresses. If you want to deploy `universal quoter and router`, you can refer to `deployment-multistep.md`.
+**Notice 1:** `deploy-in-one-command` will not involve deployment of `universal quoters and routers`, due to the fact that `universal quoter and router` may need `v2 or v3` addresses. If you want to deploy `universal quoter and router`, you can refer to `deployment-multistep.md`.
 
 **Notice 2:** `deploy-in-one-command` will not involve deployment of `WETH9`, because on mainnet we will use official `WETH9`. If you want to deploy `WETH9` on testnet, you can refer to `deployment-multistep.md`. On testnet, you can first deploy `WETH9` separately and then deploy other contracts via `deploy-in-one-command`.
 
