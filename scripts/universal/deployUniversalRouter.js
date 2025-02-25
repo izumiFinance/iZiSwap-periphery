@@ -6,16 +6,18 @@ const net = process.env.HARDHAT_NETWORK
 const v = process.argv
 
 const para = {
-    classicFactory: v[2],
-    weth: v[3],
-    charger: v[4],
+    charger: v[2],
 }
 
 async function main() {
 
     const iZiSwapFactory = deployed[net].iZiSwapFactory;
+    const iZiClassicFactory = deployed[net].iZiClassicFactory ?? '0x0000000000000000000000000000000000000000';
+    const weth = deployed[net].wrappedNative;
     console.log("Paramters: ");
     console.log('iZiSwapFactory: ', iZiSwapFactory)
+    console.log('iZiClassicFactory: ', iZiClassicFactory)
+    console.log('weth: ', weth)
     for ( var i in para) { console.log("    " + i + ": " + para[i]); }
   
     console.log('=====================');
@@ -23,12 +25,19 @@ async function main() {
     const SwapRouter = await ethers.getContractFactory("UniversalSwapRouter");
     const router = await SwapRouter.deploy(
         iZiSwapFactory,
-        para.classicFactory,
-        para.weth,
+        iZiClassicFactory,
+        weth,
         para.charger,
     );
     await router.deployed();
     console.log("router: ", router.address);
+    console.log('\nconstructor args: ')
+    console.log('module.exports =', [
+        iZiSwapFactory,
+        iZiClassicFactory,
+        weth,
+        para.charger,
+    ])
 }
 
 main().then(() => process.exit(0))
