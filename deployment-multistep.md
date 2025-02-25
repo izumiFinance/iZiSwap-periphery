@@ -53,6 +53,11 @@ module.exports = [
 ]
 ```
 
+**Notice:** if you failed with error like following, you can try a new rpc.
+```
+Error: could not detect network (event="noNetwork", code=NETWORK_ERROR, version=providers/5.7.2)
+```
+
 
 ##### deploy LimitOrderManager
 

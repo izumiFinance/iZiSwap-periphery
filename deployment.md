@@ -213,6 +213,10 @@ module.exports = [
 
 this `deployAll.js` will print addresses deployed and also, it will print `constructor args` for each deployed contract if need.
 
+**Notice:** if you failed with error like following, you can try a new rpc.
+```
+Error: could not detect network (event="noNetwork", code=NETWORK_ERROR, version=providers/5.7.2)
+```
 
 ##### deploy via multi step
 

@@ -46,7 +46,7 @@ module.exports = {
       gasPrice: 100000000000,
     },
     bscTest: {
-      url: 'https://bsc-testnet-rpc.publicnode.com',
+      url: 'https://data-seed-prebsc-1-s2.bnbchain.org:8545',
       accounts: [sk],
       gasPrice: 5000000000,
     },
@@ -292,10 +292,6 @@ module.exports = {
     },
     hashKey: {
       url: 'https://mainnet.hsk.xyz',
-      accounts: [sk],
-    },
-    monadTest: {
-      url: 'https://rpc.monad-testnet.category.xyz/rpc/SPa4TbSgMJxz5ywmzYvvc9O5nkAVGTgOcsi7yErG',
       accounts: [sk],
     },
     tacTurinTest: {
