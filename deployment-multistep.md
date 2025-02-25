@@ -212,7 +212,9 @@ module.exports = [
 
 ##### deploy universal quoter and swap router (v1+v2)
 
-ensure `iZiSwapFactory`, `iZiClassicFactory` and `wrappedNative` have been configured in `scripts/deployed.js`.
+config `iZiSwapFactory`, `iZiClassicFactory` and `wrappedNative` in `scripts/deployed.js`.
+
+`iZiClassicFactory` is optional.
 
 Just like following:
 
@@ -256,7 +258,55 @@ both scripts above will print deployed contract address and constructor args.
 
 ##### deploy universal quoter and router (v1+v2+v3)
 
-##### deploy universal router (v1+v2+v3)
+config `iZiSwapV3Factory` `iZiSwapFactory`, `iZiClassicFactory` and `wrappedNative` have been configured in `scripts/deployed.js`.
+
+`iZiSwapV3Factory` and `iZiClassicFactory` are optional.
+
+```
+bscTest: {
+        iZiSwapFactory: '0x31834FEc56F3e245715D3A68F63927D93a2d3e6d',
+        iZiClassicFactory: '0x784EE74BE57D2567A17399F6aA435183C4e267EE',
+        iZiSwapV3Factory: '0x46DB7f868a1B34bc976251C314c35E3c5a582a3A',
+        wrappedNative: '0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd',
+        pancakeSwapRouter: '0x9ac64cc6e4415144c455bd8e4837fea55603e5c3',
+    },
+```
+
+**deploy quoter**
+
+```
+$ HARDHAT_NETWORK=bscTest node scripts/universal/deployUniversalV3Quoter.js
+```
+
+and get following output:
+
+```
+args:  [
+  '0x31834FEc56F3e245715D3A68F63927D93a2d3e6d',
+  '0x784EE74BE57D2567A17399F6aA435183C4e267EE',
+  '0x46DB7f868a1B34bc976251C314c35E3c5a582a3A'
+]
+quoter:  0x6acC56c107Da21A16aEB9bdD0fcCF27feB2c220C
+```
+
+**deploy swap router**
+
+```
+$ HARDHAT_NETWORK=bscTest node scripts/universal/deployUniversalV3Router.js 0xe90ebA9b7f3fC6a0B1aE28FfF4932cb9E35B6946
+```
+
+output:
+
+```
+args:  [
+  '0x31834FEc56F3e245715D3A68F63927D93a2d3e6d',
+  '0x784EE74BE57D2567A17399F6aA435183C4e267EE',
+  '0x46DB7f868a1B34bc976251C314c35E3c5a582a3A',
+  '0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd',
+  '0xe90ebA9b7f3fC6a0B1aE28FfF4932cb9E35B6946'
+]
+router:  0xf5d1e741B222D1Ae6e829ea9990aB509Ab433161
+```
 
 ### verify
 To verify contracts, you can refer to corresponding section in `deployment.md`.
