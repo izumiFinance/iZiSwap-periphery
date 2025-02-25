@@ -1,3 +1,0 @@
-module.exports=[
-'0x19b683A2F45012318d9B2aE1280d68d3eC54D663', 300
-]
