@@ -24,6 +24,7 @@ Asume we are deploying on `bscTest` and we have finished sections above.
 $ HARDHAT_NETWORK=bscTest node scripts/token/deployToken.js "Test A Token" TESTA 18
 ```
 
+output will tell us deployed address and constructor args.
 
 ##### deploy WETH9 (optional)
 
