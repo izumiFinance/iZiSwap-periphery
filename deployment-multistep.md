@@ -18,6 +18,13 @@ refer to `deployment.md`
 Asume we are deploying on `bscTest` and we have finished sections above.
 
 
+##### deploy Test Token (optional)
+
+```
+$ HARDHAT_NETWORK=bscTest node scripts/token/deployToken.js "Test A Token" TESTA 18
+```
+
+
 ##### deploy WETH9 (optional)
 
 if you want to deploy your own `WETH9` on some testnet, use following command
