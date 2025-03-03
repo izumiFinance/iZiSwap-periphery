@@ -6,3 +6,6 @@ cache/*
 
 test/core/*
 tmp*
+
+.DS_Store
+*/.DS_Store
