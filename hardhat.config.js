@@ -306,6 +306,10 @@ module.exports = {
       url: 'https://rpc.overprotocol.com/',
       accounts: [sk],
     },
+    memecore: {
+      url: "https://rpc.memecore.net",
+      accounts: [sk],
+    },
   },
   etherscan: { 
     customChains:[
@@ -395,6 +399,14 @@ module.exports = {
         urls: {
           apiURL: "https://scan.over.network:443/api",
           browserURL: "https://scan.over.network:443"
+        }
+      },
+      {
+        network: "memecore",
+        chainId: 4352,
+        urls: {
+          apiURL: "https://rpc.memecore.net",
+          browserURL: "https://www.okx.com/en-sg/web3/explorer/memecore"
         }
       },
     ],
