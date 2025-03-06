@@ -188,6 +188,8 @@ const contracts = {
     },
     zeta: {
         iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
+	wrappedNative: '0x5F0b1a82749cb4E2278EC87F8BF6B618dC71a8bf',
+	iZiClassicFactory: '0x4e86c9271bBd850dDc92f8a086F43FE996Ba59f5',
     },
     taikoKatlaL2Test: {
         iZiSwapFactory: '0x64c2F1306b4ED3183E7B345158fd01c19C0d8c5E',
