@@ -310,6 +310,10 @@ module.exports = {
       url: "https://rpc.memecore.net",
       accounts: [sk],
     },
+    plumeNew: {
+      url: "https://phoenix-rpc.plumenetwork.xyz",
+      accounts: [sk],
+    },
   },
   etherscan: { 
     customChains:[
@@ -409,6 +413,14 @@ module.exports = {
           browserURL: "https://www.okx.com/en-sg/web3/explorer/memecore"
         }
       },
+      {
+        network: "plume",
+        chainId: 98866,
+        urls: {
+          apiURL: "https://explorer-plume-mainnet-1.t.conduit.xyz/api",
+          browserURL: "https://explorer-plume-mainnet-1.t.conduit.xyz:443"
+        }
+      }
     ],
     apiKey: apiKey,
   },
