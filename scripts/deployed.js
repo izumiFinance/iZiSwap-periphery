@@ -255,6 +255,7 @@ const contracts = {
     plumeNew: {
         iZiSwapFactory: '0x8c7d3063579BdB0b90997e18A770eaE32E1eBb08',
 	wrappedNative: '0xEa237441c92CAe6FC17Caaf9a7acB3f953be4bd1',
+	iZiClassicFactory: '0x88867BF3bB3321d8c7Da71a8eAb70680037068E4',
     },
 }
 
