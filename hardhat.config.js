@@ -314,6 +314,22 @@ module.exports = {
       url: "https://phoenix-rpc.plumenetwork.xyz",
       accounts: [sk],
     },
+    Berachain: {
+      url: "https://rpc.berachain.com",
+      accounts: [sk],
+    },
+    Sei: {
+      url: "https://evm-rpc.sei-apis.com",
+      accounts: [sk],
+    },
+    Lisk: {
+      url: "https://rpc.api.lisk.com",
+      accounts: [sk],
+    },
+    stableTest: {
+      url: "https://stable-jsonrpc.testnet.chain0.dev",
+      accounts: [sk],
+    },
   },
   etherscan: { 
     customChains:[
@@ -420,7 +436,15 @@ module.exports = {
           apiURL: "https://explorer-plume-mainnet-1.t.conduit.xyz/api",
           browserURL: "https://explorer-plume-mainnet-1.t.conduit.xyz:443"
         }
-      }
+      },
+      {
+        network: "stableTest",
+        chainId: 2201,
+        urls: {
+          apiURL: "https://stable-explorer.testnet.chain0.dev/api",
+          browserURL: "http://stable-explorer.testnet.chain0.dev"
+        }
+      },
     ],
     apiKey: apiKey,
   },

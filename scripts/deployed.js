@@ -257,6 +257,10 @@ const contracts = {
 	wrappedNative: '0xEa237441c92CAe6FC17Caaf9a7acB3f953be4bd1',
 	iZiClassicFactory: '0x88867BF3bB3321d8c7Da71a8eAb70680037068E4',
     },
+    stableTest: {
+        iZiSwapFactory: '0xC6C7c2edF70A3245ad6051E93809162B9758ce08',
+	wrappedNative: '0x1eE5eDC5Fe498a2dD82862746D674DB2a5e7fef6',
+    },
 }
 
 module.exports = contracts;
